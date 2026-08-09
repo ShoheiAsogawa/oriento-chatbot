@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "started_at": "2026-08-09T17:03:55.089092+00:00",
+  "finished_at": "2026-08-09T17:07:46.382504+00:00",
+  "source_roots": [
+    "https://orijyu.com/",
+    "https://orichin.com/",
+    "https://origumi.jp/",
+    "https://oriho.com/",
+    "https://cn.orijyu.com/"
+  ],
+  "page_count": 2520,
+  "category_counts": {
+    "corporate_and_policies": 2,
+    "homebuilding_and_renovation": 9,
+    "international_chinese": 244,
+    "news_and_general": 9,
+    "orichin_real_estate": 38,
+    "origumi_construction": 24,
+    "oriho_homebuilding": 1527,
+    "properties_for_rent": 26,
+    "properties_for_sale": 521,
+    "property_search_guides": 100,
+    "recruitment": 12,
+    "services_and_guides": 6,
+    "stores_and_contacts": 2
+  },
+  "files": [
+    {
+      "file": "corporate_and_policies.md",
+      "category": "corporate_and_policies",
+      "bytes": 4944,
+      "sha256": "3d85bd8197d44c617869c033988da1c2b1eaae37309f87a513d13f82e6b85e36"
+    },
+    {
+      "file": "stores_and_contacts.md",
+      "category": "stores_and_contacts",
+      "bytes": 2449,
+      "sha256": "d9ddcbc13997972537bff5992217d0532551d5ec11d4d5711f0bdb70861e2f2c"
+    },
+    {
+      "file": "services_and_guides.md",
+      "category": "services_and_guides",
+      "bytes": 15793,
+      "sha256": "c8e8630bf08ed5c725ffb1b6b312042d523f64b704f3ac75431e9ea696814a73"
+    },
+    {
+      "file": "homebuilding_and_renovation.md",
+      "category": "homebuilding_and_renovation",
+      "bytes": 12146,
+      "sha256": "c8358ef7f9603ce9b3ba4aa73ec659f9b10953840f2f047f1be2574c93e0cc4e"
+    },
+    {
+      "file": "property_search_guides.md",
+      "category": "property_search_guides",
+      "bytes": 125580,
+      "sha256": "5717253b1ae365f3bac0fe30840eead7e1e616eb45a3d6035ed649463d5effd2"
+    },
+    {
+      "file": "properties_for_sale.md",
+      "category": "properties_for_sale",
+      "bytes": 1450247,
+      "sha256": "e5f111b92a5edacab7c483a68328e7b4747a9231f6fea22ef2b5bf971dbfc73f"
+    },
+    {
+      "file": "properties_for_rent.md",
+      "category": "properties_for_rent",
+      "bytes": 59545,
+      "sha256": "0f1f4c0cd719f73176423b0fb2695a67b7b4bfb5cedb7899795e8b7e149cbd37"
+    },
+    {
+      "file": "recruitment.md",
+      "category": "recruitment",
+      "bytes": 47235,
+      "sha256": "bd5f67a6776632edfcc461c6f79357891c4c15e7cffe9921a7cafa50c1a70915"
+    },
+    {
+      "file": "orichin_real_estate.md",
+      "category": "orichin_real_estate",
+      "bytes": 164206,
+      "sha256": "46d8c1afeb54332d5ab1957353862126e0fa7eedc8ebab40e910ec6379a18ed9"
+    },
+    {
+      "file": "origumi_construction.md",
+      "category": "origumi_construction",
+      "bytes": 67472,
+      "sha256": "6b66f75ec453f5010c4633f37acfb412774fda9c072b9551ee20388f04c69ae3"
+    },
+    {
+      "file": "oriho_homebuilding.md",
+      "category": "oriho_homebuilding",
+      "bytes": 1306710,
+      "sha256": "96ae701a11f4471652b20ed52678f1e402a31792c1d861387f056ed053b3ea3a"
+    },
+    {
+      "file": "international_chinese.md",
+      "category": "international_chinese",
+      "bytes": 428279,
+      "sha256": "ddb7be1351e19d5b29bd4c03d4fbae0e7e611c47b83088ae28333244cafe94bf"
+    },
+    {
+      "file": "news_and_general.md",
+      "category": "news_and_general",
+      "bytes": 10035,
+      "sha256": "7a36ff2f155c95648ed2dc09e82f5070cf31ab2976fa2aaa387fb25daa896310"
+    }
+  ],
+  "failures": []
+}

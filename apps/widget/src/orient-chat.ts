@@ -164,10 +164,6 @@ const styles = `
   .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--orient-muted); animation: typing 1s infinite ease-in-out; }
   .typing i:nth-child(2) { animation-delay: .12s; }
   .typing i:nth-child(3) { animation-delay: .24s; }
-  .sources { display: grid; gap: 6px; margin-top: 9px; padding-top: 9px; border-top: 1px solid #dddde2; }
-  .source { display: grid; grid-template-columns: auto 1fr auto; gap: 7px; align-items: center; color: var(--orient-ink); font-size: 12px; text-decoration: none; }
-  .source strong { color: var(--orient-primary-strong); font-weight: 800; }
-  .source:hover span { text-decoration: underline; }
   .suggestions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
   .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
   .suggestions button span { display: block; color: var(--orient-primary); font-size: 17px; line-height: 1; }
@@ -542,6 +538,7 @@ class OrientChat extends HTMLElement {
   private async typeAnswer(id: string, answer: string) {
     const message = this.messages.find((item) => item.id === id);
     if (!message) return;
+    answer = answer.replace(/\s*\[\d+\]/gu, '').trim();
     const item = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
       .find((candidate) => candidate.dataset.messageId === id);
     const bubble = item?.querySelector<HTMLElement>('.bubble');
@@ -552,23 +549,22 @@ class OrientChat extends HTMLElement {
       return;
     }
 
-    const updateBubble = (content: string, includeSources = false) => {
+    const updateBubble = (content: string) => {
       message.content = content;
       bubble.replaceChildren(document.createTextNode(content));
-      if (includeSources && message.sources?.length) bubble.append(this.renderSources(message.sources));
       if (container) container.scrollTop = container.scrollHeight;
     };
 
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
-      updateBubble(answer, true);
+      updateBubble(answer);
       return;
     }
     for (let index = 0; index < answer.length; index += 2) {
       updateBubble(answer.slice(0, index + 2));
       await new Promise((resolve) => window.setTimeout(resolve, 18));
     }
-    updateBubble(answer, true);
+    updateBubble(answer);
   }
 
   private setDisabled(disabled: boolean) {
@@ -603,30 +599,11 @@ class OrientChat extends HTMLElement {
       bubble.append(typing);
     } else {
       bubble.append(document.createTextNode(message.content));
-      if (message.sources?.length) bubble.append(this.renderSources(message.sources));
     }
     item.append(bubble);
     return item;
   }
 
-  private renderSources(sources: Source[]) {
-    const list = document.createElement('div');
-    list.className = 'sources';
-    for (const source of sources) {
-      const link = document.createElement(source.url ? 'a' : 'div');
-      link.className = 'source';
-      if (link instanceof HTMLAnchorElement && source.url) { link.href = source.url; link.target = '_blank'; link.rel = 'noopener'; }
-      const label = document.createElement('strong');
-      label.textContent = `参照 ${source.index}`;
-      const title = document.createElement('span');
-      title.textContent = source.title;
-      const arrow = document.createElement('span');
-      arrow.textContent = source.url ? '↗' : '';
-      link.append(label, title, arrow);
-      list.append(link);
-    }
-    return list;
-  }
 }
 
 if (!customElements.get('orient-chat')) customElements.define('orient-chat', OrientChat);

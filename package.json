@@ -6,6 +6,7 @@
     "build": "pnpm --filter @orient/widget --filter @orient/admin build && pnpm prepare:assets && pnpm --filter @orient/worker build",
     "build:preview": "pnpm --filter @orient/worker exec wrangler deploy --dry-run --config ../preview/wrangler.jsonc --outdir ../preview/dist",
     "prepare:assets": "node scripts/prepare-assets.mjs",
+    "knowledge:scrape": "python scripts/scrape-orient-knowledge.py",
     "check": "pnpm -r check",
     "test": "pnpm --filter @orient/worker test",
     "deploy:production": "pnpm --filter @orient/worker exec wrangler deploy",

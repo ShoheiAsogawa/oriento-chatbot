@@ -5,6 +5,8 @@ dist/
 .env*
 !.dev.vars.example
 *.tsbuildinfo
+__pycache__/
+*.pyc
 
 # Generated Cloudflare bundles and type declarations
 apps/worker/static/

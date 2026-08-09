@@ -103,7 +103,7 @@ app.notFound(async (context) => {
   if (context.req.method !== 'GET' && context.req.method !== 'HEAD') return context.json({ error: 'Not found' }, 404);
   const url = new URL(context.req.url);
   if (url.pathname === '/admin') url.pathname = '/admin/index.html';
-  if (url.pathname.startsWith('/admin/') || url.pathname.startsWith('/widget/') || url.pathname.startsWith('/assets/')) {
+  if (url.pathname.startsWith('/admin/') || url.pathname.startsWith('/widget/') || url.pathname.startsWith('/assets/') || url.pathname.startsWith('/documents/')) {
     const response = await context.env.STATIC_ASSETS.fetch(new Request(url, context.req.raw));
     if (response.status !== 404 || !url.pathname.startsWith('/admin/')) return response;
     url.pathname = '/admin/index.html';
@@ -160,6 +160,13 @@ function safeSourceUrl(value: unknown) {
   } catch {
     return undefined;
   }
+}
+
+function knowledgeCategoryFromFilename(filename: string) {
+  const category = filename
+    .replace(/\.md$/iu, '')
+    .replace(/-part-\d+$/iu, '');
+  return /^[a-z0-9_]{1,64}$/u.test(category) ? category : 'general';
 }
 
 function sourceFromChunk(chunk: SearchChunk, index: number) {
@@ -477,7 +484,7 @@ app.post('/api/admin/knowledge', async (context) => {
   if (form.get('sourceUrl') && !sourceUrl) return context.json({ error: 'ソースURLはorijyu.comのHTTPS URLを指定してください' }, 400);
   const result = await context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.upload(file.name, file, {
     metadata: {
-      category: String(form.get('category') || 'general'),
+      category: String(form.get('category') || knowledgeCategoryFromFilename(file.name)),
       language: 'ja',
       source_url: sourceUrl || '',
       title: String(form.get('title') || file.name),
