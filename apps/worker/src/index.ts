@@ -292,7 +292,7 @@ app.post('/api/chat/message', async (context) => {
     throw error;
   }
   const answer = ensureOrinyanEnding(completion.answer);
-  const sources = selectAnswerSources(answer, chunks, 2);
+  const sources = selectAnswerSources(answer, chunks, 2, redacted);
   const messageId = await recordTurn(
     context.env,
     input.conversationId,

@@ -70,18 +70,34 @@ export function sourceFromChunk(chunk: SearchChunk, index: number): AnswerSource
   };
 }
 
-export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit = 2) {
+function questionTitleScore(question: string, title: string) {
+  const normalizedTitle = title.replace(/[\s　・|｜「」『』（）()【】\[\]]+/gu, '');
+  const tokens = question
+    .split(/[\s　、。,.!?！？「」『』（）()【】\[\]]+/gu)
+    .map((token) => token.replace(/(?:について|を教えて|の価格|と間取り|詳細|ください|ですか)$/gu, ''))
+    .filter((token) => token.length >= 2);
+  return tokens.reduce((score, token) => score + (normalizedTitle.includes(token) ? token.length : 0), 0);
+}
+
+export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit = 2, question = '') {
   const cited = Array.from(answer.matchAll(/\[(\d+)\]/gu), (match) => Number(match[1]) - 1)
     .filter((index, position, all) => index >= 0 && index < chunks.length && all.indexOf(index) === position);
   const candidates = [...cited, ...chunks.map((_, index) => index)]
     .filter((index, position, all) => all.indexOf(index) === position);
+  const ranked = candidates.map((index, order) => {
+    const chunk = chunks[index];
+    if (!chunk) return undefined;
+    const source = sourceFromChunk(chunk, index);
+    return { source, order, relevance: questionTitleScore(question, source.title) };
+  }).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+  const bestRelevance = Math.max(0, ...ranked.map((entry) => entry.relevance));
+  ranked.sort((left, right) => right.relevance - left.relevance || left.order - right.order);
+
   const seen = new Set<string>();
   const selected: AnswerSource[] = [];
-
-  for (const index of candidates) {
-    const chunk = chunks[index];
-    if (!chunk) continue;
-    const source = sourceFromChunk(chunk, index);
+  for (const entry of ranked) {
+    const { source, relevance } = entry;
+    if (bestRelevance > 0 && relevance === 0) continue;
     if (!source.url || seen.has(source.url)) continue;
     seen.add(source.url);
     selected.push(source);

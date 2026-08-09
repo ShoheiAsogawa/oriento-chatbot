@@ -35,6 +35,16 @@ describe('answer sources', () => {
     ]);
   });
 
+  it('filters unrelated property citations when the question names an exact address', () => {
+    const chunks = [
+      chunk('## OrientCity 伏見\n公式ページ: https://orijyu.com/buy/other/\n\n別の物件'),
+      chunk('## 大阪市東住吉区公園南矢田3丁目 1期 7号棟\n公式ページ: https://orijyu.com/buy/target/\n\n販売価格 5,899万円'),
+    ];
+    expect(selectAnswerSources('価格は5,899万円です。[1][2]', chunks, 2, '大阪市東住吉区公園南矢田3丁目 1期 7号棟の価格')).toEqual([
+      expect.objectContaining({ title: '大阪市東住吉区公園南矢田3丁目 1期 7号棟', url: 'https://orijyu.com/buy/target/' }),
+    ]);
+  });
+
   it('rejects non-official links', () => {
     expect(safeSourceUrl('https://example.com/property/1')).toBeUndefined();
   });
