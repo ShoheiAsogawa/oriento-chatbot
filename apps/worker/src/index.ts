@@ -96,9 +96,13 @@ app.onError((error, context) => {
     errorType: error.name,
     message: error.message,
   }));
+  const canSeeInternalDetails = context.req.path === '/api/internal/knowledge/reseed'
+    && Boolean(context.env.KNOWLEDGE_SYNC_SECRET)
+    && context.req.header('X-Knowledge-Sync-Token') === context.env.KNOWLEDGE_SYNC_SECRET;
   return context.json({
     error: status === 500 ? '処理中にエラーが発生しました' : error.message,
     requestId,
+    ...(canSeeInternalDetails ? { details: error.message } : {}),
   }, status);
 });
 
