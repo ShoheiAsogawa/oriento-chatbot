@@ -41,7 +41,7 @@ const html = `<!doctype html>
     <span class="preview-badge">CHAT PREVIEW</span>
   </header>
   <main>
-    <p class="eyebrow">AI CONCIERGE DEMO</p>
+    <p class="eyebrow">AI CONCIERGE PRODUCTION PREVIEW</p>
     <h1>住まい探しに、<br>オリにゃんという相棒を。</h1>
     <p class="lead">実際にWordPressへ設置するチャット画面の確認ページです。右下のキャラクターを押して、会話や動きをお試しください。</p>
     <div class="hint">右下のオリにゃんをタップ</div>
@@ -78,7 +78,7 @@ export default {
     return new Response(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=300',
+        'Cache-Control': 'no-store',
         'X-Robots-Tag': 'noindex, nofollow',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
