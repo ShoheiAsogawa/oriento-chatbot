@@ -14,10 +14,15 @@ await rm(staticRoot, { recursive: true, force: true });
 await mkdir(join(staticRoot, 'admin'), { recursive: true });
 await mkdir(join(staticRoot, 'widget'), { recursive: true });
 await mkdir(join(staticRoot, 'assets'), { recursive: true });
+await mkdir(join(staticRoot, 'documents'), { recursive: true });
 
 await cp(resolve(projectRoot, 'apps', 'admin', 'dist'), join(staticRoot, 'admin'), { recursive: true });
 await cp(resolve(projectRoot, 'apps', 'widget', 'dist'), join(staticRoot, 'widget'), { recursive: true });
 await cp(
   resolve(projectRoot, 'apps', 'widget', 'public', 'assets', 'orinyan-states.png'),
   join(staticRoot, 'assets', 'orinyan-states.png'),
+);
+await cp(
+  resolve(projectRoot, 'output', 'pdf', 'orient-ai-chat-privacy-policy.pdf'),
+  join(staticRoot, 'documents', 'orient-ai-chat-privacy-policy.pdf'),
 );

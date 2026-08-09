@@ -58,7 +58,10 @@ template.innerHTML = `
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11.5 17-8-6.5 17-2.8-6.2L3 11.5Z"/><path d="m10.7 14.3 4-4"/></svg>
         </button>
       </form>
-      <p class="privacy">入力内容は品質管理のため記録されます。</p>
+      <p class="privacy">
+        <span class="privacy-copy">入力内容は品質管理のため記録されます。</span>
+        <a class="privacy-link" target="_blank" rel="noopener">プライバシーポリシー・免責事項</a>
+      </p>
       <div class="escalation">
         <p>解決しない場合は、こちらからもご連絡いただけます。</p>
         <div>
@@ -178,6 +181,8 @@ const styles = `
   .send svg { width: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .privacy { margin: 7px 18px 10px; color: var(--orient-muted); font-size: 10px; }
   .privacy::before { content: "▣"; margin-right: 5px; }
+  .privacy-link { color: var(--orient-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--orient-primary); text-underline-offset: 2px; }
+  .privacy-link:hover, .privacy-link:focus-visible { color: var(--orient-primary-strong); outline: none; }
   .escalation { padding: 10px 14px 14px; border-top: 1px solid var(--orient-border); }
   .escalation p { margin: 0 0 8px; text-align: center; color: var(--orient-muted); font-size: 10px; }
   .escalation > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -259,8 +264,8 @@ class OrientChat extends HTMLElement {
 
   connectedCallback() {
     this.applyConfiguration();
-    const privacy = this.root.querySelector<HTMLElement>('.privacy');
-    if (privacy && this.demoMode) privacy.textContent = 'プレビューで入力した内容は保存されません。';
+    const privacyCopy = this.root.querySelector<HTMLElement>('.privacy-copy');
+    if (privacyCopy && this.demoMode) privacyCopy.textContent = 'プレビューで入力した内容は保存されません。';
     this.bindEvents();
     this.messages = [{
       id: crypto.randomUUID(),
@@ -288,8 +293,13 @@ class OrientChat extends HTMLElement {
     for (const [key, value] of Object.entries(appearance)) if (value) this.style.setProperty(key, value);
     const line = this.root.querySelector<HTMLAnchorElement>('.line-link');
     const contact = this.root.querySelector<HTMLAnchorElement>('.contact-link');
+    const privacy = this.root.querySelector<HTMLAnchorElement>('.privacy-link');
     if (line) line.href = this.getAttribute('line-url') || 'https://line.me/';
     if (contact) contact.href = this.getAttribute('contact-url') || 'https://orijyu.com/contact/';
+    if (privacy) {
+      privacy.href = this.getAttribute('privacy-policy-url')
+        || `${this.apiUrl}/documents/orient-ai-chat-privacy-policy.pdf`;
+    }
   }
 
   private bindEvents() {

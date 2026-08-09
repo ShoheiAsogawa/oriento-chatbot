@@ -5,7 +5,7 @@ import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from '.
 import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-controls';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
-import { evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
+import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
 import {
   createSessionToken,
   decryptPII,
@@ -297,7 +297,7 @@ app.post('/api/chat/message', async (context) => {
     }
     throw error;
   }
-  const answer = completion.answer;
+  const answer = ensureOrinyanEnding(completion.answer);
   const sources = chunks.slice(0, 5).map(sourceFromChunk);
   const messageId = await recordTurn(
     context.env,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluatePolicy } from '../src/policy';
+import { ensureOrinyanEnding, evaluatePolicy } from '../src/policy';
 
 describe('evaluatePolicy', () => {
   it('allows ordinary property questions', () => {
@@ -7,7 +7,9 @@ describe('evaluatePolicy', () => {
   });
 
   it('blocks price negotiation', () => {
-    expect(evaluatePolicy('この物件を値引きしてもらえますか').code).toBe('price_negotiation');
+    const decision = evaluatePolicy('この物件を値引きしてもらえますか');
+    expect(decision.code).toBe('price_negotiation');
+    expect(decision.response).toMatch(/にゃん。$/u);
   });
 
   it('blocks important matters explanations', () => {
@@ -19,6 +21,18 @@ describe('evaluatePolicy', () => {
   });
 
   it('blocks clearly out-of-scope requests', () => {
-    expect(evaluatePolicy('今日の天気と株価を教えてください').code).toBe('out_of_scope');
+    const decision = evaluatePolicy('今日の天気と株価を教えてください');
+    expect(decision.code).toBe('out_of_scope');
+    expect(decision.response).toMatch(/にゃん。$/u);
+  });
+});
+
+describe('ensureOrinyanEnding', () => {
+  it('adds the character ending while preserving trailing citations', () => {
+    expect(ensureOrinyanEnding('営業時間は午前9時からです。[1]')).toBe('営業時間は午前9時からですにゃん。[1]');
+  });
+
+  it('does not duplicate an existing character ending', () => {
+    expect(ensureOrinyanEnding('気軽に相談してにゃん。[1]')).toBe('気軽に相談してにゃん。[1]');
   });
 });
