@@ -103,7 +103,7 @@ app.notFound(async (context) => {
   if (context.req.method !== 'GET' && context.req.method !== 'HEAD') return context.json({ error: 'Not found' }, 404);
   const url = new URL(context.req.url);
   if (url.pathname === '/admin') url.pathname = '/admin/index.html';
-  if (url.pathname.startsWith('/admin/') || url.pathname.startsWith('/widget/') || url.pathname.startsWith('/assets/') || url.pathname.startsWith('/documents/')) {
+  if (url.pathname.startsWith('/admin/') || url.pathname.startsWith('/widget/') || url.pathname.startsWith('/assets/') || url.pathname.startsWith('/documents/') || url.pathname.startsWith('/knowledge/')) {
     const response = await context.env.STATIC_ASSETS.fetch(new Request(url, context.req.raw));
     if (response.status !== 404 || !url.pathname.startsWith('/admin/')) return response;
     url.pathname = '/admin/index.html';
