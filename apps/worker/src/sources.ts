@@ -44,7 +44,16 @@ function embeddedPageReference(text: string) {
 
   const urlMatch = text.match(/(?:公式ページ|物件詳細ページ|URL):\s*(https:\/\/[^\s]+)/u);
   const url = safeSourceUrl(urlMatch?.[1]);
-  return url ? { title: '', url } : undefined;
+  if (!url) return undefined;
+  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+  const markerIndex = lines.findIndex((line) => line.includes(urlMatch?.[1] || ''));
+  const nearby = markerIndex >= 0 ? lines.slice(markerIndex + 1, markerIndex + 14) : lines.slice(0, 12);
+  const title = nearby.find((line) =>
+    line.length <= 140
+    && !/^(?:更新日|Copyright|お問い合わせ|ページトップ|大阪・堺の新築)/u.test(line)
+    && /(?:\d.*(?:号棟|号地|丁目)|(?:新築|中古|賃貸).*(?:戸建|マンション|土地)|物件)/u.test(line),
+  ) || '';
+  return { title, url };
 }
 
 export function sourceFromChunk(chunk: SearchChunk, index: number): AnswerSource {
