@@ -48,21 +48,23 @@ const html = `<!doctype html>
     <section class="cards" aria-label="プレビューの説明">
       <div class="card"><strong>会話アニメーション</strong><span>待機・聞き取り・考え中・回答中の状態に合わせてキャラクターが動きます。</span></div>
       <div class="card"><strong>スマホ対応</strong><span>ホームページ右下に常駐し、画面幅に合わせてチャットモーダルを調整します。</span></div>
-      <div class="card"><strong>データ分離</strong><span>このURLは見た目確認専用です。入力内容は本番の顧客DBや監査ログへ保存されません。</span></div>
+      <div class="card"><strong>本番回答の確認</strong><span>このURLも本番AI・ナレッジ・顧客DB・監査ログへ接続します。実データとして扱ってください。</span></div>
     </section>
   </main>
-  <footer>Orient Chat UI preview — no production data is used.</footer>
+  <footer>Orient Chat production-connected preview — conversations are audited.</footer>
 
   <orient-chat
     open
-    demo-mode="true"
+    api-url="${productionAssetOrigin}"
     primary-color="#ff680b"
     ink-color="#29293a"
     character-src="${productionAssetOrigin}/assets/orinyan-states.png"
+    turnstile-site-key="0x4AAAAAAELFZjpF4XsO2kRC"
     line-url="https://line.me/"
     contact-url="https://orijyu.com/contact/"
   ></orient-chat>
-  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260809-1"></script>
+  <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
+  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260809-2"></script>
 </body>
 </html>`;
 
@@ -70,7 +72,7 @@ export default {
   fetch(request: Request) {
     const url = new URL(request.url);
     if (url.pathname === '/health') {
-      return Response.json({ ok: true, environment: 'preview', productionDataConnected: false });
+      return Response.json({ ok: true, environment: 'preview', productionDataConnected: true });
     }
     if (url.pathname !== '/') return new Response('Not found', { status: 404 });
     return new Response(html, {
@@ -80,7 +82,7 @@ export default {
         'X-Robots-Tag': 'noindex, nofollow',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Content-Security-Policy': `default-src 'self'; script-src 'self' ${productionAssetOrigin}; img-src 'self' ${productionAssetOrigin} data:; style-src 'unsafe-inline'; connect-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`,
+        'Content-Security-Policy': `default-src 'self'; script-src 'self' ${productionAssetOrigin} https://challenges.cloudflare.com; img-src 'self' ${productionAssetOrigin} data:; style-src 'unsafe-inline'; connect-src ${productionAssetOrigin} https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`,
       },
     });
   },
