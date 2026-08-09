@@ -35,4 +35,8 @@ describe('ensureOrinyanEnding', () => {
   it('does not duplicate an existing character ending', () => {
     expect(ensureOrinyanEnding('気軽に相談してにゃん。[1]')).toBe('気軽に相談してにゃん。[1]');
   });
+
+  it('preserves full-width citations without displaying a malformed ending', () => {
+    expect(ensureOrinyanEnding('営業時間は午前9時からです。【1】')).toBe('営業時間は午前9時からですにゃん。【1】');
+  });
 });

@@ -80,7 +80,7 @@ function questionTitleScore(question: string, title: string) {
 }
 
 export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit = 2, question = '') {
-  const cited = Array.from(answer.matchAll(/\[(\d+)\]/gu), (match) => Number(match[1]) - 1)
+  const cited = Array.from(answer.matchAll(/(?:\[(\d+)\]|【(\d+)】)/gu), (match) => Number(match[1] || match[2]) - 1)
     .filter((index, position, all) => index >= 0 && index < chunks.length && all.indexOf(index) === position);
   const candidates = [...cited, ...chunks.map((_, index) => index)]
     .filter((index, position, all) => all.indexOf(index) === position);

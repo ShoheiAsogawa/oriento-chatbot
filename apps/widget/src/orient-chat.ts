@@ -13,6 +13,7 @@ interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
+  rawContent?: string;
   sources?: Source[];
   pending?: boolean;
 }
@@ -162,11 +163,8 @@ const styles = `
   .user .bubble { color: #3c2a20; background: #fff0e8; border-radius: 14px 5px 14px 14px; }
   .message-content { min-width: 0; max-width: 100%; }
   .user .message-content { justify-self: end; }
-  .source-links { display: grid; gap: 7px; margin-top: 8px; }
-  .source-link { display: grid; gap: 2px; padding: 9px 11px; color: var(--orient-ink); border: 1px solid #ffd1b6; border-radius: 10px; background: #fffaf7; text-decoration: none; }
-  .source-link:hover, .source-link:focus-visible { border-color: var(--orient-primary); background: #fff5ef; outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
-  .source-title { overflow: hidden; font-size: 11px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
-  .source-action { color: var(--orient-primary-strong); font-size: 10px; font-weight: 800; }
+  .inline-source { display: inline-flex; align-items: center; margin: 3px 0 3px 5px; padding: 3px 8px; color: var(--orient-primary-strong); border: 1px solid #ffb98d; border-radius: 999px; background: #fffaf7; font-size: 10px; font-weight: 800; line-height: 1.5; text-decoration: none; vertical-align: middle; white-space: nowrap; }
+  .inline-source:hover, .inline-source:focus-visible { border-color: var(--orient-primary); background: #fff1e8; outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
   .typing { display: flex; gap: 5px; align-items: center; height: 24px; }
   .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--orient-muted); animation: typing 1s infinite ease-in-out; }
   .typing i:nth-child(2) { animation-delay: .12s; }
@@ -273,7 +271,7 @@ class OrientChat extends HTMLElement {
     this.messages = [{
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: '住まい探しのご質問をどうぞ。\nサイトの情報をもとにご案内します。',
+      content: 'こんにちは！オリにゃんだよ〜♪\nおうち探しのお手伝いが大好きにゃん。気になる物件や住まいのこと、なんでも聞いてにゃん！',
     }];
     this.renderMessages();
     if (this.hasAttribute('open')) this.open();
@@ -546,13 +544,14 @@ class OrientChat extends HTMLElement {
   private async typeAnswer(id: string, answer: string) {
     const message = this.messages.find((item) => item.id === id);
     if (!message) return;
-    answer = answer.replace(/\s*\[\d+\]/gu, '').trim();
+    const displayAnswer = answer.replace(/\s*(?:\[\d+\]|【\d+】)/gu, '').trim();
+    message.rawContent = answer;
     const item = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
       .find((candidate) => candidate.dataset.messageId === id);
     const bubble = item?.querySelector<HTMLElement>('.bubble');
     const container = this.root.querySelector<HTMLElement>('.messages');
     if (!bubble) {
-      message.content = answer;
+      message.content = displayAnswer;
       this.renderMessages();
       return;
     }
@@ -565,14 +564,44 @@ class OrientChat extends HTMLElement {
 
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
-      updateBubble(answer);
+      updateBubble(displayAnswer);
+      this.renderAnswerWithSources(bubble, answer, message.sources || []);
       return;
     }
-    for (let index = 0; index < answer.length; index += 2) {
-      updateBubble(answer.slice(0, index + 2));
+    for (let index = 0; index < displayAnswer.length; index += 2) {
+      updateBubble(displayAnswer.slice(0, index + 2));
       await new Promise((resolve) => window.setTimeout(resolve, 18));
     }
-    updateBubble(answer);
+    updateBubble(displayAnswer);
+    this.renderAnswerWithSources(bubble, answer, message.sources || []);
+  }
+
+  private renderAnswerWithSources(bubble: HTMLElement, answer: string, sources: Source[]) {
+    const sourceByIndex = new Map(sources.map((source) => [source.index, source]));
+    const usedUrls = new Set<string>();
+    const fragment = document.createDocumentFragment();
+    const citationPattern = /\s*(?:\[(\d+)\]|【(\d+)】)/gu;
+    let cursor = 0;
+    for (const match of answer.matchAll(citationPattern)) {
+      const index = match.index ?? cursor;
+      fragment.append(document.createTextNode(answer.slice(cursor, index)));
+      const citationIndex = Number(match[1] || match[2]);
+      const source = sourceByIndex.get(citationIndex);
+      if (source?.url && !usedUrls.has(source.url)) {
+        usedUrls.add(source.url);
+        const link = document.createElement('a');
+        link.className = 'inline-source';
+        link.href = source.url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.title = source.title;
+        link.textContent = '物件詳細を見る ↗';
+        fragment.append(link);
+      }
+      cursor = index + match[0].length;
+    }
+    fragment.append(document.createTextNode(answer.slice(cursor)));
+    bubble.replaceChildren(fragment);
   }
 
   private setDisabled(disabled: boolean) {
@@ -605,34 +634,14 @@ class OrientChat extends HTMLElement {
       typing.setAttribute('aria-label', '回答を考えています');
       typing.innerHTML = '<i></i><i></i><i></i>';
       bubble.append(typing);
+    } else if (message.role === 'assistant' && message.rawContent && message.sources?.length) {
+      this.renderAnswerWithSources(bubble, message.rawContent, message.sources);
     } else {
       bubble.append(document.createTextNode(message.content));
     }
     const messageContent = document.createElement('div');
     messageContent.className = 'message-content';
     messageContent.append(bubble);
-    if (message.role === 'assistant' && message.sources?.length) {
-      const links = document.createElement('nav');
-      links.className = 'source-links';
-      links.setAttribute('aria-label', '関連する公式ページ');
-      for (const source of message.sources.slice(0, 2)) {
-        if (!source.url) continue;
-        const link = document.createElement('a');
-        link.className = 'source-link';
-        link.href = source.url;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        const title = document.createElement('span');
-        title.className = 'source-title';
-        title.textContent = source.title;
-        const action = document.createElement('span');
-        action.className = 'source-action';
-        action.textContent = '物件詳細を見る ↗';
-        link.append(title, action);
-        links.append(link);
-      }
-      if (links.childElementCount) messageContent.append(links);
-    }
     item.append(messageContent);
     return item;
   }

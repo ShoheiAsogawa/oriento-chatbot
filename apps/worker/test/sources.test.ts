@@ -45,6 +45,13 @@ describe('answer sources', () => {
     ]);
   });
 
+  it('accepts full-width citation markers for source selection', () => {
+    const chunks = [chunk('## 物件A\n公式ページ: https://orijyu.com/buy/a/\n\nA')];
+    expect(selectAnswerSources('物件Aです。【1】', chunks)).toEqual([
+      expect.objectContaining({ title: '物件A', url: 'https://orijyu.com/buy/a/' }),
+    ]);
+  });
+
   it('rejects non-official links', () => {
     expect(safeSourceUrl('https://example.com/property/1')).toBeUndefined();
   });
