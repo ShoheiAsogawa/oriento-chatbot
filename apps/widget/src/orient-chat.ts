@@ -532,15 +532,33 @@ class OrientChat extends HTMLElement {
   private async typeAnswer(id: string, answer: string) {
     const message = this.messages.find((item) => item.id === id);
     if (!message) return;
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { message.content = answer; this.renderMessages(); return; }
-    for (let index = 0; index < answer.length; index += 2) {
-      message.content = answer.slice(0, index + 2);
+    const item = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
+      .find((candidate) => candidate.dataset.messageId === id);
+    const bubble = item?.querySelector<HTMLElement>('.bubble');
+    const container = this.root.querySelector<HTMLElement>('.messages');
+    if (!bubble) {
+      message.content = answer;
       this.renderMessages();
+      return;
+    }
+
+    const updateBubble = (content: string, includeSources = false) => {
+      message.content = content;
+      bubble.replaceChildren(document.createTextNode(content));
+      if (includeSources && message.sources?.length) bubble.append(this.renderSources(message.sources));
+      if (container) container.scrollTop = container.scrollHeight;
+    };
+
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      updateBubble(answer, true);
+      return;
+    }
+    for (let index = 0; index < answer.length; index += 2) {
+      updateBubble(answer.slice(0, index + 2));
       await new Promise((resolve) => window.setTimeout(resolve, 18));
     }
-    message.content = answer;
-    this.renderMessages();
+    updateBubble(answer, true);
   }
 
   private setDisabled(disabled: boolean) {
@@ -557,6 +575,7 @@ class OrientChat extends HTMLElement {
   private renderMessage(message: ChatMessage) {
     const item = document.createElement('article');
     item.className = `message ${message.role}`;
+    item.dataset.messageId = message.id;
     if (message.role === 'assistant') {
       const cat = document.createElement('div');
       cat.className = 'cat';
