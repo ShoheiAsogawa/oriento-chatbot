@@ -22,3 +22,11 @@ pnpm build:preview
 ```
 
 ビルド履歴はCloudflare Dashboardの各Workerで **Deployments > View build history** から確認できます。
+
+## 更新手順
+
+1. 変更を `main` へcommitしてGitHubへpushします。
+2. Workers Buildsが本番と確認用のビルドを開始します。
+3. 両方のビルド成功後、各 `workers.dev` URLへ反映されます。
+
+本番以外のブランチではCloudflareビルドを実行しない設定にし、不要なビルド時間を抑えています。
