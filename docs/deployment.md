@@ -76,7 +76,7 @@ Budget Alertは通知のみで利用停止しないため、D1の原子的カウ
 - retrieval: hybrid
 - reranking: `@cf/baai/bge-reranker-base`
 - query rewrite: enabled
-- generation model: `gpt-5-mini-2025-08-07`
+- generation model: `gpt-5.4-nano`
 - AI Gateway: `orient-chat` を使用し、OpenAIキーはBYOKで保存
 - AI Gateway payload logging: 外部モデル採用時もdisabled
 - AI Gateway metadata logging: enabled

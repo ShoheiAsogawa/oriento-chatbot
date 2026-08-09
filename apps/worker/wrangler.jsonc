@@ -23,7 +23,7 @@
     "AI_SEARCH_INSTANCE": "orient-knowledge",
     "CLOUDFLARE_ACCOUNT_ID": "d2874089eebcda705bf220d39f117aec",
     "AI_GATEWAY_ID": "orient-chat",
-    "GENERATION_MODEL": "gpt-5-mini-2025-08-07",
+    "GENERATION_MODEL": "gpt-5.4-nano",
     "DAILY_SESSION_LIMIT": "500",
     "DAILY_AI_REQUEST_LIMIT": "500",
     "DEV_ADMIN_BYPASS": "false"

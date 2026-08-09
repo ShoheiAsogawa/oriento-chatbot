@@ -23,7 +23,7 @@ flowchart LR
 5. 監査イベントは月単位に分割した SQLite Durable Object で直列化する。SHA-256 ハッシュチェーンと永続Outboxを同一トランザクションへ記録し、Queue 経由で D1 と R2 に複製する。管理画面から月次チェーンを再計算して欠損・改変を検知できる。
 6. 管理画面は Cloudflare Access で保護し、API 側でも Access JWT を検証する。
 7. 管理画面、WordPress用Web Component、キャラクター画像はWorker Static Assetsへ同梱する。Accessは `/admin/*` と `/api/admin/*` のみに適用し、`/api/chat/*` はTurnstileとRate Limitingで保護する。
-8. 回答生成は `gpt-5-mini-2025-08-07` を Cloudflare AI Gateway `orient-chat` のBYOK経由で呼び出す。AI Searchの埋め込み、クエリ書換え、再ランキングはCloudflare上で完結させる。モデルは `GENERATION_MODEL` で切替可能。
+8. 回答生成は速度・コスト重視の `gpt-5.4-nano` を Cloudflare AI Gateway `orient-chat` のBYOK経由で呼び出す。AI Searchの埋め込み、クエリ書換え、再ランキングはCloudflare上で完結させる。モデルは `GENERATION_MODEL` で切替可能。
 
 ## LLM 学習への利用防止
 
