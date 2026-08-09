@@ -52,7 +52,8 @@ export async function generateGroundedAnswer(
     body: JSON.stringify({
       model: env.GENERATION_MODEL,
       store: false,
-      max_completion_tokens: 500,
+      reasoning_effort: 'minimal',
+      max_completion_tokens: 1_500,
       messages: [
         { role: 'system', content: systemPrompt },
         {
