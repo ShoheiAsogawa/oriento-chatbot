@@ -497,7 +497,7 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
       if (!assetResponse.ok) throw new Error(`初期ナレッジを読み込めません: ${filename}`);
       const body = await assetResponse.arrayBuffer();
       if (body.byteLength > 4 * 1024 * 1024) throw new Error(`初期ナレッジが4MBを超えています: ${filename}`);
-      const result = await items.uploadAndPoll(key, new File([body], key, { type: 'text/markdown' }), {
+      const result = await items.upload(key, new File([body], key, { type: 'text/markdown' }), {
         metadata: {
           category: entry.category || knowledgeCategoryFromFilename(filename),
           language: 'ja',
@@ -505,8 +505,6 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
           title: filename,
           manifest_sha256: entry.sha256,
         },
-        pollIntervalMs: 1_000,
-        timeoutMs: 45_000,
       });
       return { file: filename, key, id: result.id, status: result.status };
     }));
