@@ -439,6 +439,54 @@ app.post('/api/admin/knowledge/bootstrap', async (context) => {
   return context.json({ ok: true, instance: id, created: !found });
 });
 
+app.post('/api/admin/knowledge/seed', async (context) => {
+  const baseUrl = new URL(context.req.url);
+  const manifestUrl = new URL('/knowledge/manifest.json', baseUrl);
+  const manifestResponse = await context.env.STATIC_ASSETS.fetch(new Request(manifestUrl));
+  if (!manifestResponse.ok) return context.json({ error: '初期ナレッジのマニフェストを読み込めません' }, 500);
+  const manifest = await manifestResponse.json<{
+    files?: Array<{ file?: string; category?: string; bytes?: number; sha256?: string }>;
+  }>();
+  const files = (manifest.files || []).filter((entry) => entry.file && /^[a-z0-9_-]+\.md$/u.test(entry.file));
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const accepted: Array<{ file: string; id: string }> = [];
+  const skipped: string[] = [];
+
+  for (const entry of files) {
+    const filename = entry.file!;
+    const existing = await items.list({ page: 1, per_page: 50, search: filename });
+    if (existing.result.some((item) => item.key === filename)) {
+      skipped.push(filename);
+      continue;
+    }
+    const assetUrl = new URL(`/knowledge/${filename}`, baseUrl);
+    const assetResponse = await context.env.STATIC_ASSETS.fetch(new Request(assetUrl));
+    if (!assetResponse.ok) throw new Error(`初期ナレッジを読み込めません: ${filename}`);
+    const body = await assetResponse.arrayBuffer();
+    if (body.byteLength > 4 * 1024 * 1024) throw new Error(`初期ナレッジが4MBを超えています: ${filename}`);
+    const file = new File([body], filename, { type: 'text/markdown' });
+    const result = await items.upload(filename, file, {
+      metadata: {
+        category: entry.category || knowledgeCategoryFromFilename(filename),
+        language: 'ja',
+        source_url: 'https://orijyu.com/',
+        title: filename,
+      },
+    });
+    accepted.push({ file: filename, id: result.id });
+  }
+
+  await appendAudit(context.env, {
+    eventType: 'knowledge.initial_seeded',
+    actorType: 'admin',
+    actorId: context.get('admin').email,
+    subjectType: 'ai_search_instance',
+    subjectId: context.env.AI_SEARCH_INSTANCE,
+    metadata: { accepted: accepted.length, skipped: skipped.length },
+  });
+  return context.json({ ok: true, accepted, skipped }, 202);
+});
+
 app.get('/api/admin/overview', async (context) => {
   const [conversations, customers, unanswered, knowledge, dailyUsage] = await Promise.all([
     context.env.DB.prepare(`SELECT COUNT(*) AS count FROM conversations WHERE created_at >= datetime('now','-30 days')`).first<{ count: number }>(),

@@ -15,6 +15,7 @@ await mkdir(join(staticRoot, 'admin'), { recursive: true });
 await mkdir(join(staticRoot, 'widget'), { recursive: true });
 await mkdir(join(staticRoot, 'assets'), { recursive: true });
 await mkdir(join(staticRoot, 'documents'), { recursive: true });
+await mkdir(join(staticRoot, 'knowledge'), { recursive: true });
 
 await cp(resolve(projectRoot, 'apps', 'admin', 'dist'), join(staticRoot, 'admin'), { recursive: true });
 await cp(resolve(projectRoot, 'apps', 'widget', 'dist'), join(staticRoot, 'widget'), { recursive: true });
@@ -25,4 +26,9 @@ await cp(
 await cp(
   resolve(projectRoot, 'output', 'pdf', 'orient-ai-chat-privacy-policy.pdf'),
   join(staticRoot, 'documents', 'orient-ai-chat-privacy-policy.pdf'),
+);
+await cp(
+  resolve(projectRoot, 'knowledge', 'initial'),
+  join(staticRoot, 'knowledge'),
+  { recursive: true },
 );

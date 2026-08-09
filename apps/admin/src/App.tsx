@@ -157,6 +157,7 @@ function KnowledgePage() {
   const [search, setSearch] = useState('');
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [seeded, setSeeded] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const load = async () => { const data = await api.knowledge(); setItems(data.result); setTotal(Number(data.result_info.total_count || data.result.length)); setSelected((current) => current || data.result[0] || null); };
@@ -168,10 +169,11 @@ function KnowledgePage() {
   };
   const remove = async () => { if (!selected) return; setBusy(true); try { await api.deleteKnowledge(selected.id); setItems((current) => current.filter((item) => item.id !== selected.id)); setSelected(null); } finally { setBusy(false); } };
   const reindex = async () => { if (!selected) return; setBusy(true); try { await api.reindexKnowledge(selected.id); await load(); } finally { setBusy(false); } };
+  const seed = async () => { setBusy(true); try { await api.seedKnowledge(); setSeeded(true); await load(); } finally { setBusy(false); } };
 
   return <div className="split-page">
     <main className="split-main">
-      <PageHeader title="ナレッジ" description="チャットボットの回答に利用する資料を管理します。" action={<button className="primary-button" onClick={() => fileInput.current?.click()}><Plus />資料を追加</button>} />
+      <PageHeader title="ナレッジ" description="チャットボットの回答に利用する資料を管理します。" action={<><button className="secondary-button" onClick={() => void seed()} disabled={busy}><Database />{seeded ? '初期ナレッジ登録済み' : '初期ナレッジを登録'}</button><button className="primary-button" onClick={() => fileInput.current?.click()} disabled={busy}><Plus />資料を追加</button></>} />
       <input ref={fileInput} type="file" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.webp" onChange={(event) => void upload(event.target.files)} />
       <button className={`dropzone ${dragging ? 'dragging' : ''}`} onClick={() => fileInput.current?.click()} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); void upload(event.dataTransfer.files); }} disabled={busy}>
         <UploadCloud /><span><strong>{busy ? '処理しています…' : '資料をドラッグ＆ドロップするか、クリックして選択'}</strong><small>PDF、DOCX、XLSX、CSV、画像（最大4MB / 1ファイル）</small></span>

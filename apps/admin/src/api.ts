@@ -144,6 +144,7 @@ export const api = {
     costGuard: { day: '2026-08-09', sessions: 84, sessionLimit: 500, aiRequests: 312, aiRequestLimit: 2000 },
   }),
   bootstrapKnowledge: () => request('/api/admin/knowledge/bootstrap', { method: 'POST' }),
+  seedKnowledge: () => request<{ ok: boolean; accepted: Array<{ file: string; id: string }>; skipped: string[] }>('/api/admin/knowledge/seed', { method: 'POST' }, { ok: true, accepted: [], skipped: [] }),
   knowledge: () => request<{ result: KnowledgeItem[]; result_info: Record<string, number> }>('/api/admin/knowledge', undefined, { result: mockKnowledge, result_info: { total_count: 28, page: 1, per_page: 20 } }),
   uploadKnowledge: (file: File) => {
     const form = new FormData(); form.set('file', file); form.set('title', file.name); form.set('category', 'general');
