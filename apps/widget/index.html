@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>オリにゃん チャットデモ</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; color: #29293a; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; background: #fff; }
+      header { height: 88px; display: flex; align-items: center; justify-content: center; border-bottom: 3px solid #ff680b; }
+      header strong { color: #ff680b; font-size: 22px; }
+      main { width: min(1180px, calc(100% - 40px)); margin: 54px auto; }
+      .hero { height: 330px; padding: 56px; display: grid; align-content: center; background: #f6f6f6; border-left: 8px solid #ff680b; }
+      h1 { margin: 0 0 16px; font-size: clamp(28px, 4vw, 52px); }
+      p { color: #74757f; }
+    </style>
+  </head>
+  <body>
+    <header><strong>オリエントホールディングス</strong></header>
+    <main>
+      <section class="hero"><h1>理想の住まい探しを、もっと身近に。</h1><p>右下のオリにゃんをクリックしてチャットをお試しください。</p></section>
+    </main>
+    <orient-chat api-url="" demo-mode="true" open="true"></orient-chat>
+    <script type="module" src="/src/orient-chat.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "orient-ai-chatbot",
+  "private": true,
+  "packageManager": "pnpm@10.4.1",
+  "scripts": {
+    "build": "pnpm --filter @orient/widget --filter @orient/admin build && pnpm prepare:assets && pnpm --filter @orient/worker build",
+    "build:preview": "pnpm --filter @orient/worker exec wrangler deploy --dry-run --config ../preview/wrangler.jsonc --outdir ../preview/dist",
+    "prepare:assets": "node scripts/prepare-assets.mjs",
+    "check": "pnpm -r check",
+    "test": "pnpm --filter @orient/worker test",
+    "deploy:production": "pnpm --filter @orient/worker exec wrangler deploy",
+    "deploy:preview": "pnpm --filter @orient/worker exec wrangler deploy --config ../preview/wrangler.jsonc",
+    "dev:worker": "pnpm --filter @orient/worker dev",
+    "dev:admin": "pnpm --filter @orient/admin dev",
+    "dev:widget": "pnpm --filter @orient/widget dev"
+  }
+}

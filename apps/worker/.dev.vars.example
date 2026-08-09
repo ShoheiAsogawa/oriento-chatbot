@@ -1,0 +1,8 @@
+# Copy this file to .dev.vars and replace every value for local development.
+TURNSTILE_SECRET="local-turnstile-placeholder"
+SESSION_SIGNING_KEY="replace-with-at-least-32-random-bytes"
+HASH_SALT="replace-with-a-random-salt"
+PII_ENCRYPTION_KEY="replace-with-32-random-bytes-as-base64url"
+ACCESS_TEAM_DOMAIN="your-team.cloudflareaccess.com"
+ACCESS_AUD="replace-with-admin-and-admin-api-aud-tags-comma-separated"
+ADMIN_ALLOWED_EMAILS="admin@example.com"
