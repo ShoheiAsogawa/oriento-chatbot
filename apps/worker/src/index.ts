@@ -6,7 +6,7 @@ import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-c
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
 import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
-import { safeSourceUrl, selectAnswerSources, sourceFromChunk } from './sources';
+import { attachMissingSourceMarkers, safeSourceUrl, selectAnswerSources, sourceFromChunk } from './sources';
 import {
   createSessionToken,
   decryptPII,
@@ -291,8 +291,9 @@ app.post('/api/chat/message', async (context) => {
     }
     throw error;
   }
-  const answer = ensureOrinyanEnding(completion.answer);
-  const sources = selectAnswerSources(answer, chunks, 2, redacted);
+  const voicedAnswer = ensureOrinyanEnding(completion.answer);
+  const sources = selectAnswerSources(voicedAnswer, chunks, 2, redacted);
+  const answer = attachMissingSourceMarkers(voicedAnswer, sources);
   const messageId = await recordTurn(
     context.env,
     input.conversationId,

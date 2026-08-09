@@ -105,3 +105,44 @@ export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit
   }
   return selected;
 }
+
+export function attachMissingSourceMarkers(answer: string, sources: AnswerSource[]) {
+  const missing = sources.filter((source) => {
+    return !new RegExp(`(?:\\[${source.index}\\]|【${source.index}】)`, 'u').test(answer);
+  });
+  if (missing.length === 0) return answer;
+
+  const detailLines = Array.from(answer.matchAll(/^.*(?:間取り|間取|販売価格|価格|所在地).*$/gmu));
+  const fallbackPosition = detailLines.at(-1)?.index != null
+    ? detailLines.at(-1)!.index! + detailLines.at(-1)![0].length
+    : answer.length;
+  const markersByPosition = new Map<number, string[]>();
+
+  for (const [sourcePosition, source] of missing.entries()) {
+    const shortTitle = source.title.split(/\s+-\s+|\s+\|/u)[0]?.trim() || source.title;
+    const titlePosition = shortTitle.length >= 4 ? answer.indexOf(shortTitle) : -1;
+    const distributedDetail = detailLines.length > 0
+      ? detailLines[Math.min(
+        detailLines.length - 1,
+        Math.ceil(((sourcePosition + 1) * detailLines.length) / missing.length) - 1,
+      )]
+      : undefined;
+    let position = distributedDetail?.index != null
+      ? distributedDetail.index + distributedDetail[0].length
+      : fallbackPosition;
+    if (titlePosition >= 0) {
+      const following = answer.slice(titlePosition);
+      const followingDetail = Array.from(following.matchAll(/^.*(?:間取り|間取|販売価格|価格|所在地).*$/gmu)).at(-1);
+      if (followingDetail?.index != null) position = titlePosition + followingDetail.index + followingDetail[0].length;
+    }
+    const markers = markersByPosition.get(position) || [];
+    markers.push(`[${source.index}]`);
+    markersByPosition.set(position, markers);
+  }
+
+  let linkedAnswer = answer;
+  for (const [position, markers] of [...markersByPosition.entries()].sort((left, right) => right[0] - left[0])) {
+    linkedAnswer = `${linkedAnswer.slice(0, position)} ${markers.join('')}${linkedAnswer.slice(position)}`;
+  }
+  return linkedAnswer;
+}

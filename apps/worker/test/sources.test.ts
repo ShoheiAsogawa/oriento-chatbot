@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { safeSourceUrl, selectAnswerSources, sourceFromChunk } from '../src/sources';
+import { attachMissingSourceMarkers, safeSourceUrl, selectAnswerSources, sourceFromChunk } from '../src/sources';
 import type { SearchChunk } from '../src/types';
 
 function chunk(text: string, score = 0.9): SearchChunk {
@@ -50,6 +50,30 @@ describe('answer sources', () => {
     expect(selectAnswerSources('物件Aです。【1】', chunks)).toEqual([
       expect.objectContaining({ title: '物件A', url: 'https://orijyu.com/buy/a/' }),
     ]);
+  });
+
+  it('attaches a missing source marker after the property detail lines', () => {
+    const answer = '物件情報はこちらにゃん。\n- 販売価格：5,899万円にゃん\n- 間取り：4LDKにゃん\n\n見学予約もできるにゃん。';
+    const source = sourceFromChunk(chunk('## 大阪市東住吉区公園南矢田3丁目 1期 7号棟\n公式ページ: https://orijyu.com/buy/target/\n\n販売価格 5,899万円'), 0);
+    expect(attachMissingSourceMarkers(answer, [source])).toBe(
+      '物件情報はこちらにゃん。\n- 販売価格：5,899万円にゃん\n- 間取り：4LDKにゃん [1]\n\n見学予約もできるにゃん。',
+    );
+  });
+
+  it('does not duplicate an existing full-width marker', () => {
+    const source = sourceFromChunk(chunk('## 物件A\n公式ページ: https://orijyu.com/buy/a/\n\nA'), 0);
+    expect(attachMissingSourceMarkers('物件Aです。【1】', [source])).toBe('物件Aです。【1】');
+  });
+
+  it('distributes missing links across multiple property detail blocks', () => {
+    const answer = '物件Aにゃん。\n- 価格：3,000万円にゃん\n- 間取り：3LDKにゃん\n\n物件Bにゃん。\n- 価格：4,000万円にゃん\n- 間取り：4LDKにゃん';
+    const sources = [
+      sourceFromChunk(chunk('## 別名A\n公式ページ: https://orijyu.com/buy/a/\n\nA'), 0),
+      sourceFromChunk(chunk('## 別名B\n公式ページ: https://orijyu.com/buy/b/\n\nB'), 1),
+    ];
+    expect(attachMissingSourceMarkers(answer, sources)).toBe(
+      '物件Aにゃん。\n- 価格：3,000万円にゃん\n- 間取り：3LDKにゃん [1]\n\n物件Bにゃん。\n- 価格：4,000万円にゃん\n- 間取り：4LDKにゃん [2]',
+    );
   });
 
   it('rejects non-official links', () => {
