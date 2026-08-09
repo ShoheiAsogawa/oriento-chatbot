@@ -1,11 +1,11 @@
 # Orient Group Initial Knowledge: news_and_general
 
-生成日時(UTC): 2026-08-09T17:07:46.381507+00:00
+生成日時(UTC): 2026-08-09T20:03:32.391591+00:00
 収録ページ数: 9
 出典: 各節のURLに記載されたオリエントグループ公式公開ページ
 
 ## お客様からのお声
-URL: https://orijyu.com/comments.html
+公式ページ: https://orijyu.com/comments.html
 更新日: 2021-03-23T00:45:37+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -20,7 +20,7 @@ URL: https://orijyu.com/comments.html
 電話でお問い合わせ
 
 ## GWイベント
-URL: https://orijyu.com/gwevent.html
+公式ページ: https://orijyu.com/gwevent.html
 更新日: 2026-07-13T01:51:31+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -37,7 +37,7 @@ URL: https://orijyu.com/gwevent.html
 電話でお問い合わせ
 
 ## LP雛形
-URL: https://orijyu.com/lpbase.html
+公式ページ: https://orijyu.com/lpbase.html
 更新日: 2021-07-01T04:15:11+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -59,7 +59,7 @@ URL: https://orijyu.com/lpbase.html
 電話でお問い合わせ
 
 ## メディア情報
-URL: https://orijyu.com/media.html
+公式ページ: https://orijyu.com/media.html
 更新日: 2025-08-09T01:14:05+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -85,7 +85,7 @@ OrientCity PREMIUM りんくうCM
 電話でお問い合わせ
 
 ## 目安箱
-URL: https://orijyu.com/meyasubako.html
+公式ページ: https://orijyu.com/meyasubako.html
 更新日: 2019-06-27T02:51:10+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -97,7 +97,7 @@ URL: https://orijyu.com/meyasubako.html
 電話でお問い合わせ
 
 ## お問合せを承りました
-URL: https://orijyu.com/thanks.html
+公式ページ: https://orijyu.com/thanks.html
 更新日: 2019-10-22T07:25:39+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -107,7 +107,7 @@ URL: https://orijyu.com/thanks.html
 電話でお問い合わせ
 
 ## ご応募を承りました
-URL: https://orijyu.com/thanks2.html
+公式ページ: https://orijyu.com/thanks2.html
 更新日: 2019-10-22T07:34:28+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -117,14 +117,14 @@ URL: https://orijyu.com/thanks2.html
 電話でお問い合わせ
 
 ## トップページ
-URL: https://orijyu.com/top.html
+公式ページ: https://orijyu.com/top.html
 更新日: 2019-06-07T04:13:43+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## toptest
-URL: https://orijyu.com/toptest.html
+公式ページ: https://orijyu.com/toptest.html
 更新日: 2023-08-25T07:14:32+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -175,6 +175,11 @@ OrientCity 海塚・堀
 シルバーハイツ東寺町
 オーナーチェンジ物件・利回り7.7%。駅・スーパー徒歩圏内。
 丹波篠山市魚屋町
+
+## toptest（続き 2）
+公式ページ: https://orijyu.com/toptest.html
+更新日: 2023-08-25T07:14:32+09:00
+
 丹波篠山城下町。観光地・何商可。想定利回り13.46%。建物62坪・土地95坪。
 難波シティハイツ
 月額11万円で賃貸中のオーナーチェンジ物件。周辺に交通路線・商業施設充実。

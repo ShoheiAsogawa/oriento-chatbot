@@ -1,11 +1,11 @@
 # Orient Group Initial Knowledge: property_search_guides
 
-生成日時(UTC): 2026-08-09T17:07:46.237209+00:00
+生成日時(UTC): 2026-08-09T20:03:32.104471+00:00
 収録ページ数: 100
 出典: 各節のURLに記載されたオリエントグループ公式公開ページ
 
 ## 大阪・堺の新築一戸建て、中古一戸建て新築中古住宅はオリエントホールディングス・オリエント住宅販売
-URL: https://orijyu.com/
+公式ページ: https://orijyu.com/
 更新日: 2026-08-09T02:23:14+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -60,6 +60,11 @@ OrientCity 泉ケ丘
 OrientCity 紅葉ガ丘
 更地最大99坪・閑静な住宅地。駅・商業施設が徒歩圏内で、生活便利な庭付き自由設計新築一戸建。
 OrientCity 北信太
+
+## 大阪・堺の新築一戸建て、中古一戸建て新築中古住宅はオリエントホールディングス・オリエント住宅販売（続き 2）
+公式ページ: https://orijyu.com/
+更新日: 2026-08-09T02:23:14+09:00
+
 全13区画。駅・スーパー徒歩圏内で、生活便利な自由設計新築一戸建分譲地。
 OrientCity 神戸南 Part5
 モデルハウス完成!全4区画。駅近く、徒歩圏内に、商業施設・教育施設があり、生活便利な自由設計分譲地。
@@ -124,7 +129,7 @@ OrientCity 忠岡
 電話でお問い合わせ
 
 ## 田舎暮らしにおすすめの物件特集
-URL: https://orijyu.com/inaka.html
+公式ページ: https://orijyu.com/inaka.html
 更新日: 2026-08-07T01:49:36+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -176,7 +181,7 @@ OrientCity 薗
 電話でお問い合わせ
 
 ## 兵庫県の売土地
-URL: https://orijyu.com/land-h01.html
+公式ページ: https://orijyu.com/land-h01.html
 更新日: 2019-07-19T07:35:40+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -195,7 +200,7 @@ URL: https://orijyu.com/land-h01.html
 電話でお問い合わせ
 
 ## 大阪市の売土地
-URL: https://orijyu.com/land-o01.html
+公式ページ: https://orijyu.com/land-o01.html
 更新日: 2019-07-01T03:31:11+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -210,7 +215,7 @@ URL: https://orijyu.com/land-o01.html
 電話でお問い合わせ
 
 ## 大阪府の売土地
-URL: https://orijyu.com/land-p01.html
+公式ページ: https://orijyu.com/land-p01.html
 更新日: 2019-07-19T07:36:09+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -253,7 +258,7 @@ URL: https://orijyu.com/land-p01.html
 電話でお問い合わせ
 
 ## 堺市の売土地
-URL: https://orijyu.com/land-s01.html
+公式ページ: https://orijyu.com/land-s01.html
 更新日: 2019-07-02T06:27:15+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -314,6 +319,11 @@ URL: https://orijyu.com/land-s01.html
 堺市堺区新在家町西3丁
 更地・建築条件無土地。駅・スーパー・教育施設徒歩圏内で生活便利。
 堺市堺区旭ヶ丘北町4丁
+
+## 堺市の売土地（続き 2）
+公式ページ: https://orijyu.com/land-s01.html
+更新日: 2019-07-02T06:27:15+09:00
+
 角地・更地渡し・建築条件無し土地。閑静な住宅街・教育施設徒歩で子育て安心。
 堺市堺区槇塚台3丁
 建築条件無土地・47.10坪・更地。スーパー・公園・教育施設徒歩圏内で生活便利。
@@ -338,7 +348,7 @@ URL: https://orijyu.com/land-s01.html
 電話でお問い合わせ
 
 ## 他府県の物件
-URL: https://orijyu.com/list-e01.html
+公式ページ: https://orijyu.com/list-e01.html
 更新日: 2019-07-14T19:20:59+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -390,6 +400,11 @@ ZEH・長期優良住宅対応。土地最大52坪。各区画3台以上駐車�
 土地1685坪。大型トラックや資材置き場など多目的に利用可能。ガレージハウスなど多目的に利用できる鉄骨造2階建・建物617坪付。
 和歌山県海南市下津町下津
 建築条件無土地54坪・住宅用地にもOK。駅徒歩4分、小中学校徒歩10分。下津港すぐそこ。
+
+## 他府県の物件（続き 2）
+公式ページ: https://orijyu.com/list-e01.html
+更新日: 2019-07-14T19:20:59+09:00
+
 奈良県北葛城郡上牧町米山台2丁目
 建築条件無土地。閑静な住宅地。建築プランなど、ご相談下さい。
 福岡県糸島市志摩桜井
@@ -401,7 +416,7 @@ ZEH・長期優良住宅対応。土地最大52坪。各区画3台以上駐車�
 電話でお問い合わせ
 
 ## 神戸市東灘区の物件
-URL: https://orijyu.com/list-h01.html
+公式ページ: https://orijyu.com/list-h01.html
 更新日: 2019-07-12T07:22:10+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -418,7 +433,7 @@ URL: https://orijyu.com/list-h01.html
 電話でお問い合わせ
 
 ## 神戸市灘区の物件
-URL: https://orijyu.com/list-h02.html
+公式ページ: https://orijyu.com/list-h02.html
 更新日: 2019-07-12T07:21:27+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -431,7 +446,7 @@ URL: https://orijyu.com/list-h02.html
 電話でお問い合わせ
 
 ## 神戸市中央区の物件
-URL: https://orijyu.com/list-h03.html
+公式ページ: https://orijyu.com/list-h03.html
 更新日: 2019-07-20T08:34:43+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -440,7 +455,7 @@ URL: https://orijyu.com/list-h03.html
 電話でお問い合わせ
 
 ## 神戸市兵庫区の物件
-URL: https://orijyu.com/list-h04.html
+公式ページ: https://orijyu.com/list-h04.html
 更新日: 2019-07-12T07:24:37+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -467,7 +482,7 @@ LDK21帖・新築一戸建・オープンハウス開催中。スーパー徒歩
 電話でお問い合わせ
 
 ## 神戸市長田区の物件
-URL: https://orijyu.com/list-h05.html
+公式ページ: https://orijyu.com/list-h05.html
 更新日: 2019-07-12T07:25:22+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -496,7 +511,7 @@ URL: https://orijyu.com/list-h05.html
 電話でお問い合わせ
 
 ## 神戸市須磨区の物件
-URL: https://orijyu.com/list-h06.html
+公式ページ: https://orijyu.com/list-h06.html
 更新日: 2019-07-12T07:25:42+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -515,7 +530,7 @@ URL: https://orijyu.com/list-h06.html
 電話でお問い合わせ
 
 ## 神戸市垂水区の物件
-URL: https://orijyu.com/list-h07.html
+公式ページ: https://orijyu.com/list-h07.html
 更新日: 2019-07-12T07:26:07+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -526,7 +541,7 @@ OrientCity 滝の茶屋
 電話でお問い合わせ
 
 ## 神戸市北区の物件
-URL: https://orijyu.com/list-h08.html
+公式ページ: https://orijyu.com/list-h08.html
 更新日: 2019-07-12T07:26:33+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -551,14 +566,14 @@ URL: https://orijyu.com/list-h08.html
 電話でお問い合わせ
 
 ## 神戸市西区の物件
-URL: https://orijyu.com/list-h09.html
+公式ページ: https://orijyu.com/list-h09.html
 更新日: 2019-07-13T03:09:23+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 尼崎市の物件
-URL: https://orijyu.com/list-h10.html
+公式ページ: https://orijyu.com/list-h10.html
 更新日: 2019-07-13T03:18:41+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -585,7 +600,7 @@ URL: https://orijyu.com/list-h10.html
 電話でお問い合わせ
 
 ## 西宮市の物件
-URL: https://orijyu.com/list-h11.html
+公式ページ: https://orijyu.com/list-h11.html
 更新日: 2019-07-13T03:21:25+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -626,7 +641,7 @@ OrientCity 苦楽園四番町
 電話でお問い合わせ
 
 ## 芦屋市の物件
-URL: https://orijyu.com/list-h12.html
+公式ページ: https://orijyu.com/list-h12.html
 更新日: 2019-07-14T19:07:48+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -645,7 +660,7 @@ Panasonic Homes施工・軽量鉄骨造。土地60.82坪。太陽光発電・エ
 電話でお問い合わせ
 
 ## 宝塚市の物件
-URL: https://orijyu.com/list-h13.html
+公式ページ: https://orijyu.com/list-h13.html
 更新日: 2019-07-16T09:26:11+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -664,7 +679,7 @@ OrientCity 紅葉ガ丘
 電話でお問い合わせ
 
 ## その他兵庫県の物件
-URL: https://orijyu.com/list-h14.html
+公式ページ: https://orijyu.com/list-h14.html
 更新日: 2019-08-01T11:27:28+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -695,28 +710,28 @@ OrientCity 篠山城城下町
 電話でお問い合わせ
 
 ## 伊丹市の物件
-URL: https://orijyu.com/list-h16.html
+公式ページ: https://orijyu.com/list-h16.html
 更新日: 2019-09-30T05:37:33+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 川西市の物件
-URL: https://orijyu.com/list-h17.html
+公式ページ: https://orijyu.com/list-h17.html
 更新日: 2019-09-30T05:38:04+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 大阪市旭区の物件
-URL: https://orijyu.com/list-o01.html
+公式ページ: https://orijyu.com/list-o01.html
 更新日: 2019-06-27T02:40:23+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 大阪市阿倍野区の物件
-URL: https://orijyu.com/list-o02.html
+公式ページ: https://orijyu.com/list-o02.html
 更新日: 2019-06-27T05:43:11+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -729,7 +744,7 @@ URL: https://orijyu.com/list-o02.html
 電話でお問い合わせ
 
 ## 大阪市生野区の物件
-URL: https://orijyu.com/list-o03.html
+公式ページ: https://orijyu.com/list-o03.html
 更新日: 2019-06-28T05:14:39+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -746,14 +761,14 @@ URL: https://orijyu.com/list-o03.html
 電話でお問い合わせ
 
 ## 大阪市北区の物件
-URL: https://orijyu.com/list-o04.html
+公式ページ: https://orijyu.com/list-o04.html
 更新日: 2019-06-28T05:15:28+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 大阪市此花区の物件
-URL: https://orijyu.com/list-o05.html
+公式ページ: https://orijyu.com/list-o05.html
 更新日: 2019-06-28T05:33:11+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -776,7 +791,7 @@ OrientCity 伝法 Part2
 電話でお問い合わせ
 
 ## 大阪市城東区の物件
-URL: https://orijyu.com/list-o06.html
+公式ページ: https://orijyu.com/list-o06.html
 更新日: 2019-07-15T01:16:48+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -787,7 +802,7 @@ URL: https://orijyu.com/list-o06.html
 電話でお問い合わせ
 
 ## 大阪市住之江区の物件
-URL: https://orijyu.com/list-o07.html
+公式ページ: https://orijyu.com/list-o07.html
 更新日: 2019-06-30T06:10:36+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -812,7 +827,7 @@ OrientCity 住之江
 電話でお問い合わせ
 
 ## 大阪市住吉区の物件
-URL: https://orijyu.com/list-o08.html
+公式ページ: https://orijyu.com/list-o08.html
 更新日: 2019-06-30T06:11:20+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -827,7 +842,7 @@ URL: https://orijyu.com/list-o08.html
 電話でお問い合わせ
 
 ## 大阪市大正区の物件
-URL: https://orijyu.com/list-o09.html
+公式ページ: https://orijyu.com/list-o09.html
 更新日: 2019-06-30T06:12:40+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -856,7 +871,7 @@ OrientCity 平尾
 電話でお問い合わせ
 
 ## 大阪市中央区の物件
-URL: https://orijyu.com/list-o10.html
+公式ページ: https://orijyu.com/list-o10.html
 更新日: 2019-06-30T06:13:33+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -867,14 +882,14 @@ URL: https://orijyu.com/list-o10.html
 電話でお問い合わせ
 
 ## 大阪市鶴見区の物件
-URL: https://orijyu.com/list-o11.html
+公式ページ: https://orijyu.com/list-o11.html
 更新日: 2019-07-01T08:50:58+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 大阪市天王寺区の物件
-URL: https://orijyu.com/list-o12.html
+公式ページ: https://orijyu.com/list-o12.html
 更新日: 2019-06-30T07:16:57+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -887,7 +902,7 @@ URL: https://orijyu.com/list-o12.html
 電話でお問い合わせ
 
 ## 大阪市浪速区の物件
-URL: https://orijyu.com/list-o13.html
+公式ページ: https://orijyu.com/list-o13.html
 更新日: 2019-07-01T03:14:33+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -898,14 +913,14 @@ URL: https://orijyu.com/list-o13.html
 電話でお問い合わせ
 
 ## 大阪市西区の物件
-URL: https://orijyu.com/list-o14.html
+公式ページ: https://orijyu.com/list-o14.html
 更新日: 2019-07-01T03:15:40+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 大阪市西成区の物件
-URL: https://orijyu.com/list-o15.html
+公式ページ: https://orijyu.com/list-o15.html
 更新日: 2019-07-01T03:16:14+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -928,7 +943,7 @@ OrientCity 橘
 電話でお問い合わせ
 
 ## 大阪市西淀川区の物件
-URL: https://orijyu.com/list-o16.html
+公式ページ: https://orijyu.com/list-o16.html
 更新日: 2019-07-01T03:16:52+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -957,7 +972,7 @@ OrientCity 姫島
 電話でお問い合わせ
 
 ## 大阪市東住吉区の物件
-URL: https://orijyu.com/list-o17.html
+公式ページ: https://orijyu.com/list-o17.html
 更新日: 2019-07-01T03:17:37+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -992,7 +1007,7 @@ OrientCity 長居公園
 電話でお問い合わせ
 
 ## 大阪市東成区の物件
-URL: https://orijyu.com/list-o18.html
+公式ページ: https://orijyu.com/list-o18.html
 更新日: 2019-07-01T03:18:16+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1007,7 +1022,7 @@ URL: https://orijyu.com/list-o18.html
 電話でお問い合わせ
 
 ## 大阪市東淀川区の物件
-URL: https://orijyu.com/list-o19.html
+公式ページ: https://orijyu.com/list-o19.html
 更新日: 2019-07-01T03:18:50+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1038,7 +1053,7 @@ URL: https://orijyu.com/list-o19.html
 電話でお問い合わせ
 
 ## 大阪市平野区の物件
-URL: https://orijyu.com/list-o20.html
+公式ページ: https://orijyu.com/list-o20.html
 更新日: 2019-07-01T03:19:27+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1063,7 +1078,7 @@ OrientCity 平野
 電話でお問い合わせ
 
 ## 大阪市福島区の物件
-URL: https://orijyu.com/list-o21.html
+公式ページ: https://orijyu.com/list-o21.html
 更新日: 2019-07-01T03:21:43+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1072,7 +1087,7 @@ URL: https://orijyu.com/list-o21.html
 電話でお問い合わせ
 
 ## 大阪市港区の物件
-URL: https://orijyu.com/list-o22.html
+公式ページ: https://orijyu.com/list-o22.html
 更新日: 2019-07-01T03:22:21+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1087,7 +1102,7 @@ OrientCity 弁天
 電話でお問い合わせ
 
 ## 大阪市都島区の物件
-URL: https://orijyu.com/list-o23.html
+公式ページ: https://orijyu.com/list-o23.html
 更新日: 2019-07-01T03:22:52+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1096,7 +1111,7 @@ URL: https://orijyu.com/list-o23.html
 電話でお問い合わせ
 
 ## 大阪市淀川区の物件
-URL: https://orijyu.com/list-o24.html
+公式ページ: https://orijyu.com/list-o24.html
 更新日: 2019-07-01T07:52:18+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1105,7 +1120,7 @@ URL: https://orijyu.com/list-o24.html
 電話でお問い合わせ
 
 ## 高石市の物件
-URL: https://orijyu.com/list-p01.html
+公式ページ: https://orijyu.com/list-p01.html
 更新日: 2019-07-07T10:27:05+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1120,14 +1135,14 @@ OrientCity 取石 Part2
 電話でお問い合わせ
 
 ## 泉大津市の物件
-URL: https://orijyu.com/list-p02.html
+公式ページ: https://orijyu.com/list-p02.html
 更新日: 2019-07-07T10:27:49+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 泉北郡の物件
-URL: https://orijyu.com/list-p03.html
+公式ページ: https://orijyu.com/list-p03.html
 更新日: 2019-07-07T10:28:42+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1136,7 +1151,7 @@ URL: https://orijyu.com/list-p03.html
 電話でお問い合わせ
 
 ## 和泉市の物件
-URL: https://orijyu.com/list-p04.html
+公式ページ: https://orijyu.com/list-p04.html
 更新日: 2019-07-07T10:29:21+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1161,7 +1176,7 @@ OrientCity 鶴山台
 電話でお問い合わせ
 
 ## 岸和田市の物件
-URL: https://orijyu.com/list-p05.html
+公式ページ: https://orijyu.com/list-p05.html
 更新日: 2019-07-07T10:30:11+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1186,7 +1201,7 @@ OrientCity 忠岡
 電話でお問い合わせ
 
 ## 貝塚市の物件
-URL: https://orijyu.com/list-p06.html
+公式ページ: https://orijyu.com/list-p06.html
 更新日: 2019-07-07T10:30:45+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1236,7 +1251,7 @@ OrientCity 貝塚駅
 電話でお問い合わせ
 
 ## 泉佐野市の物件
-URL: https://orijyu.com/list-p07.html
+公式ページ: https://orijyu.com/list-p07.html
 更新日: 2019-07-07T10:31:28+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1263,14 +1278,14 @@ OrientCity 泉佐野
 電話でお問い合わせ
 
 ## 泉南市の物件
-URL: https://orijyu.com/list-p08.html
+公式ページ: https://orijyu.com/list-p08.html
 更新日: 2019-07-12T06:41:57+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 阪南市の物件
-URL: https://orijyu.com/list-p09.html
+公式ページ: https://orijyu.com/list-p09.html
 更新日: 2019-07-12T06:44:56+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1295,7 +1310,7 @@ OrientCity 箱作
 電話でお問い合わせ
 
 ## 泉南郡の物件
-URL: https://orijyu.com/list-p10.html
+公式ページ: https://orijyu.com/list-p10.html
 更新日: 2019-07-12T06:45:24+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1318,14 +1333,14 @@ OrientCity みさき公園
 電話でお問い合わせ
 
 ## 箕面市の物件
-URL: https://orijyu.com/list-p11.html
+公式ページ: https://orijyu.com/list-p11.html
 更新日: 2019-07-12T06:45:52+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 高槻市の物件
-URL: https://orijyu.com/list-p12.html
+公式ページ: https://orijyu.com/list-p12.html
 更新日: 2019-07-12T06:46:28+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1336,7 +1351,7 @@ URL: https://orijyu.com/list-p12.html
 電話でお問い合わせ
 
 ## 豊中市の物件
-URL: https://orijyu.com/list-p13.html
+公式ページ: https://orijyu.com/list-p13.html
 更新日: 2019-07-12T06:47:01+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1347,14 +1362,14 @@ URL: https://orijyu.com/list-p13.html
 電話でお問い合わせ
 
 ## 大東市の物件
-URL: https://orijyu.com/list-p14.html
+公式ページ: https://orijyu.com/list-p14.html
 更新日: 2019-07-12T06:47:27+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 東大阪市の物件
-URL: https://orijyu.com/list-p15.html
+公式ページ: https://orijyu.com/list-p15.html
 更新日: 2019-07-12T06:47:52+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1393,7 +1408,7 @@ OrientCity 菱江
 電話でお問い合わせ
 
 ## 八尾市の物件
-URL: https://orijyu.com/list-p16.html
+公式ページ: https://orijyu.com/list-p16.html
 更新日: 2019-07-12T06:48:17+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1424,7 +1439,7 @@ OrientCity 恩智北町
 電話でお問い合わせ
 
 ## 松原市の物件
-URL: https://orijyu.com/list-p17.html
+公式ページ: https://orijyu.com/list-p17.html
 更新日: 2019-07-12T06:48:42+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1445,7 +1460,7 @@ URL: https://orijyu.com/list-p17.html
 電話でお問い合わせ
 
 ## 藤井寺市の物件
-URL: https://orijyu.com/list-p18.html
+公式ページ: https://orijyu.com/list-p18.html
 更新日: 2019-07-12T06:49:07+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1480,7 +1495,7 @@ OrientCity 藤井寺
 電話でお問い合わせ
 
 ## 羽曳野市の物件
-URL: https://orijyu.com/list-p19.html
+公式ページ: https://orijyu.com/list-p19.html
 更新日: 2019-07-12T06:51:22+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1497,7 +1512,7 @@ URL: https://orijyu.com/list-p19.html
 電話でお問い合わせ
 
 ## 富田林市の物件
-URL: https://orijyu.com/list-p20.html
+公式ページ: https://orijyu.com/list-p20.html
 更新日: 2019-07-12T06:53:21+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1512,14 +1527,14 @@ URL: https://orijyu.com/list-p20.html
 電話でお問い合わせ
 
 ## その他大阪府の物件
-URL: https://orijyu.com/list-p21.html
+公式ページ: https://orijyu.com/list-p21.html
 更新日: 2019-08-01T11:26:33+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 守口市の物件
-URL: https://orijyu.com/list-p22.html
+公式ページ: https://orijyu.com/list-p22.html
 更新日: 2019-09-06T07:36:03+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1532,7 +1547,7 @@ URL: https://orijyu.com/list-p22.html
 電話でお問い合わせ
 
 ## 大阪狭山市の物件
-URL: https://orijyu.com/list-p23.html
+公式ページ: https://orijyu.com/list-p23.html
 更新日: 2019-09-06T07:35:44+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1543,7 +1558,7 @@ URL: https://orijyu.com/list-p23.html
 電話でお問い合わせ
 
 ## 池田市の物件
-URL: https://orijyu.com/list-p24.html
+公式ページ: https://orijyu.com/list-p24.html
 更新日: 2019-09-27T18:48:50+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1558,21 +1573,21 @@ URL: https://orijyu.com/list-p24.html
 電話でお問い合わせ
 
 ## 河内長野市の物件
-URL: https://orijyu.com/list-p25.html
+公式ページ: https://orijyu.com/list-p25.html
 更新日: 2019-09-30T04:34:04+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 南河内郡の物件
-URL: https://orijyu.com/list-p26.html
+公式ページ: https://orijyu.com/list-p26.html
 更新日: 2019-09-30T04:34:22+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 池田市の物件
-URL: https://orijyu.com/list-p27.html
+公式ページ: https://orijyu.com/list-p27.html
 更新日: 2019-09-30T04:38:09+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1587,14 +1602,14 @@ URL: https://orijyu.com/list-p27.html
 電話でお問い合わせ
 
 ## 豊能郡の物件
-URL: https://orijyu.com/list-p28.html
+公式ページ: https://orijyu.com/list-p28.html
 更新日: 2019-09-30T04:43:31+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 茨木市の物件
-URL: https://orijyu.com/list-p29.html
+公式ページ: https://orijyu.com/list-p29.html
 更新日: 2019-09-30T04:43:59+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1603,28 +1618,28 @@ URL: https://orijyu.com/list-p29.html
 電話でお問い合わせ
 
 ## 吹田市の物件
-URL: https://orijyu.com/list-p30.html
+公式ページ: https://orijyu.com/list-p30.html
 更新日: 2019-09-30T04:51:13+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 摂津市の物件
-URL: https://orijyu.com/list-p31.html
+公式ページ: https://orijyu.com/list-p31.html
 更新日: 2019-09-30T04:51:41+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 三島郡の物件
-URL: https://orijyu.com/list-p32.html
+公式ページ: https://orijyu.com/list-p32.html
 更新日: 2019-09-30T04:52:06+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 枚方市の物件
-URL: https://orijyu.com/list-p33.html
+公式ページ: https://orijyu.com/list-p33.html
 更新日: 2019-09-30T04:52:31+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1643,14 +1658,14 @@ OrientCity 樟葉
 電話でお問い合わせ
 
 ## 交野市の物件
-URL: https://orijyu.com/list-p34.html
+公式ページ: https://orijyu.com/list-p34.html
 更新日: 2019-09-30T04:52:58+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 寝屋川市の物件
-URL: https://orijyu.com/list-p35.html
+公式ページ: https://orijyu.com/list-p35.html
 更新日: 2019-09-30T04:57:49+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1663,7 +1678,7 @@ URL: https://orijyu.com/list-p35.html
 電話でお問い合わせ
 
 ## 門真市の物件
-URL: https://orijyu.com/list-p36.html
+公式ページ: https://orijyu.com/list-p36.html
 更新日: 2019-09-30T05:27:16+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1674,14 +1689,14 @@ URL: https://orijyu.com/list-p36.html
 電話でお問い合わせ
 
 ## 四條畷市の物件
-URL: https://orijyu.com/list-p37.html
+公式ページ: https://orijyu.com/list-p37.html
 更新日: 2019-09-30T05:27:45+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
 電話でお問い合わせ
 
 ## 柏原市の物件
-URL: https://orijyu.com/list-p38.html
+公式ページ: https://orijyu.com/list-p38.html
 更新日: 2019-09-30T05:28:17+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1690,7 +1705,7 @@ OrientCity 河内国分
 電話でお問い合わせ
 
 ## 大阪市の賃貸物件
-URL: https://orijyu.com/list-r01.html
+公式ページ: https://orijyu.com/list-r01.html
 更新日: 2020-08-28T02:38:34+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1731,7 +1746,7 @@ URL: https://orijyu.com/list-r01.html
 電話でお問い合わせ
 
 ## 堺市の賃貸物件
-URL: https://orijyu.com/list-r02.html
+公式ページ: https://orijyu.com/list-r02.html
 更新日: 2020-08-28T02:39:03+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1743,7 +1758,7 @@ URL: https://orijyu.com/list-r02.html
 電話でお問い合わせ
 
 ## 大阪府の賃貸物件
-URL: https://orijyu.com/list-r03.html
+公式ページ: https://orijyu.com/list-r03.html
 更新日: 2020-08-28T02:39:12+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1759,7 +1774,7 @@ URL: https://orijyu.com/list-r03.html
 電話でお問い合わせ
 
 ## 兵庫県の賃貸物件
-URL: https://orijyu.com/list-r04.html
+公式ページ: https://orijyu.com/list-r04.html
 更新日: 2020-08-28T02:39:19+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1769,7 +1784,7 @@ URL: https://orijyu.com/list-r04.html
 電話でお問い合わせ
 
 ## 他府県の物件
-URL: https://orijyu.com/list-r05.html
+公式ページ: https://orijyu.com/list-r05.html
 更新日: 2019-07-14T20:29:51+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1779,7 +1794,7 @@ URL: https://orijyu.com/list-r05.html
 電話でお問い合わせ
 
 ## 堺市堺区の物件
-URL: https://orijyu.com/list-s01.html
+公式ページ: https://orijyu.com/list-s01.html
 更新日: 2019-07-02T06:23:54+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1832,11 +1847,16 @@ OrientCity 堺駅
 堺市堺区緑ヶ丘北町2丁
 更地・土地39坪・建築条件無土地。駅・スーパー・教育施設徒歩圏内で生活便利。
 堺市堺区菅原通
+
+## 堺市堺区の物件（続き 2）
+公式ページ: https://orijyu.com/list-s01.html
+更新日: 2019-07-02T06:23:54+09:00
+
 建築条件無土地。駅・スーパー徒歩3分、生活便利。お好きなハウスメーカーで建てられます。
 電話でお問い合わせ
 
 ## 堺市西区の物件
-URL: https://orijyu.com/list-s02.html
+公式ページ: https://orijyu.com/list-s02.html
 更新日: 2019-07-02T06:24:38+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1877,7 +1897,7 @@ OrientCity 船尾町西 Part2
 電話でお問い合わせ
 
 ## 堺市中区の物件
-URL: https://orijyu.com/list-s03.html
+公式ページ: https://orijyu.com/list-s03.html
 更新日: 2019-07-02T06:25:04+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1937,6 +1957,11 @@ OrientCity 深井北町II
 建築条件無し土地・約18.38坪。公園近く、閑静な住宅街。
 堺市中区深阪 A号地
 建築条件無・更地45坪。スーパー徒歩6分、買物便利。引渡即時。
+
+## 堺市中区の物件（続き 2）
+公式ページ: https://orijyu.com/list-s03.html
+更新日: 2019-07-02T06:25:04+09:00
+
 堺市中区深阪3丁
 更地・角地・建築条件無土地。スーパー・教育施設徒歩圏内で生活便利。
 堺市中区見野山
@@ -1944,7 +1969,7 @@ OrientCity 深井北町II
 電話でお問い合わせ
 
 ## 堺市北区の物件
-URL: https://orijyu.com/list-s04.html
+公式ページ: https://orijyu.com/list-s04.html
 更新日: 2019-07-02T06:25:34+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1953,7 +1978,7 @@ URL: https://orijyu.com/list-s04.html
 電話でお問い合わせ
 
 ## 堺市東区の物件
-URL: https://orijyu.com/list-s05.html
+公式ページ: https://orijyu.com/list-s05.html
 更新日: 2019-07-02T06:25:59+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1980,7 +2005,7 @@ OrientCity 北野田
 電話でお問い合わせ
 
 ## 堺市南区の物件
-URL: https://orijyu.com/list-s06.html
+公式ページ: https://orijyu.com/list-s06.html
 更新日: 2019-07-02T06:26:25+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -2035,6 +2060,11 @@ OrientCity 泉ケ丘
 堺市南区竹城台4丁 B号地
 建築条件無土地。更地渡し・角地・土地46坪。スーパー徒歩6分、買物便利。
 堺市南区若松台3丁 1号地
+
+## 堺市南区の物件（続き 2）
+公式ページ: https://orijyu.com/list-s06.html
+更新日: 2019-07-02T06:26:25+09:00
+
 建築条件無し土地・現況更地・48.47坪。公園近く、閑静な住宅街です。
 堺市南区若松台3丁 2号地
 建築条件無し土地・現況更地・48.47坪。公園近く、閑静な住宅街です。
@@ -2045,7 +2075,7 @@ OrientCity 泉ケ丘
 電話でお問い合わせ
 
 ## 堺市美原区の物件
-URL: https://orijyu.com/list-s07.html
+公式ページ: https://orijyu.com/list-s07.html
 更新日: 2019-07-02T06:26:51+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -2062,7 +2092,7 @@ URL: https://orijyu.com/list-s07.html
 電話でお問い合わせ
 
 ## 今、ここでオープンハウスやってます
-URL: https://orijyu.com/openhouse.html
+公式ページ: https://orijyu.com/openhouse.html
 更新日: 2025-08-11T07:22:59+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -2080,7 +2110,7 @@ URL: https://orijyu.com/openhouse.html
 電話でお問い合わせ
 
 ## 新着物件一覧
-URL: https://orijyu.com/recent.html
+公式ページ: https://orijyu.com/recent.html
 更新日: 2019-08-11T00:58:16+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -2113,7 +2143,7 @@ URL: https://orijyu.com/recent.html
 電話でお問い合わせ
 
 ## OrientCity 脇浜 LP
-URL: https://orijyu.com/wakihama.html
+公式ページ: https://orijyu.com/wakihama.html
 更新日: 2021-07-03T04:51:33+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売

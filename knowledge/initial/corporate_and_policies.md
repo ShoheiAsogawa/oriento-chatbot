@@ -1,11 +1,11 @@
 # Orient Group Initial Knowledge: corporate_and_policies
 
-生成日時(UTC): 2026-08-09T17:07:46.231786+00:00
+生成日時(UTC): 2026-08-09T20:03:32.093905+00:00
 収録ページ数: 2
 出典: 各節のURLに記載されたオリエントグループ公式公開ページ
 
 ## 会社概要
-URL: https://orijyu.com/company.html
+公式ページ: https://orijyu.com/company.html
 更新日: 2026-02-24T02:50:19+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -50,7 +50,7 @@ FAX
 電話でお問い合わせ
 
 ## 個人情報保護方針
-URL: https://orijyu.com/policy.html
+公式ページ: https://orijyu.com/policy.html
 更新日: 2025-04-01T03:49:37+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売

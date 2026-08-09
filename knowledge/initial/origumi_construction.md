@@ -1,11 +1,11 @@
 # Orient Group Initial Knowledge: origumi_construction
 
-生成日時(UTC): 2026-08-09T17:07:46.281201+00:00
+生成日時(UTC): 2026-08-09T20:03:32.220005+00:00
 収録ページ数: 24
 出典: 各節のURLに記載されたオリエントグループ公式公開ページ
 
 ## オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/
+公式ページ: https://origumi.jp/
 
 インスタ
 有料老人ホーム
@@ -63,7 +63,7 @@ URL: https://origumi.jp/
 このページのトップへ
 
 ## 木造住宅 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/built01.html
+公式ページ: https://origumi.jp/built01.html
 
 木造住宅
 木造住宅のメリット
@@ -110,7 +110,7 @@ URL: https://origumi.jp/built01.html
 このページのトップへ
 
 ## 鉄骨造住宅 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/built02.html
+公式ページ: https://origumi.jp/built02.html
 
 鉄骨造住宅
 鉄骨造住宅のメリット
@@ -157,7 +157,7 @@ URL: https://origumi.jp/built02.html
 このページのトップへ
 
 ## 狭小住宅 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/built03.html
+公式ページ: https://origumi.jp/built03.html
 
 狭小住宅
 狭小住宅のメリット
@@ -206,7 +206,7 @@ URL: https://origumi.jp/built03.html
 このページのトップへ
 
 ## 建物構造 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/built04.html
+公式ページ: https://origumi.jp/built04.html
 
 建物構造
 木造
@@ -277,7 +277,7 @@ URL: https://origumi.jp/built04.html
 このページのトップへ
 
 ## 住宅工法 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/built05.html
+公式ページ: https://origumi.jp/built05.html
 
 住宅工法
 木造軸組工法
@@ -334,6 +334,10 @@ URL: https://origumi.jp/built05.html
 ・コンクリート施工を現場で行うため、品質管理が難しくなり施工品質にバラツキのでる場合があります。
 ・コンクリートは熱を通しやすく蓄積量も多いことから、夏は暑く冬は寒くなりがちです。
 ←前のページへ | 次のページへ→
+
+## 住宅工法 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設（続き 2）
+公式ページ: https://origumi.jp/built05.html
+
 大型建築
 有料老人ホーム
 サービス付き高齢者向け住宅
@@ -365,7 +369,7 @@ URL: https://origumi.jp/built05.html
 このページのトップへ
 
 ## 施工例 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/built06.html
+公式ページ: https://origumi.jp/built06.html
 
 施工例
 施工例【画像クリックで更に表示】
@@ -428,7 +432,7 @@ URL: https://origumi.jp/built06.html
 このページのトップへ
 
 ## 家を建てるまでの流れ - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/built07.html
+公式ページ: https://origumi.jp/built07.html
 
 家を建てるまでの流れ
 1.予算を決める
@@ -458,6 +462,10 @@ URL: https://origumi.jp/built07.html
 しかし、実際に契約を交わしたわけではありませんので、この時点で依頼先が少し違うと感じれば、解約をすることも選択肢の一つとして考えることもできますので、慎重に見極めるようにしましょう。
 6.地盤調査
 その土地が家をさ焦るだけの強さを持っているかどうかを調べるための調査であり、ここで補強が必要となることが判明することもあります。
+
+## 家を建てるまでの流れ - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設（続き 2）
+公式ページ: https://origumi.jp/built07.html
+
 できるだけ費用を増やしたくないと思うのであれば、土地差が新段階から地盤がいいかどうかに着目をしておくと良いでしょう。
 7.プランの詳細を決めるための打ち合わせ
 主に間取りや住宅設備の話し合いになります。
@@ -492,6 +500,10 @@ URL: https://origumi.jp/built07.html
 この部分がしっかりと施工できているかが、これからの工事を左右する大切なポイントです。
 14.上棟
 上棟は家の骨格が出来上がっていく段階の事です。
+
+## 家を建てるまでの流れ - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設（続き 3）
+公式ページ: https://origumi.jp/built07.html
+
 上棟の際にも上棟式が行われる場合もありますが、その理由としては大工さんの労をねぎらうという意味でのものです。
 こちらも最近では行わないケースも増えて来ています。
 なお、骨組みがきちんと仕上がれば、家の耐震強度などに対する強さが8割程度は完成すると言われているので、ここがしっかりとできているかもかなり重要な部分となります。
@@ -537,7 +549,7 @@ URL: https://origumi.jp/built07.html
 このページのトップへ
 
 ## 有料老人ホーム - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/const01.html
+公式ページ: https://origumi.jp/const01.html
 
 有料老人ホーム
 ■土地面積 1386.66m2(約419坪)■建物面積 1216.60m2(約368坪)■木造
@@ -579,7 +591,7 @@ URL: https://origumi.jp/const01.html
 このページのトップへ
 
 ## サービス付き高齢者向け住宅 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/const02.html
+公式ページ: https://origumi.jp/const02.html
 
 サービス付き高齢者向け住宅
 鉄骨造 ■土地面積 609.66m2(約184坪)■建物面積 978.95m2(約296坪)
@@ -639,7 +651,7 @@ URL: https://origumi.jp/const02.html
 このページのトップへ
 
 ## 複合タイプ - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/const03.html
+公式ページ: https://origumi.jp/const03.html
 
 複合タイプ
 オーナー住宅付マンション・店舗
@@ -676,7 +688,7 @@ URL: https://origumi.jp/const03.html
 このページのトップへ
 
 ## 賃貸マンション - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/const04.html
+公式ページ: https://origumi.jp/const04.html
 
 賃貸マンション
 大阪市天王寺区松崎町に新築賃貸マンション完成
@@ -726,7 +738,7 @@ URL: https://origumi.jp/const04.html
 このページのトップへ
 
 ## 簡易宿泊・民泊施設 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/const05.html
+公式ページ: https://origumi.jp/const05.html
 
 簡易宿泊・民泊施設
 木造 ■土地面積 315.00m2(約95坪)■建物面積 473.67m2(約143坪)
@@ -764,7 +776,7 @@ URL: https://origumi.jp/const05.html
 このページのトップへ
 
 ## おすすめする理由 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/const06.html
+公式ページ: https://origumi.jp/const06.html
 
 おすすめする理由
 短期間の工事
@@ -812,7 +824,7 @@ URL: https://origumi.jp/const06.html
 このページのトップへ
 
 ## 工事完了までの流れ - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/const07.html
+公式ページ: https://origumi.jp/const07.html
 
 工事完了までの流れ
 1.お問い合わせ
@@ -863,7 +875,7 @@ URL: https://origumi.jp/const07.html
 このページのトップへ
 
 ## 会社概要 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/corp.html
+公式ページ: https://origumi.jp/corp.html
 
 会社概要
 会社名
@@ -915,7 +927,7 @@ FAX
 このページのトップへ
 
 ## オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/index.html
+公式ページ: https://origumi.jp/index.html
 
 インスタ
 有料老人ホーム
@@ -973,7 +985,7 @@ URL: https://origumi.jp/index.html
 このページのトップへ
 
 ## フルリフォーム - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/reform01.html
+公式ページ: https://origumi.jp/reform01.html
 
 フルリフォーム
 フルリフォーム A【画像クリックで拡大表示】
@@ -1097,7 +1109,7 @@ URL: https://origumi.jp/reform01.html
 このページのトップへ
 
 ## 屋外のリフォーム - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/reform02.html
+公式ページ: https://origumi.jp/reform02.html
 
 屋外のリフォーム
 外構のリフォーム【画像クリックで拡大表示】
@@ -1210,6 +1222,10 @@ URL: https://origumi.jp/reform02.html
 サービス付き高齢者向け住宅
 複合タイプ
 賃貸マンション
+
+## 屋外のリフォーム - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設（続き 2）
+公式ページ: https://origumi.jp/reform02.html
+
 簡易宿泊・民泊施設
 おすすめする理由
 工事完了までの流れ
@@ -1236,7 +1252,7 @@ URL: https://origumi.jp/reform02.html
 このページのトップへ
 
 ## 屋内のリフォーム - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/reform03.html
+公式ページ: https://origumi.jp/reform03.html
 
 屋内のリフォーム
 洋室のリフォーム【画像クリックで拡大表示】
@@ -1346,7 +1362,7 @@ URL: https://origumi.jp/reform03.html
 このページのトップへ
 
 ## 水回りのリフォーム - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/reform04.html
+公式ページ: https://origumi.jp/reform04.html
 
 水回りのリフォーム
 キッチンのリフォーム【画像クリックで拡大表示】
@@ -1464,7 +1480,7 @@ URL: https://origumi.jp/reform04.html
 このページのトップへ
 
 ## 介護保険で住宅改修 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/reform05.html
+公式ページ: https://origumi.jp/reform05.html
 
 介護保険で住宅改修
 工事完了までの流れ
@@ -1537,7 +1553,7 @@ URL: https://origumi.jp/reform05.html
 このページのトップへ
 
 ## リフォームの対象 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/reform06.html
+公式ページ: https://origumi.jp/reform06.html
 
 リフォームの対象
 外構・エクステリア工事
@@ -1650,6 +1666,10 @@ URL: https://origumi.jp/reform06.html
 障子の取替・張替・修理
 その他の工事
 ペンキ塗替工事
+
+## リフォームの対象 - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設（続き 2）
+公式ページ: https://origumi.jp/reform06.html
+
 すべり止め処理
 コーティング(クリーニング・ワックス仕上げ)
 コーキング処理(ひび・すきま埋め)
@@ -1687,7 +1707,7 @@ URL: https://origumi.jp/reform06.html
 このページのトップへ
 
 ## リフォームの流れ - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設
-URL: https://origumi.jp/reform07.html
+公式ページ: https://origumi.jp/reform07.html
 
 リフォームの流れ
 1.不満点と優先順位
@@ -1725,6 +1745,10 @@ URL: https://origumi.jp/reform07.html
 また追加工事や変更の希望が出た場合は、リフォーム会社担当者に連絡しましょう。
 職人さんに頼んでしまうと無駄に費用がかかったりトラブルにもつながる恐れがあります。
 8.完成・引渡
+
+## リフォームの流れ - オリエント組(オリグミ)建築・設計・リフォーム・マンション建設（続き 2）
+公式ページ: https://origumi.jp/reform07.html
+
 リフォーム工事が終わると完成検査で依頼通りに仕上がっているか確認しましょう。
 図面や仕様書を見ながらリフォーム会社担当者から説明を受け、気がついた事があれば担当者に指摘し、どのような段取りで修正されるか確認しましょう。
 引き渡しの際に、工事完了確認書が用意されている場合は、署名押印をして工事完了となります。

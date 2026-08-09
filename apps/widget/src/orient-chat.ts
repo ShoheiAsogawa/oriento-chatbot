@@ -160,6 +160,13 @@ const styles = `
   .message .cat { width: 38px; height: 38px; border: 1px solid var(--orient-border); border-radius: 50%; background-color: #fff; }
   .bubble { max-width: 100%; padding: 11px 13px; color: var(--orient-ink); background: var(--orient-soft); border-radius: 5px 14px 14px 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .user .bubble { color: #3c2a20; background: #fff0e8; border-radius: 14px 5px 14px 14px; }
+  .message-content { min-width: 0; max-width: 100%; }
+  .user .message-content { justify-self: end; }
+  .source-links { display: grid; gap: 7px; margin-top: 8px; }
+  .source-link { display: grid; gap: 2px; padding: 9px 11px; color: var(--orient-ink); border: 1px solid #ffd1b6; border-radius: 10px; background: #fffaf7; text-decoration: none; }
+  .source-link:hover, .source-link:focus-visible { border-color: var(--orient-primary); background: #fff5ef; outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
+  .source-title { overflow: hidden; font-size: 11px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+  .source-action { color: var(--orient-primary-strong); font-size: 10px; font-weight: 800; }
   .typing { display: flex; gap: 5px; align-items: center; height: 24px; }
   .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--orient-muted); animation: typing 1s infinite ease-in-out; }
   .typing i:nth-child(2) { animation-delay: .12s; }
@@ -496,6 +503,7 @@ class OrientChat extends HTMLElement {
       const result = this.demoMode ? await this.demoResponse(content) : await this.remoteResponse(content);
       const message = this.messages.find((item) => item.id === pendingId);
       if (message) { message.pending = false; message.content = ''; message.sources = result.sources; }
+      this.renderMessages();
       this.setCatState('speaking');
       await this.typeAnswer(pendingId, result.answer);
     } catch (error) {
@@ -600,7 +608,32 @@ class OrientChat extends HTMLElement {
     } else {
       bubble.append(document.createTextNode(message.content));
     }
-    item.append(bubble);
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    messageContent.append(bubble);
+    if (message.role === 'assistant' && message.sources?.length) {
+      const links = document.createElement('nav');
+      links.className = 'source-links';
+      links.setAttribute('aria-label', '関連する公式ページ');
+      for (const source of message.sources.slice(0, 2)) {
+        if (!source.url) continue;
+        const link = document.createElement('a');
+        link.className = 'source-link';
+        link.href = source.url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        const title = document.createElement('span');
+        title.className = 'source-title';
+        title.textContent = source.title;
+        const action = document.createElement('span');
+        action.className = 'source-action';
+        action.textContent = '物件詳細を見る ↗';
+        link.append(title, action);
+        links.append(link);
+      }
+      if (links.childElementCount) messageContent.append(links);
+    }
+    item.append(messageContent);
     return item;
   }
 

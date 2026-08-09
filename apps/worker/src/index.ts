@@ -6,6 +6,7 @@ import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-c
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
 import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
+import { safeSourceUrl, selectAnswerSources, sourceFromChunk } from './sources';
 import {
   createSessionToken,
   decryptPII,
@@ -42,6 +43,10 @@ const leadSchema = z.object({
   phone: z.string().trim().min(8).max(30).optional(),
   marketingConsent: z.literal(true),
 }).refine((data) => data.email || data.phone, { message: 'メールアドレスまたは電話番号が必要です' });
+
+const knowledgeReseedSchema = z.object({
+  prune: z.boolean().default(false),
+});
 
 function allowedOrigins(env: Env) {
   return new Set(env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean));
@@ -151,33 +156,11 @@ app.post('/api/chat/session', async (context) => {
   });
 });
 
-function safeSourceUrl(value: unknown) {
-  if (typeof value !== 'string' || !value) return undefined;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== 'https:' || !['orijyu.com', 'www.orijyu.com'].includes(url.hostname)) return undefined;
-    return url.toString();
-  } catch {
-    return undefined;
-  }
-}
-
 function knowledgeCategoryFromFilename(filename: string) {
   const category = filename
     .replace(/\.md$/iu, '')
     .replace(/-part-\d+$/iu, '');
   return /^[a-z0-9_]{1,64}$/u.test(category) ? category : 'general';
-}
-
-function sourceFromChunk(chunk: SearchChunk, index: number) {
-  const metadata = chunk.item.metadata || {};
-  return {
-    index: index + 1,
-    title: String(metadata.title || metadata.filename || chunk.item.key.split('/').pop() || `資料 ${index + 1}`),
-    url: safeSourceUrl(metadata.source_url),
-    key: chunk.item.key,
-    score: chunk.score,
-  };
 }
 
 async function recordTurn(
@@ -305,7 +288,7 @@ app.post('/api/chat/message', async (context) => {
     throw error;
   }
   const answer = ensureOrinyanEnding(completion.answer);
-  const sources = chunks.slice(0, 5).map(sourceFromChunk);
+  const sources = selectAnswerSources(answer, chunks, 2);
   const messageId = await recordTurn(
     context.env,
     input.conversationId,
@@ -485,6 +468,78 @@ app.post('/api/admin/knowledge/seed', async (context) => {
     metadata: { accepted: accepted.length, skipped: skipped.length },
   });
   return context.json({ ok: true, accepted, skipped }, 202);
+});
+
+app.post('/api/internal/knowledge/reseed', async (context) => {
+  const configuredSecret = context.env.KNOWLEDGE_SYNC_SECRET;
+  const providedSecret = context.req.header('X-Knowledge-Sync-Token');
+  if (!configuredSecret || !providedSecret || providedSecret !== configuredSecret) {
+    return context.json({ error: 'Not found' }, 404);
+  }
+  const input = knowledgeReseedSchema.parse(await context.req.json().catch(() => ({})));
+  const baseUrl = new URL(context.req.url);
+  const manifestResponse = await context.env.STATIC_ASSETS.fetch(new Request(new URL('/knowledge/manifest.json', baseUrl)));
+  if (!manifestResponse.ok) return context.json({ error: '初期ナレッジのマニフェストを読み込めません' }, 500);
+  const manifest = await manifestResponse.json<{
+    files?: Array<{ file?: string; category?: string; bytes?: number; sha256?: string }>;
+  }>();
+  const files = (manifest.files || []).filter((entry) => entry.file && entry.sha256 && /^[a-z0-9_-]+\.md$/u.test(entry.file));
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const desiredKeys = new Set(files.map((entry) => `${entry.sha256!.slice(0, 12)}-${entry.file!}`));
+  const accepted: Array<{ file: string; key: string; id: string; status: string }> = [];
+
+  for (let offset = 0; offset < files.length; offset += 3) {
+    const batch = files.slice(offset, offset + 3);
+    const results = await Promise.all(batch.map(async (entry) => {
+      const filename = entry.file!;
+      const key = `${entry.sha256!.slice(0, 12)}-${filename}`;
+      const assetResponse = await context.env.STATIC_ASSETS.fetch(new Request(new URL(`/knowledge/${filename}`, baseUrl)));
+      if (!assetResponse.ok) throw new Error(`初期ナレッジを読み込めません: ${filename}`);
+      const body = await assetResponse.arrayBuffer();
+      if (body.byteLength > 4 * 1024 * 1024) throw new Error(`初期ナレッジが4MBを超えています: ${filename}`);
+      const result = await items.uploadAndPoll(key, new File([body], key, { type: 'text/markdown' }), {
+        metadata: {
+          category: entry.category || knowledgeCategoryFromFilename(filename),
+          language: 'ja',
+          source_url: 'https://orijyu.com/',
+          title: filename,
+          manifest_sha256: entry.sha256,
+        },
+        pollIntervalMs: 1_000,
+        timeoutMs: 45_000,
+      });
+      return { file: filename, key, id: result.id, status: result.status };
+    }));
+    accepted.push(...results);
+  }
+
+  const incomplete = accepted.filter((item) => item.status !== 'completed');
+  const deleted: string[] = [];
+  if (input.prune && incomplete.length === 0) {
+    let page = 1;
+    let totalPages = 1;
+    const existingItems: Array<{ id: string; key: string }> = [];
+    do {
+      const listed = await items.list({ page, per_page: 50 });
+      totalPages = Math.max(1, Math.ceil((listed.result_info?.total_count || listed.result.length) / 50));
+      existingItems.push(...listed.result.map((item) => ({ id: item.id, key: item.key })));
+      page += 1;
+    } while (page <= totalPages);
+    for (const item of existingItems) {
+      if (desiredKeys.has(item.key)) continue;
+      await items.delete(item.id);
+      deleted.push(item.key);
+    }
+  }
+
+  await appendAudit(context.env, {
+    eventType: 'knowledge.initial_reseeded',
+    actorType: 'system',
+    subjectType: 'ai_search_instance',
+    subjectId: context.env.AI_SEARCH_INSTANCE,
+    metadata: { accepted: accepted.length, incomplete: incomplete.length, deleted: deleted.length },
+  });
+  return context.json({ ok: incomplete.length === 0, accepted, incomplete, deleted }, incomplete.length ? 202 : 200);
 });
 
 app.get('/api/admin/overview', async (context) => {

@@ -1,11 +1,11 @@
 # Orient Group Initial Knowledge: homebuilding_and_renovation
 
-生成日時(UTC): 2026-08-09T17:07:46.235050+00:00
+生成日時(UTC): 2026-08-09T20:03:32.100005+00:00
 収録ページ数: 9
 出典: 各節のURLに記載されたオリエントグループ公式公開ページ
 
 ## 家をリフォームしたい
-URL: https://orijyu.com/reform.html
+公式ページ: https://orijyu.com/reform.html
 更新日: 2022-02-07T07:29:02+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -53,7 +53,7 @@ URL: https://orijyu.com/reform.html
 電話でお問い合わせ
 
 ## ミラブルキッチン
-URL: https://orijyu.com/science01.html
+公式ページ: https://orijyu.com/science01.html
 更新日: 2022-09-17T07:32:13+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -78,7 +78,7 @@ URL: https://orijyu.com/science01.html
 電話でお問い合わせ
 
 ## マイクロバブル
-URL: https://orijyu.com/science02.html
+公式ページ: https://orijyu.com/science02.html
 更新日: 2022-09-17T07:31:31+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -101,7 +101,7 @@ URL: https://orijyu.com/science02.html
 電話でお問い合わせ
 
 ## ミラバス
-URL: https://orijyu.com/science03.html
+公式ページ: https://orijyu.com/science03.html
 更新日: 2022-09-17T07:31:45+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -126,7 +126,7 @@ URL: https://orijyu.com/science03.html
 電話でお問い合わせ
 
 ## ミラブル Plus
-URL: https://orijyu.com/science04.html
+公式ページ: https://orijyu.com/science04.html
 更新日: 2022-09-17T07:31:56+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -147,7 +147,7 @@ URL: https://orijyu.com/science04.html
 電話でお問い合わせ
 
 ## サイエンスウォーターシステム
-URL: https://orijyu.com/science05.html
+公式ページ: https://orijyu.com/science05.html
 更新日: 2022-09-17T07:31:18+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -169,7 +169,7 @@ URL: https://orijyu.com/science05.html
 電話でお問い合わせ
 
 ## サイエンス TVCM
-URL: https://orijyu.com/science06.html
+公式ページ: https://orijyu.com/science06.html
 更新日: 2022-09-17T07:31:07+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -197,7 +197,7 @@ URL: https://orijyu.com/science06.html
 電話でお問い合わせ
 
 ## ミラブル zero
-URL: https://orijyu.com/science07.html
+公式ページ: https://orijyu.com/science07.html
 更新日: 2022-09-17T07:30:28+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -218,7 +218,7 @@ URL: https://orijyu.com/science07.html
 電話でお問い合わせ
 
 ## ミラブル 艶
-URL: https://orijyu.com/science08.html
+公式ページ: https://orijyu.com/science08.html
 更新日: 2025-07-08T05:27:47+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売

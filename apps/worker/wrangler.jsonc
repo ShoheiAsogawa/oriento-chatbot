@@ -37,7 +37,8 @@
       "ACCESS_TEAM_DOMAIN",
       "ACCESS_AUD",
       "ADMIN_ALLOWED_EMAILS",
-      "AI_GATEWAY_TOKEN"
+      "AI_GATEWAY_TOKEN",
+      "KNOWLEDGE_SYNC_SECRET"
     ]
   },
   "d1_databases": [

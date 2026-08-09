@@ -30,6 +30,7 @@ from typing import Iterable
 
 USER_AGENT = "OrientKnowledgeBot/1.0 (+https://orijyu.com/)"
 MAX_FILE_BYTES = 2_500_000
+MAX_PAGE_SECTION_CHARS = 1_400
 MAX_RESPONSE_BYTES = 12_000_000
 REQUEST_TIMEOUT = 30
 OFFICIAL_ROOTS = (
@@ -316,8 +317,28 @@ def fetch_page(url: str, modified: str | None) -> Page | None:
 
 
 def render_page(page: Page) -> str:
-    modified = f"\n更新日: {page.modified}" if page.modified else ""
-    return f"## {page.title}\nURL: {page.url}{modified}\n\n{page.text}\n"
+    paragraphs = [part.strip() for part in page.text.split("\n") if part.strip()]
+    sections: list[str] = []
+    current: list[str] = []
+    current_size = 0
+    for paragraph in paragraphs:
+        pieces = [paragraph[index:index + MAX_PAGE_SECTION_CHARS] for index in range(0, len(paragraph), MAX_PAGE_SECTION_CHARS)]
+        for piece in pieces:
+            if current and current_size + len(piece) + 1 > MAX_PAGE_SECTION_CHARS:
+                sections.append("\n".join(current))
+                current = []
+                current_size = 0
+            current.append(piece)
+            current_size += len(piece) + 1
+    if current:
+        sections.append("\n".join(current))
+
+    rendered: list[str] = []
+    for index, section in enumerate(sections or [page.text], 1):
+        suffix = f"（続き {index}）" if index > 1 else ""
+        modified = f"\n更新日: {page.modified}" if page.modified else ""
+        rendered.append(f"## {page.title}{suffix}\n公式ページ: {page.url}{modified}\n\n{section}\n")
+    return "\n".join(rendered)
 
 
 def chunk_pages(pages: Iterable[Page]) -> list[str]:

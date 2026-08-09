@@ -1,11 +1,11 @@
 # Orient Group Initial Knowledge: international_chinese
 
-生成日時(UTC): 2026-08-09T17:07:46.373697+00:00
+生成日時(UTC): 2026-08-09T20:03:32.374182+00:00
 収録ページ数: 244
 出典: 各節のURLに記載されたオリエントグループ公式公開ページ
 
 ## オリエント住宅販売・オリエントホールディングス|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/
+公式ページ: https://cn.orijyu.com/
 
 recommend
 推荐房产
@@ -47,7 +47,7 @@ to-top
 公司简介
 
 ## 硬币评估 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/advice.html
+公式ページ: https://cn.orijyu.com/contents/advice.html
 
 b-advice
 基于特定商户交易法的记载
@@ -66,7 +66,7 @@ to-top
 公司简介
 
 ## 房屋设计步骤 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/allorder.html
+公式ページ: https://cn.orijyu.com/contents/allorder.html
 
 b-allorder
 客户和我公司的一级建筑师两个人一起建造理想的家园
@@ -84,7 +84,7 @@ to-top
 公司简介
 
 ## 施工例 - オリエントホールディングス|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/const.html
+公式ページ: https://cn.orijyu.com/contents/const.html
 
 外观
 更多点击
@@ -134,7 +134,7 @@ to-top
 Free Dial
 
 ## 外观 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const01.html
+公式ページ: https://cn.orijyu.com/contents/const01.html
 
 01
 02
@@ -151,7 +151,7 @@ URL: https://cn.orijyu.com/contents/const01.html
 to-top
 
 ## 客厅・餐厅 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const02.html
+公式ページ: https://cn.orijyu.com/contents/const02.html
 
 01
 02
@@ -168,7 +168,7 @@ URL: https://cn.orijyu.com/contents/const02.html
 to-top
 
 ## 厨房 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const03.html
+公式ページ: https://cn.orijyu.com/contents/const03.html
 
 01
 02
@@ -185,7 +185,7 @@ URL: https://cn.orijyu.com/contents/const03.html
 to-top
 
 ## 洗面化妆台 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const04.html
+公式ページ: https://cn.orijyu.com/contents/const04.html
 
 01
 02
@@ -202,7 +202,7 @@ URL: https://cn.orijyu.com/contents/const04.html
 to-top
 
 ## 浴室 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const05.html
+公式ページ: https://cn.orijyu.com/contents/const05.html
 
 01
 02
@@ -219,7 +219,7 @@ URL: https://cn.orijyu.com/contents/const05.html
 to-top
 
 ## 厕所 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const06.html
+公式ページ: https://cn.orijyu.com/contents/const06.html
 
 01
 02
@@ -236,7 +236,7 @@ URL: https://cn.orijyu.com/contents/const06.html
 to-top
 
 ## 洋式房间 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const07.html
+公式ページ: https://cn.orijyu.com/contents/const07.html
 
 01
 02
@@ -253,7 +253,7 @@ URL: https://cn.orijyu.com/contents/const07.html
 to-top
 
 ## 衣柜・收纳 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const08.html
+公式ページ: https://cn.orijyu.com/contents/const08.html
 
 01
 02
@@ -270,7 +270,7 @@ URL: https://cn.orijyu.com/contents/const08.html
 to-top
 
 ## 玄关 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const09.html
+公式ページ: https://cn.orijyu.com/contents/const09.html
 
 01
 02
@@ -287,7 +287,7 @@ URL: https://cn.orijyu.com/contents/const09.html
 to-top
 
 ## 玄关收纳 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const10.html
+公式ページ: https://cn.orijyu.com/contents/const10.html
 
 01
 02
@@ -304,7 +304,7 @@ URL: https://cn.orijyu.com/contents/const10.html
 to-top
 
 ## 阳台・楼顶露天阳台 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const11.html
+公式ページ: https://cn.orijyu.com/contents/const11.html
 
 01
 02
@@ -321,7 +321,7 @@ URL: https://cn.orijyu.com/contents/const11.html
 to-top
 
 ## 室外设备 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/const12.html
+公式ページ: https://cn.orijyu.com/contents/const12.html
 
 01
 02
@@ -338,7 +338,7 @@ URL: https://cn.orijyu.com/contents/const12.html
 to-top
 
 ## 老年人福祉设施01 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constB01.html
+公式ページ: https://cn.orijyu.com/contents/constB01.html
 
 01
 02
@@ -355,7 +355,7 @@ URL: https://cn.orijyu.com/contents/constB01.html
 to-top
 
 ## 老年人福祉设施02 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constB02.html
+公式ページ: https://cn.orijyu.com/contents/constB02.html
 
 01
 02
@@ -372,7 +372,7 @@ URL: https://cn.orijyu.com/contents/constB02.html
 to-top
 
 ## 老年人福祉设施03 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constB03.html
+公式ページ: https://cn.orijyu.com/contents/constB03.html
 
 01
 02
@@ -389,7 +389,7 @@ URL: https://cn.orijyu.com/contents/constB03.html
 to-top
 
 ## 老年人福祉设施04 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constB04.html
+公式ページ: https://cn.orijyu.com/contents/constB04.html
 
 01
 02
@@ -406,7 +406,7 @@ URL: https://cn.orijyu.com/contents/constB04.html
 to-top
 
 ## 公寓01 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constC01.html
+公式ページ: https://cn.orijyu.com/contents/constC01.html
 
 01
 02
@@ -423,7 +423,7 @@ URL: https://cn.orijyu.com/contents/constC01.html
 to-top
 
 ## 公寓02 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constC02.html
+公式ページ: https://cn.orijyu.com/contents/constC02.html
 
 01
 02
@@ -444,7 +444,7 @@ URL: https://cn.orijyu.com/contents/constC02.html
 to-top
 
 ## 公寓03 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constC03.html
+公式ページ: https://cn.orijyu.com/contents/constC03.html
 
 01
 02
@@ -461,7 +461,7 @@ URL: https://cn.orijyu.com/contents/constC03.html
 to-top
 
 ## 公寓04 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constC04.html
+公式ページ: https://cn.orijyu.com/contents/constC04.html
 
 01
 02
@@ -478,7 +478,7 @@ URL: https://cn.orijyu.com/contents/constC04.html
 to-top
 
 ## 木造公寓01 - オリエントホールディングス
-URL: https://cn.orijyu.com/contents/constC05.html
+公式ページ: https://cn.orijyu.com/contents/constC05.html
 
 01
 02
@@ -495,7 +495,7 @@ URL: https://cn.orijyu.com/contents/constC05.html
 to-top
 
 ## 公司简介 - オリエントホールディングス|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/corp.html
+公式ページ: https://cn.orijyu.com/contents/corp.html
 
 会社概要
 オリエントホールディングス是完全订单体制的房地产公司,通过客户和一级建筑师一起设计房型、室内设计,选择房产的各种配备等等,实现了客户所需要所想像的家园梦想。
@@ -544,7 +544,7 @@ to-top
 公司简介
 
 ## 常见问题 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/faq.html
+公式ページ: https://cn.orijyu.com/contents/faq.html
 
 FAQ
 问题01
@@ -625,6 +625,10 @@ MB= 水电、煤气盒
 听说个人创业者很难贷到款么?
 个人创业者在购入住宅申请贷款时需要过去3年的确定申告和纳税证明。
 由于过去3年的平均收入额,决定贷款额。
+
+## 常见问题 - オリエント住宅販売|簡体中文 房产・独立式住宅（続き 2）
+公式ページ: https://cn.orijyu.com/contents/faq.html
+
 但是如果在3年间有1年发生赤字的话,在银行就很难贷到款了。
 但像信用金库等比较容易贷款的金融机构还是有的。
 to-top
@@ -641,7 +645,7 @@ to-top
 公司简介
 
 ## 住房「购入」手册 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/manual-buy.html
+公式ページ: https://cn.orijyu.com/contents/manual-buy.html
 
 p-manual01
 房产情报的収集
@@ -706,7 +710,7 @@ to-top
 公司简介
 
 ## 住房「资金计划」手册 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/manual-plan.html
+公式ページ: https://cn.orijyu.com/contents/manual-plan.html
 
 p-manual01
 资金计划
@@ -740,6 +744,10 @@ p-manual01
 关于住房取得税有轻减措施、新建的房产的情况房产评价额将被减去1,200万日元。
 二手房的情况、1997年4月1日以后建的房子的话也减1,200万日元。
 建筑物的税务减轻是要在、建筑面积(公寓是包含共有部分平均分配部分的面积)在50平方以上240平方以下、自己居住房子或者第二栋房、二手房是在1982年1月1日以后に建的满足一定的耐震条件(需建筑师证明)。
+
+## 住房「资金计划」手册 - オリエント住宅販売|簡体中文 房产・独立式住宅（続き 2）
+公式ページ: https://cn.orijyu.com/contents/manual-plan.html
+
 还有、接受建筑物税务轻减的住宅用地是4万5000日元、或土地1平方评价额×1/2×住宅的建筑面积2倍(上限200m2)×3%所计算出的税額高的金額从税额中减免。
 但是需注意的是、得到减免的一定时期内必须向都道府県税务署申告(拿到纳税通知書时再申告减免或者直接寄减税后的纳税通知书的都道府県也有)。
 住宅取得时尽早向都道府県税事務进行咨询。
@@ -781,7 +789,7 @@ to-top
 公司简介
 
 ## 住房「装修」手册 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/manual-reform.html
+公式ページ: https://cn.orijyu.com/contents/manual-reform.html
 
 p-manual01
 确定不满意的地方和先后顺序
@@ -836,6 +844,10 @@ to-top
 目录
 买卖房产
 房屋租赁
+
+## 住房「装修」手册 - オリエント住宅販売|簡体中文 房产・独立式住宅（続き 2）
+公式ページ: https://cn.orijyu.com/contents/manual-reform.html
+
 想要翻新装修
 特别推荐房产
 房屋设计步骤
@@ -846,7 +858,7 @@ to-top
 公司简介
 
 ## 住房「租赁」手册 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/manual-rent.html
+公式ページ: https://cn.orijyu.com/contents/manual-rent.html
 
 p-manual01
 房屋情报的収集
@@ -899,7 +911,7 @@ to-top
 公司简介
 
 ## 住房生活手册 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/manual.html
+公式ページ: https://cn.orijyu.com/contents/manual.html
 
 b-manual
 manual01
@@ -924,7 +936,7 @@ to-top
 公司简介
 
 ## 保护个人信息方针 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/policy.html
+公式ページ: https://cn.orijyu.com/contents/policy.html
 
 個人情報保護方針
 个人信息利用目的
@@ -964,7 +976,7 @@ to-top
 公司简介
 
 ## 低风险投资・小额投资 - オリエントホールディングス|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/prit2.html
+公式ページ: https://cn.orijyu.com/contents/prit2.html
 
 prit2
 お問い合わせフォーム
@@ -982,7 +994,7 @@ to-top
 公司简介
 
 ## 人才招聘 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/recruit.html
+公式ページ: https://cn.orijyu.com/contents/recruit.html
 
 我们重视您的成长和将来
 只要您有“干劲”和“毅力”没有经验也可轻松上手!
@@ -1035,7 +1047,7 @@ to-top
 公司简介
 
 ## 想要翻新装修 - オリエント住宅販売|簡体中文 房产・独立式住宅
-URL: https://cn.orijyu.com/contents/reform.html
+公式ページ: https://cn.orijyu.com/contents/reform.html
 
 室内(天井・内壁・榻榻米・地板等)工事
 天井的翻新・重涂・修理
@@ -1153,6 +1165,10 @@ to-top
 买卖房产
 房屋租赁
 想要翻新装修
+
+## 想要翻新装修 - オリエント住宅販売|簡体中文 房产・独立式住宅（続き 2）
+公式ページ: https://cn.orijyu.com/contents/reform.html
+
 特别推荐房产
 房屋设计步骤
 住房生活手册
@@ -1163,7 +1179,7 @@ to-top
 
 ## 神戸市兵庫区大同町1丁目
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/daidocho1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/daidocho1-s/detail.html
 
 神戸市兵庫区大同町1丁目
 画像01
@@ -1226,7 +1242,7 @@ to-top
 公司简介
 
 ## 神戸市長田区二葉町2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/futabacho2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/futabacho2-s/detail.html
 
 神戸市長田区二葉町2丁目
 画像01
@@ -1286,7 +1302,7 @@ to-top
 公司简介
 
 ## 神戸市兵庫区浜中町2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/hamanakacho2-t/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/hamanakacho2-t/detail.html
 
 神戸市兵庫区浜中町2丁目
 格局図
@@ -1348,7 +1364,7 @@ to-top
 公司简介
 
 ## 神戸市長田区花山町2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/hanayamacho2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/hanayamacho2-s/detail.html
 
 神戸市長田区花山町2丁目
 格局図
@@ -1409,7 +1425,7 @@ to-top
 公司简介
 
 ## 花山グリーンハイツ- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/hanayamahigashimachi-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/hanayamahigashimachi-m/detail.html
 
 花山グリーンハイツ
 画像01
@@ -1475,7 +1491,7 @@ to-top
 
 ## 神戸市須磨区東白川台2丁目
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/higashishirakawadai2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/higashishirakawadai2-s/detail.html
 
 神戸市須磨区東白川台2丁目
 画像01
@@ -1540,7 +1556,7 @@ to-top
 公司简介
 
 ## 神戸市長田区東尻池町7丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/higashishiriikecho7-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/higashishiriikecho7-s/detail.html
 
 神戸市長田区東尻池町7丁目
 画像01
@@ -1608,7 +1624,7 @@ to-top
 
 ## 神戸市須磨区板宿3丁目
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/itayadocho3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/itayadocho3-s/detail.html
 
 神戸市須磨区板宿3丁目
 画像01
@@ -1672,7 +1688,7 @@ to-top
 公司简介
 
 ## 神戸市兵庫区上祇園- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/kamigioncho/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/kamigioncho/detail.html
 
 神戸市兵庫区上祇園
 格局図
@@ -1734,7 +1750,7 @@ to-top
 
 ## 神戸市長田区上池田1丁目
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/kamiikeda1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/kamiikeda1-s/detail.html
 
 神戸市長田区上池田1丁目
 画像01
@@ -1800,7 +1816,7 @@ to-top
 公司简介
 
 ## 神戸市灘区神前町3丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/kamimaecho-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/kamimaecho-u/detail.html
 
 神戸市灘区神前町3丁目
 画像01
@@ -1859,7 +1875,7 @@ to-top
 公司简介
 
 ## 神戸市東灘区鴨子ヶ原3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/kamokogahara3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/kamokogahara3-s/detail.html
 
 神戸市東灘区鴨子ヶ原3丁目
 画像01
@@ -1924,7 +1940,7 @@ to-top
 公司简介
 
 ## 神戸市北区唐櫃台2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/karatodai2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/karatodai2-s/detail.html
 
 神戸市北区唐櫃台2丁目
 画像01
@@ -1989,7 +2005,7 @@ to-top
 公司简介
 
 ## 神戸市長田区苅藻通4丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/karumodori4-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/karumodori4-u/detail.html
 
 神戸市長田区苅藻通4丁目
 画像01
@@ -2048,7 +2064,7 @@ to-top
 公司简介
 
 ## 神戸市長田区片山町1丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/katayamacho1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/katayamacho1-s/detail.html
 
 神戸市長田区片山町1丁目
 格局図
@@ -2113,7 +2129,7 @@ to-top
 公司简介
 
 ## OrientCity 神戸南 Part5- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/kinpeicho1-part5-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/kinpeicho1-part5-ori/detail.html
 
 OrientCity 神戸南 Part5
 OrientCity
@@ -2181,7 +2197,7 @@ to-top
 公司简介
 
 ## 神戸市兵庫区金平町1丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/kinpeicho1/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/kinpeicho1/detail.html
 
 神戸市兵庫区金平町1丁目
 房屋信息
@@ -2243,7 +2259,7 @@ to-top
 公司简介
 
 ## 神戸市須磨区北落合5丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/kitaochiai5-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/kitaochiai5-s/detail.html
 
 神戸市須磨区北落合5丁目
 画像01
@@ -2308,7 +2324,7 @@ to-top
 公司简介
 
 ## 神戸市北区上津台2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/kozudai2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/kozudai2-s/detail.html
 
 神戸市北区上津台2丁目
 画像01
@@ -2375,7 +2391,7 @@ to-top
 公司简介
 
 ## 兵库県的房产01 - オリエントホールディングス
-URL: https://cn.orijyu.com/objects/hyogo/list01.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/list01.html
 
 recommend
 神户市東灘区的房产
@@ -2416,6 +2432,10 @@ recommend
 看房活动开展中・即刻交付,超市步行圈内,购物方便
 ■房产类型:中古一户建■房产售价: 1,980万日元■地址:神戸市中央区中尾町■交通: JR山陽新幹線「新神戸」歩15分■土地面积: 67.44m2■建筑面积: 77.76m2■格局: 5DK
 详情点击
+
+## 兵库県的房产01 - オリエントホールディングス（続き 2）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list01.html
+
 神户市兵库区的房产
 OrientCity 神戸南 Part11
 车站步行2分・超市步行3分,生活便利,自由设计
@@ -2451,6 +2471,10 @@ OrientCity 神戸南 Part5
 详情点击
 神戸市兵庫区大同町1丁目
 看房活动开展中,超市・便利店・公园步行圈内,生活便利
+
+## 兵库県的房产01 - オリエントホールディングス（続き 3）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list01.html
+
 ■房产类型:中古一户建■销售价格: 2,980万日元■地址:神戸市兵庫区大同町1丁目■交通:神戸市営地下鉄西神山手線「湊川公園」駅歩15分■土地面积: 97.32m2■建物面积: 111.32m2■格局: 4DK
 详情点击
 ダイアパレス水木通弐番館
@@ -2487,6 +2511,10 @@ OrientCity 神戸南 Part5
 ■房产类型:中古一户建■销售价格: 3,000万日元■地址: 神戸市長田区片山町1丁目■交通:地下鉄西神・山手線「長田」歩7分■土地面积: 104.23m2 ■建筑面积: 94.77m2格局: 3LDK
 详情点击
 神戸市長田区花山町2丁目
+
+## 兵库県的房产01 - オリエントホールディングス（続き 4）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list01.html
+
 装修完成・看房活动开展中,娴静的住宅区,车站・超市・教育设施,全部在步行圈内,可即刻交付
 ■房产类型:中古一户建■销售价格: 980万日元■地址: 神戸市長田区花山町2丁目■交通: 神戸電鉄有馬線「丸山」歩15分■土地面积: 80.86m2 ■建筑面积: 80.18m2■格局: 4DK
 詳情點擊
@@ -2524,6 +2552,10 @@ OrientCity 神戸南 Part5
 ■房产类型:中古一户建■销售价格: 4,280万日元■地址: 神戸市須磨区板宿町3丁目■交通:地下鉄西神・山手線「板宿」歩9分■土地面积: 153.59m2■建築面积: 109.94m2■格局: 4LDK
 详情点击
 神戸市須磨区若草町3丁目
+
+## 兵库県的房产01 - オリエントホールディングス（続き 5）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list01.html
+
 装修中,角地58.4坪・日照良好,小学校步行4分,上下学方便,即刻交付
 ■房产类型:中古一户建■销售价格: 3,049万日元■地址: 神戸市須磨区若草町3丁目■交通: 地下鉄西神・山手線「妙法寺」■土地面积: 193.07m2■建築面积: 122.54m2■格局: 4LDK
 详情点击
@@ -2559,6 +2591,10 @@ OrientCity 滝の茶屋
 详情点击
 神戸市北区唐櫃台2丁目
 娴静的住宅地,朝西南向・日照良好,车站・超市・教育设施全部在步行圈内,生活便利
+
+## 兵库県的房产01 - オリエントホールディングス（続き 6）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list01.html
+
 ■房产类型:中古一户建■销售价格: 1,380万日元■地址:神戸市北区唐櫃台2丁目■交通: 神戸電鉄有馬線「唐櫃台」歩11分■土地面积:141.69m2■建筑面积: 100.19m2■格局:4LDK
 详情点击
 神戸市北区大原1丁目
@@ -2613,7 +2649,7 @@ to-top
 公司简介
 
 ## 兵库県的房产01 - オリエントホールディングス
-URL: https://cn.orijyu.com/objects/hyogo/list02.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/list02.html
 
 recommend
 尼崎市的房产
@@ -2655,6 +2691,10 @@ recommend
 ■房产类型:一栋公寓■销售价格: 4,980万日元■地址:尼崎市東園田町5丁目■交通:阪急神戸本線「園田」歩4分■土地面积:230.00m2■建筑面积: 270.10m2■格局:1DK×8室
 详情点击
 尼崎市杭瀬北新町3丁目
+
+## 兵库県的房产01 - オリエントホールディングス（続き 2）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list02.html
+
 换房东物件・表面利润回利15.69%,车站・超市步行7分,生活便利
 ■房产类型:收益物件■销售价格: 390日元■地址: 尼崎市杭瀬北新町3丁目■交通: 阪神本線「杭瀬」歩7分■土地面积: 65.00m2■建筑面积: 90.68m2
 详情点击
@@ -2692,6 +2732,10 @@ OrientCity 苦楽園四番町
 ■房产类型:中古一户建■销售价格: 2,049万日元■地址:西宮市北六甲台2丁目■交通: JR福知山線「西宮名塩」駅巴士18分■土地面积: 198.54m2■建築面积: 117.33m2■格局:3LDK
 详情点击
 西宮市名塩さくら台4丁目
+
+## 兵库県的房产01 - オリエントホールディングス（続き 3）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list02.html
+
 2025年12月装修・看房活动开展中,土地62坪・娴静的住宅地,宽敞客厅
 ■房产类型:中古一户建■销售价格:2,500万日元■地址: 西宮市名塩さくら台4丁目■交通: JR福知山線「西宮名塩」巴士15分■土地面积: 207.71m2■建築面积: 120.89m2■格局: 4LDK
 详情点击
@@ -2730,6 +2774,10 @@ OrientCity 芦屋プレミアム
 详情点击
 OrientCity 芦屋
 土地91坪,超市在步行圈内,购物便利,自由设计新独立式住宅
+
+## 兵库県的房产01 - オリエントホールディングス（続き 4）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list02.html
+
 ■房产类型:新独立式住宅■销售价格:5,880万日元~■地址: 芦屋市朝日ケ丘町■交通:JR東海道本線「芦屋」歩20分■土地面积: 302.85m2■建筑面积:88.00m2~■格局:4LDK
 详情点击
 芦屋市朝日ケ丘町1期 2号棟
@@ -2767,6 +2815,10 @@ OrientCity 紅葉ガ丘
 详情点击
 宝塚市小浜5丁目
 全新装修・可看房,宽敞客厅,超市・教育设施步行圈内,生活便利
+
+## 兵库県的房产01 - オリエントホールディングス（続き 5）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list02.html
+
 ■房产类型:中古一户建■房产售价: 2,980万日元■地址: 宝塚市小浜5丁目■交通: 阪急宝塚線「清荒神」駅歩15分■土地面积: 100.22m2■建築面积: 80.17m2■格局: 2SLDK
 详情点击
 宝塚市桜ガ丘
@@ -2804,7 +2856,7 @@ to-top
 公司简介
 
 ## 兵庫県的房产02 - オリエントホールディングス
-URL: https://cn.orijyu.com/objects/hyogo/list03.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/list03.html
 
 recommend
 兵库县其他地方房产
@@ -2845,6 +2897,10 @@ recommend
 ■房产类型:店铺・事务所■销售价格:780万日元■地址:丹波篠山市下板井■交通:JR福知山線「丹波大山」歩45分■土地面积: 240.71m2■建物面积:252.14m2
 详情点击
 丹波市氷上町大崎
+
+## 兵庫県的房产02 - オリエントホールディングス（続き 2）
+公式ページ: https://cn.orijyu.com/objects/hyogo/list03.html
+
 吐司411坪・建筑条件无,商业设施开车约10分,田园生活也很充实,可作为住居・店铺等多种目的使用
 ■房产类型:土地■销售价格: 1,333万日元■地址: 丹波市氷上町大崎■交通: JR福知山線「石生」歩13分■土地面积:1,360.74m2
 详情点击
@@ -2877,7 +2933,7 @@ to-top
 公司简介
 
 ## 神戸市東灘区御影山手3丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/mikageyamate-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/mikageyamate-s/detail.html
 
 神戸市東灘区御影山手3丁目
 画像01
@@ -2944,7 +3000,7 @@ to-top
 公司简介
 
 ## 神戸市長田区宮川町6丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/miyagawacho6-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/miyagawacho6-s/detail.html
 
 神戸市長田区宮川町6丁目
 画像01
@@ -3008,7 +3064,7 @@ to-top
 公司简介
 
 ## ダイアパレス水木通弐番館- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/mizukidori2-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/mizukidori2-m/detail.html
 
 ダイアパレス水木通弐番館
 画像01
@@ -3077,7 +3133,7 @@ to-top
 公司简介
 
 ## 神戸市東灘区森北町7丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/morikitamachi7-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/morikitamachi7-s/detail.html
 
 神戸市東灘区森北町7丁目
 房屋信息
@@ -3145,7 +3201,7 @@ to-top
 公司简介
 
 ## 神戸市須磨区妙法寺白坂- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/myohoji-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/myohoji-s/detail.html
 
 神戸市須磨区妙法寺白坂
 画像01
@@ -3209,7 +3265,7 @@ to-top
 公司简介
 
 ## 神戸市長田区長楽町2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/nagaracho2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/nagaracho2-s/detail.html
 
 神戸市長田区長楽町2丁目
 画像01
@@ -3277,7 +3333,7 @@ to-top
 公司简介
 
 ## 神戸市中央区中尾町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/nakaocho-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/nakaocho-s/detail.html
 
 神戸市中央区中尾町
 画像01
@@ -3344,7 +3400,7 @@ to-top
 公司简介
 
 ## 神戸市長田区西代通3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/nishidaidori3/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/nishidaidori3/detail.html
 
 神戸市長田区西代通3丁目
 格局図
@@ -3410,7 +3466,7 @@ to-top
 公司简介
 
 ## 神戸市東灘区青木2丁目 D号棟- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/ogi2-d/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/ogi2-d/detail.html
 
 神戸市東灘区青木2丁目 D号棟
 格局図
@@ -3476,7 +3532,7 @@ to-top
 公司简介
 
 ## モンラヴィ青木 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/ogi6-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/ogi6-m/detail.html
 
 モンラヴィ青木
 画像01
@@ -3544,7 +3600,7 @@ to-top
 
 ## 神戸市北区大原1丁目
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/ohara1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/ohara1-s/detail.html
 
 神戸市北区大原1丁目
 画像01
@@ -3613,7 +3669,7 @@ to-top
 公司简介
 
 ## OrientCity 滝の茶屋- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/oiden3-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/oiden3-ori/detail.html
 
 OrientCity 滝の茶屋
 OrientCity
@@ -3681,7 +3737,7 @@ to-top
 公司简介
 
 ## 神戸市長田区六番町8丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/rokubancho8-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/rokubancho8-u/detail.html
 
 神戸市長田区六番町8丁目
 画像01
@@ -3738,7 +3794,7 @@ to-top
 公司简介
 
 ## 神戸市長田区三番町3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/sanbancho3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/sanbancho3-s/detail.html
 
 神戸市長田区三番町3丁目
 格局図
@@ -3805,7 +3861,7 @@ to-top
 公司简介
 
 ## 神戸市垂水区清水通- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/shimizudori-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/shimizudori-2/detail.html
 
 神戸市垂水区清水通
 画像01
@@ -3866,7 +3922,7 @@ to-top
 公司简介
 
 ## 神戸市北区惣山町4丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/soyamacho4-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/soyamacho4-s/detail.html
 
 神戸市北区惣山町4丁目
 画像01
@@ -3932,7 +3988,7 @@ to-top
 
 ## 神戸市須磨区須磨浦通6丁目
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/sumauradori6-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/sumauradori6-s/detail.html
 
 神戸市須磨区須磨浦通6丁目
 画像01
@@ -4000,7 +4056,7 @@ to-top
 公司简介
 
 ## 神戸市北区鈴蘭台北町5丁目 1号棟- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/suzurandaikitamachi5-1/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/suzurandaikitamachi5-1/detail.html
 
 神戸市北区鈴蘭台北町5丁目 1号棟
 房屋信息
@@ -4060,7 +4116,7 @@ to-top
 公司简介
 
 ## 神戸市北区鈴蘭台北町5丁目 2号棟- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/suzurandaikitamachi5-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/suzurandaikitamachi5-2/detail.html
 
 神戸市北区鈴蘭台北町5丁目 2号棟
 房屋信息
@@ -4120,7 +4176,7 @@ to-top
 公司简介
 
 ## 神戸市北区鈴蘭台南町6丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/suzurandaiminamimachi6-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/suzurandaiminamimachi6-m/detail.html
 
 神戸市北区鈴蘭台南町6丁目
 画像01
@@ -4180,7 +4236,7 @@ to-top
 公司简介
 
 ## 神戸市北区鈴蘭台南町8丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/suzurandaiminamimachi8-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/suzurandaiminamimachi8-m/detail.html
 
 神戸市北区鈴蘭台南町8丁目
 画像01
@@ -4238,7 +4294,7 @@ to-top
 公司简介
 
 ## 神戸市垂水区高丸7丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/takamaru-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/takamaru-s/detail.html
 
 神戸市垂水区高丸7丁目
 画像01
@@ -4301,7 +4357,7 @@ to-top
 公司简介
 
 ## 神戸市兵庫区塚本通4丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/tsukamotodori4-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/tsukamotodori4-s/detail.html
 
 神戸市兵庫区塚本通4丁目
 画像01
@@ -4366,7 +4422,7 @@ to-top
 公司简介
 
 ## 神戸市灘区上野通3丁目 B号地- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/uenodori3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/uenodori3-s/detail.html
 
 神戸市灘区上野通3丁目 B号地
 画像01
@@ -4435,7 +4491,7 @@ to-top
 公司简介
 
 ## 神戸市東灘区魚崎北町8丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/uozakikitamachi8-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/uozakikitamachi8-s/detail.html
 
 神戸市東灘区魚崎北町8丁目
 房屋信息
@@ -4503,7 +4559,7 @@ to-top
 公司简介
 
 ## 神戸市須磨区若草町3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/wakakusacho3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/wakakusacho3-s/detail.html
 
 神戸市須磨区若草町3丁目
 格局図
@@ -4567,7 +4623,7 @@ to-top
 公司简介
 
 ## OrientCity 神戸南 Part9- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/yoshidacho1-part9-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/yoshidacho1-part9-ori/detail.html
 
 OrientCity 神戸南 Part9
 OrientCity
@@ -4634,7 +4690,7 @@ to-top
 公司简介
 
 ## 神戸市兵庫区吉田町2丁目1期1号棟- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/yoshidacho2-1-1/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/yoshidacho2-1-1/detail.html
 
 神戸市兵庫区吉田町2丁目1期1号棟
 房屋信息
@@ -4699,7 +4755,7 @@ to-top
 
 ## OrientCity 神戸南 Part11
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/yoshidacho2-part11-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/yoshidacho2-part11-ori/detail.html
 
 OrientCity 神戸南 Part11
 OrientCity
@@ -4767,7 +4823,7 @@ to-top
 公司简介
 
 ## OrientCity 神戸南 Part7- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/hyogo/yoshidacho2-part7-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/hyogo/yoshidacho2-part7-ori/detail.html
 
 OrientCity 神戸南 Part7
 OrientCity
@@ -4834,7 +4890,7 @@ to-top
 公司简介
 
 ## 大阪市阿倍野区阿倍野筋5丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/abenosuji5-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/abenosuji5-s/detail.html
 
 大阪市阿倍野区阿倍野筋5丁目
 information
@@ -4906,7 +4962,7 @@ to-top
 公司簡介
 
 ## 大阪市住之江区安立2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/anryu2/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/anryu2/detail.html
 
 大阪市住之江区安立2丁目
 information
@@ -4968,7 +5024,7 @@ to-top
 公司簡介
 
 ## 大阪市住之江区安立3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/anryu3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/anryu3-s/detail.html
 
 大阪市住之江区安立3丁目
 information
@@ -5035,7 +5091,7 @@ to-top
 公司简介
 
 ## ユニ船場 Rino Room- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/awajimachi2-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/awajimachi2-m/detail.html
 
 ユニ船場 Rino Room
 information
@@ -5094,7 +5150,7 @@ to-top
 公司简介
 
 ## シティタワー大阪本町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/azuchimachi2-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/azuchimachi2-m/detail.html
 
 シティタワー大阪本町
 information
@@ -5157,7 +5213,7 @@ to-top
 公司简介
 
 ## 大阪市此花区梅香3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/baika3/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/baika3/detail.html
 
 大阪市此花区梅香3丁目
 房屋信息
@@ -5220,7 +5276,7 @@ to-top
 公司简介
 
 ## OrientCity 弁天 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/benten3-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/benten3-ori/detail.html
 
 OrientCity 弁天
 格局图
@@ -5285,7 +5341,7 @@ to-top
 公司简介
 
 ## ファーストトヤマビル- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/chikko4/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/chikko4/detail.html
 
 ファーストトヤマビル
 information
@@ -5350,7 +5406,7 @@ to-top
 公司简介
 
 ## リバーガーデン四天王寺 1610号室- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/daido2-10-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/daido2-10-m/detail.html
 
 リバーガーデン四天王寺 1610号室
 information
@@ -5408,7 +5464,7 @@ to-top
 公司简介
 
 ## リバーガーデン四天王寺 1611号室- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/daido2-11-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/daido2-11-m/detail.html
 
 リバーガーデン四天王寺 1611号室
 information
@@ -5466,7 +5522,7 @@ to-top
 公司简介
 
 ## 大阪市此花区伝法2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/denpo2/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/denpo2/detail.html
 
 大阪市此花区伝法2丁目
 房屋信息
@@ -5531,7 +5587,7 @@ to-top
 公司简介
 
 ## OrientCity 伝法 Part2 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/denpo3-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/denpo3-ori/detail.html
 
 OrientCity 伝法 Part2
 格局图
@@ -5595,7 +5651,7 @@ to-top
 公司简介
 
 ## 大阪市浪速区恵美須東1丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/ebisuhigashi1-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/ebisuhigashi1-u/detail.html
 
 大阪市浪速区恵美須東1丁目
 information
@@ -5656,7 +5712,7 @@ to-top
 公司簡介
 
 ## 大阪市住之江区浜口西2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/hamaguchinishi2/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/hamaguchinishi2/detail.html
 
 大阪市住之江区浜口西2丁目
 房屋信息
@@ -5717,7 +5773,7 @@ to-top
 公司简介
 
 ## 住之江東コーポ- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/hamaguchinishi3-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/hamaguchinishi3-m/detail.html
 
 住之江東コーポ
 information
@@ -5786,7 +5842,7 @@ to-top
 公司简介
 
 ## 大阪市住吉区東粉浜2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/higashikohama2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/higashikohama2-s/detail.html
 
 大阪市住吉区東粉浜2丁目
 information
@@ -5849,7 +5905,7 @@ to-top
 公司簡介
 
 ## OrientCity 平尾 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/hirao1/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/hirao1/detail.html
 
 OrientCity 平尾
 格局图
@@ -5914,7 +5970,7 @@ to-top
 公司简介
 
 ## 大阪市大正区平尾2丁目 1号地- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/hirao2-1/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/hirao2-1/detail.html
 
 大阪市大正区平尾2丁目 1号地
 房屋信息
@@ -5978,7 +6034,7 @@ to-top
 公司简介
 
 ## 大阪市大正区平尾2丁目 2号地- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/hirao2-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/hirao2-2/detail.html
 
 大阪市大正区平尾2丁目 2号地
 房屋信息
@@ -6042,7 +6098,7 @@ to-top
 公司简介
 
 ## 大阪市大正区平尾2丁目 B号地- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/hirao2-b/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/hirao2-b/detail.html
 
 大阪市大正区平尾2丁目 B号地
 房屋信息
@@ -6106,7 +6162,7 @@ to-top
 公司简介
 
 ## 大阪市大正区平尾3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/hirao3-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/hirao3-2/detail.html
 
 大阪市大正区平尾3丁目
 房屋信息
@@ -6170,7 +6226,7 @@ to-top
 公司简介
 
 ## 大阪市此花区春日出南2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/kasugademinami2-1/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/kasugademinami2-1/detail.html
 
 大阪市此花区春日出南2丁目
 房屋信息
@@ -6235,7 +6291,7 @@ to-top
 公司简介
 
 ## 大阪市此花区春日出南2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/kasugademinami2-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/kasugademinami2-2/detail.html
 
 大阪市此花区春日出南2丁目
 房屋信息
@@ -6301,7 +6357,7 @@ to-top
 公司简介
 
 ## 大阪市此花区春日出中1丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/kasugadenaka1/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/kasugadenaka1/detail.html
 
 大阪市此花区春日出中1丁目
 房屋信息
@@ -6366,7 +6422,7 @@ to-top
 公司简介
 
 ## 大阪市阿倍野区北畠2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/kitabatake2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/kitabatake2-s/detail.html
 
 大阪市阿倍野区北畠2丁目
 information
@@ -6429,7 +6485,7 @@ to-top
 公司簡介
 
 ## 大阪市住之江区北島3丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/kitajima3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/kitajima3-s/detail.html
 
 大阪市住之江区北島3丁目
 information
@@ -6493,7 +6549,7 @@ to-top
 公司簡介
 
 ## 大阪市大正区小林東3丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/kobayashihigashi3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/kobayashihigashi3-s/detail.html
 
 大阪市大正区小林東3丁目
 information
@@ -6560,7 +6616,7 @@ to-top
 公司简介
 
 ## 大阪市的房产01 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/list01.html
+公式ページ: https://cn.orijyu.com/objects/osaka/list01.html
 
 recommend
 大阪市旭区的房产
@@ -6602,6 +6658,10 @@ OrientCity 伝法 Part2
 详情点击
 大阪市此花区春日出中1丁目
 新建一户建・停车位2台,便利店步行3分,超市步行4分,周边商业设施充实
+
+## 大阪市的房产01 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/osaka/list01.html
+
 ■房产类型:新建一户建■销售价格: 4,980万日元■地址: 大阪市此花区春日出中1丁目■交通: 阪神なんば線「千鳥橋」歩8分■土地面积: 74.38m2■建物面积: 103.29m2■格局: 4LDK
 详情点击
 大阪市此花区春日出南2丁目
@@ -6636,6 +6696,10 @@ OrientCity 住之江
 详情点击
 大阪市住之江区北島3丁目
 装修完成・看房活动开展中,可重建(有方案),靠近小学校,车站・超市步行圈内,生活便利
+
+## 大阪市的房产01 - オリエント住宅販売（続き 3）
+公式ページ: https://cn.orijyu.com/objects/osaka/list01.html
+
 ■房产类型:中古一户建■销售价格: 1,300万日元 ■地址: 大阪市住之江区北島3丁目■交通: 地下鉄四つ橋線・南港ポートタウン線「住之江公園」歩13分■土地面积: 66.11m2■建物面积: 62.91m2■格局: 4DK
 详情点击
 大阪市住之江区安立3丁目
@@ -6673,6 +6737,10 @@ OrientCity 平尾
 ■房产类型:新建一户建■销售价格: 3,430万日元 ■地址: 大阪市大正区三軒家東6丁目■交通: JR大阪環状線・大阪メトロ長堀鶴見緑地線「大正」駅歩14分■土地面积: 40.3m2■建筑面积 : 76.8m2■格局: 3LDK
 详情点击
 大阪市大正区三軒家西2丁目
+
+## 大阪市的房产01 - オリエント住宅販売（続き 4）
+公式ページ: https://cn.orijyu.com/objects/osaka/list01.html
+
 2026年6月建造・可看房,车站・超市・教育设施步行圈内,简易旅馆设备,地下铁心斋桥约16分
 ■房产类型:新建一户建■销售价格: 5,580万日元 ■地址: 大阪市大正区三軒家西2丁目■交通: JR大阪環状線「大正」歩8分■土地面积: 61.55m2■建筑面积 : 102.55m2■格局: 4LDK
 详情点击
@@ -6708,6 +6776,10 @@ OrientCity 平尾
 シティタワー大阪本町
 『本町』车站步行5分・免震构造塔楼・朝南向,靠近车站・超市,生活便利,可看房
 ■房产类型:塔楼■销售价格:12,000万日元■地址:大阪市中央区安土町2丁目■交通:地下鉄御堂筋線・中央線・四つ橋線「本町」歩5分 ■公寓面积: 64.78m2■格局: 3LDK
+
+## 大阪市的房产01 - オリエント住宅販売（続き 5）
+公式ページ: https://cn.orijyu.com/objects/osaka/list01.html
+
 详情点击
 ユニ船場 Rino Room
 换房东物件,表面利润回利7.5%,办公室・美容沙龙・住居对应,车站步行5分
@@ -6772,7 +6844,7 @@ to-top
 公司简介
 
 ## 大阪市的房产02 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/list02.html
+公式ページ: https://cn.orijyu.com/objects/osaka/list02.html
 
 recommend
 大阪市西区的房产
@@ -6827,6 +6899,10 @@ to-top
 大阪市平野区的房产
 大阪市福岛区的房产
 大阪市港区的房产
+
+## 大阪市的房产02 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/osaka/list02.html
+
 大阪市的土地
 目录
 买卖房产
@@ -6842,7 +6918,7 @@ to-top
 公司简介
 
 ## 大阪市的房产03 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/list03.html
+公式ページ: https://cn.orijyu.com/objects/osaka/list03.html
 
 recommend
 大阪市都島区的房产
@@ -6884,6 +6960,10 @@ OrientCity 姫島
 ■房产类型:一栋公寓■销售价格: 6,790万日元■地址:大阪市西淀川区姫島1丁目■交通:阪神本線「姫島」歩4分■土地面积:323.86m2■建物面积:471.76m2■格局:1R×12室
 详情点击
 大阪市東住吉区的房产
+
+## 大阪市的房产03 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/osaka/list03.html
+
 OrientCity 矢田
 车站步行5分・超市步行6分,生活便利,自由设计
 ■房产类型:新建一户建■销售价格: 2,580万日元~■地址: 大阪市東住吉区住道矢田1丁目■交通: 近鉄南大阪線「矢田」歩5分■土地面积: 56.59m2■建筑面积: 84.00m2 ~■格局: 4LDK
@@ -6922,6 +7002,10 @@ OrientCity 長居公園
 ■房产类型:中古一户建■销售价格: 3,480万日元■地址:大阪市東成区東今里3丁目■交通: 大阪メトロ今里筋線「緑橋」駅歩10分■土地面积: 42.78m2■建筑面积 : 100.93m2■格局: 4SLDK
 详情点击
 大阪市东淀川区的房产
+
+## 大阪市的房产03 - オリエント住宅販売（続き 3）
+公式ページ: https://cn.orijyu.com/objects/osaka/list03.html
+
 大阪市東淀川区大道南2丁目 A号棟
 2026年3月建造・可看房,车站・超市・教育设施全部在步行圈内
 ■房产类型:新建一户建■销售价格: 3,680万日元■地址: 大阪市東淀川区大道南2丁目■交通: 地下鉄今里筋線「だいどう豊里」歩15分■土地面积: 47.80m2■建筑面积: 100.28m2■格局: 2SLDK
@@ -6956,6 +7040,10 @@ OrientCity 長居公園
 详情点击
 メゾン第5新大阪Rino Room
 换房东物件,2026年2月装修,表面利润回利8.86%
+
+## 大阪市的房产03 - オリエント住宅販売（続き 4）
+公式ページ: https://cn.orijyu.com/objects/osaka/list03.html
+
 ■房产类型:公寓■销售价格: 880万日元■地址: 大阪市東淀川区東中島1丁目■交通: JR東海道・山陽本線・Osaka Metro御堂筋線「新大阪」駅歩7分■专有面积: 18.05m2■格局: 1R
 详情点击
 大阪市東淀川区菅原3丁目
@@ -6989,6 +7077,10 @@ OrientCity 長居公園
 详情点击
 大阪市平野区瓜破4丁目
 2025年9月装修完成・看房活动开展中,车站・超市步行圈内,生活便利,即刻交付
+
+## 大阪市的房产03 - オリエント住宅販売（続き 5）
+公式ページ: https://cn.orijyu.com/objects/osaka/list03.html
+
 ■房产类型:中古一户建■销售价格: 1,380万日元■地址: 大阪市平野区瓜破4丁目■交通: 地下鉄谷町線「喜連瓜破」歩10分■土地面积: 43.19m2■建筑面积: 98.54m2
 详情点击
 大阪市平野区瓜破2丁目
@@ -7033,6 +7125,10 @@ to-top
 大阪市北区的房产
 大阪市城东区的房产
 大阪市住之江区的房产
+
+## 大阪市的房产03 - オリエント住宅販売（続き 6）
+公式ページ: https://cn.orijyu.com/objects/osaka/list03.html
+
 大阪市住吉区的房产
 大阪市大正区的房产
 大阪市天王寺区的房产
@@ -7061,7 +7157,7 @@ to-top
 公司简介
 
 ## 大阪市阿倍野区丸山通2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/maruyamadori2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/maruyamadori2-s/detail.html
 
 大阪市阿倍野区丸山通2丁目
 information
@@ -7129,7 +7225,7 @@ to-top
 公司簡介
 
 ## 大阪市大正区南恩加島6丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/minamiokajima6/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/minamiokajima6/detail.html
 
 大阪市大正区南恩加島6丁目
 房屋信息
@@ -7192,7 +7288,7 @@ to-top
 公司简介
 
 ## 大阪市住吉区南住吉1丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/minamisumiyoshi1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/minamisumiyoshi1-s/detail.html
 
 大阪市住吉区南住吉1丁目
 information
@@ -7260,7 +7356,7 @@ to-top
 公司簡介
 
 ## 大阪市住之江区御崎1丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/misaki1/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/misaki1/detail.html
 
 大阪市住之江区御崎1丁目
 房屋信息
@@ -7325,7 +7421,7 @@ to-top
 公司简介
 
 ## OrientCity 住之江 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/misaki2-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/misaki2-ori/detail.html
 
 OrientCity 住之江
 格局图
@@ -7390,7 +7486,7 @@ to-top
 公司简介
 
 ## 大阪市生野区桃谷4丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/momodani4-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/momodani4-s/detail.html
 
 大阪市生野区桃谷4丁目
 information
@@ -7452,7 +7548,7 @@ to-top
 公司簡介
 
 ## 大阪市生野区桃谷5丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/momodani5-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/momodani5-s/detail.html
 
 大阪市生野区桃谷5丁目
 information
@@ -7518,7 +7614,7 @@ to-top
 公司簡介
 
 ## 上本町ガーデンハイツ- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/obasecho-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/obasecho-m/detail.html
 
 上本町ガーデンハイツ
 information
@@ -7584,7 +7680,7 @@ to-top
 公司简介
 
 ## 大阪市大正区三軒家東6丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/sangenyahigashi6/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/sangenyahigashi6/detail.html
 
 大阪市大正区三軒家東6丁目
 房屋信息
@@ -7644,7 +7740,7 @@ to-top
 公司简介
 
 ## 大阪市大正区三軒家西2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/sangenyanishi2/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/sangenyanishi2/detail.html
 
 大阪市大正区三軒家西2丁目
 房屋信息
@@ -7705,7 +7801,7 @@ to-top
 公司简介
 
 ## 大阪市住吉区清水丘3丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/shimizugaoka3/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/shimizugaoka3/detail.html
 
 大阪市住吉区清水丘3丁目
 information
@@ -7770,7 +7866,7 @@ to-top
 公司簡介
 
 ## OrientCity 今里- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/shinimazato3-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/shinimazato3-ori/detail.html
 
 OrientCity 今里
 格局图
@@ -7835,7 +7931,7 @@ to-top
 公司简介
 
 ## OrientCity 長居公園 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/sunjiyata1-ori-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/sunjiyata1-ori-2/detail.html
 
 OrientCity 長居公園
 格局图
@@ -7898,7 +7994,7 @@ to-top
 公司简介
 
 ## 大阪市此花区酉島3丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/torishima3/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/torishima3/detail.html
 
 大阪市此花区酉島3丁目
 房屋信息
@@ -7960,7 +8056,7 @@ to-top
 公司简介
 
 ## 大阪市大正区鶴町3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/osaka/tsurumachi3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/osaka/tsurumachi3-s/detail.html
 
 大阪市大正区鶴町3丁目
 information
@@ -8030,7 +8126,7 @@ to-top
 公司簡介
 
 ## 京都市西京区上桂御正町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/kamikatsuramishocho-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/kamikatsuramishocho-u/detail.html
 
 京都市西京区上桂御正町
 房屋信息
@@ -8087,7 +8183,7 @@ to-top
 公司简介
 
 ## OrientCity 香芝- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/kanmakicho-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/kanmakicho-ori/detail.html
 
 OrientCity 香芝
 格局图
@@ -8150,7 +8246,7 @@ to-top
 公司简介
 
 ## 高知県安芸郡東洋町野根 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/koutikenn-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/koutikenn-s/detail.html
 
 高知県安芸郡東洋町野根
 information
@@ -8206,7 +8302,7 @@ to-top
 公司简介
 
 ## 其他地区房产 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/list01.html
+公式ページ: https://cn.orijyu.com/objects/others/list01.html
 
 recommend
 其他地区房产
@@ -8244,6 +8340,10 @@ OrientCity 西ノ京
 详情点击
 京都市北区大宮一ノ井町 1号地
 2025年11月建造・看房活动开展中,西南朝向・日照良好,超市步行4分,购物方便
+
+## 其他地区房产 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/others/list01.html
+
 ■房产类型:新建一户建■房产售价: 4,180万日元■地址: 京都市北区大宮一ノ井町■交通:地下鉄烏丸線「北大路」巴士15分■土地面积: 105.76m2■建物面积: 95.99m2■格局: 3LDK
 详情点击
 京都市左京区静市市原町
@@ -8283,6 +8383,10 @@ OrientCity 西ノ京
 ■房产类型:土地■销售价格: 3,580万日元■地址: 京都市北区紫野東泉堂町■交通: 京都市営地下鉄烏丸線「北大路」駅歩22分■土地面积: 127.99m2
 详情点击
 京都市右京区山ノ内苗町
+
+## 其他地区房产 - オリエント住宅販売（続き 3）
+公式ページ: https://cn.orijyu.com/objects/others/list01.html
+
 无建筑条件土地・住宅地交付,购物中心步行3分,车站步行圈内,生活便利,小学校步行3分
 ■房产类型:土地■销售价格: 3,400万日元■地址: 京都市右京区山ノ内苗町■交通:京福嵐山本線「山ノ内」歩8分■土地面积: 82.71m2
 详情点击
@@ -8327,7 +8431,7 @@ to-top
 公司简介
 
 ## 和歌山県田辺市文里2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/mori2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/mori2-s/detail.html
 
 和歌山県田辺市文里2丁目
 information
@@ -8387,7 +8491,7 @@ to-top
 公司简介
 
 ## 京都市北区紫野東泉堂町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/murasakinohigashisendocho-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/murasakinohigashisendocho-u/detail.html
 
 京都市北区紫野東泉堂町
 房屋信息
@@ -8443,7 +8547,7 @@ to-top
 公司简介
 
 ## OrientCity 金閣寺 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/murasakinokamimikoshicho-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/murasakinokamimikoshicho-ori/detail.html
 
 OrientCity 金閣寺
 格局图
@@ -8509,7 +8613,7 @@ to-top
 公司简介
 
 ## 京都市北区紫野北舟岡町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/murasakinokitafunaokacho-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/murasakinokitafunaokacho-u/detail.html
 
 京都市北区紫野北舟岡町
 房屋信息
@@ -8567,7 +8671,7 @@ to-top
 公司简介
 
 ## 奈良県香芝市西真美2丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/nishimami-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/nishimami-s/detail.html
 
 奈良県香芝市西真美2丁目
 information
@@ -8626,7 +8730,7 @@ to-top
 公司简介
 
 ## 広島県福山市西新涯町2丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/nishishingaicho2-h/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/nishishingaicho2-h/detail.html
 
 広島県福山市西新涯町2丁目
 information
@@ -8682,7 +8786,7 @@ to-top
 公司简介
 
 ## 千葉県山武市沖渡 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/okiwatashi-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/okiwatashi-u/detail.html
 
 千葉県山武市沖渡
 房屋信息
@@ -8735,7 +8839,7 @@ to-top
 公司简介
 
 ## 京都市北区大宮一ノ井町 1号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/omiyaichinoicho/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/omiyaichinoicho/detail.html
 
 京都市北区大宮一ノ井町 1号地
 房屋信息
@@ -8797,7 +8901,7 @@ to-top
 公司简介
 
 ## OrientCity 西ノ京 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/rokujo1-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/rokujo1-ori/detail.html
 
 OrientCity 西ノ京
 information
@@ -8862,7 +8966,7 @@ to-top
 公司简介
 
 ## 茨城県水戸市酒門町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/sakadocho-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/sakadocho-u/detail.html
 
 茨城県水戸市酒門町
 房屋信息
@@ -8915,7 +9019,7 @@ to-top
 公司简介
 
 ## 奈良県奈良市三条町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/sanjocho/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/sanjocho/detail.html
 
 奈良県奈良市三条町
 格局図
@@ -8978,7 +9082,7 @@ to-top
 公司简介
 
 ## 京都市北区紫竹北大門町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/shichikukitadaimoncho-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/shichikukitadaimoncho-s/detail.html
 
 京都市北区紫竹北大門町
 房屋信息
@@ -9038,7 +9142,7 @@ to-top
 公司简介
 
 ## 京都市北区紫竹北大門町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/shichikukitadaimoncho-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/shichikukitadaimoncho-u/detail.html
 
 京都市北区紫竹北大門町
 房屋信息
@@ -9096,7 +9200,7 @@ to-top
 公司简介
 
 ## 滋賀県甲賀市信楽町上朝宮 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/shigarakichokamiasamiya/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/shigarakichokamiasamiya/detail.html
 
 滋賀県甲賀市信楽町上朝宮
 information
@@ -9142,7 +9246,7 @@ to-top
 公司简介
 
 ## 奈良県生駒市鹿ノ台北1丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/shikanodaikita1/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/shikanodaikita1/detail.html
 
 奈良県生駒市鹿ノ台北1丁目
 information
@@ -9207,7 +9311,7 @@ to-top
 公司简介
 
 ## 福岡県糸島市志摩桜井 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/shimasakurai-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/shimasakurai-u/detail.html
 
 福岡県糸島市志摩桜井
 房屋信息
@@ -9256,7 +9360,7 @@ to-top
 公司简介
 
 ## 奈良県北葛城郡上牧町下牧6丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/shimomaki6-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/shimomaki6-ori/detail.html
 
 奈良県北葛城郡上牧町下牧6丁目
 information
@@ -9319,7 +9423,7 @@ JR和歌山線「志都美」歩24分
 公司简介
 
 ## 京都市左京区静市市原町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/shizuichiichiharacho/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/shizuichiichiharacho/detail.html
 
 京都市左京区静市市原町
 房屋信息
@@ -9376,7 +9480,7 @@ to-top
 公司简介
 
 ## OrientCity 伏見 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/sifusimiku-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/sifusimiku-ori/detail.html
 
 OrientCity 伏見
 格局图
@@ -9437,7 +9541,7 @@ to-top
 公司简介
 
 ## OrientCity 薗 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/sono-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/sono-ori/detail.html
 
 OrientCity 薗
 information
@@ -9502,7 +9606,7 @@ to-top
 公司简介
 
 ## 奈良県天理市九条町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/tenri-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/tenri-u/detail.html
 
 奈良県天理市九条町
 information
@@ -9557,7 +9661,7 @@ JR桜井線「長柄」歩27分
 公司简介
 
 ## 京都市右京区山ノ内苗町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/others/yamanouchinaemachi-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/others/yamanouchinaemachi-u/detail.html
 
 京都市右京区山ノ内苗町
 房屋信息
@@ -9614,7 +9718,7 @@ to-top
 公司简介
 
 ## 和泉市伯太町6丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/hakatacho6-s-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/hakatacho6-s-2/detail.html
 
 和泉市伯太町6丁目
 information
@@ -9676,7 +9780,7 @@ to-top
 
 ## OrientCity 貝塚
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/horiumizuka-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/horiumizuka-ori/detail.html
 
 OrientCity 貝塚
 格局图
@@ -9740,7 +9844,7 @@ to-top
 公司简介
 
 ## 岸和田市磯上町4丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/isonokamicho4-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/isonokamicho4-u/detail.html
 
 岸和田市磯上町4丁目
 information
@@ -9800,7 +9904,7 @@ to-top
 公司简介
 
 ## 岸和田市磯上町5丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/isonokamicho5-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/isonokamicho5-s/detail.html
 
 岸和田市磯上町5丁目
 information
@@ -9863,7 +9967,7 @@ to-top
 
 ## OrientCity 忠岡
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/isonokamicho6-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/isonokamicho6-ori/detail.html
 
 OrientCity 忠岡
 画像01
@@ -9928,7 +10032,7 @@ to-top
 公司简介
 
 ## 岸和田市岸城- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/kishikicho-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/kishikicho-s/detail.html
 
 岸和田市岸城
 information
@@ -9990,7 +10094,7 @@ to-top
 公司简介
 
 ## 大阪府的房产01 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/list01.html
+公式ページ: https://cn.orijyu.com/objects/pref/list01.html
 
 recommend
 高石市的房产
@@ -10034,6 +10138,10 @@ OrientCity 鶴山台
 ■房产类型:新独立式住宅■房产售价: 2,280万日元~■地址:和泉市幸3丁目■交通:JR阪和線「信太山」歩10分■土地面积: 75.00m2 ~■建物面积:88.00m2~■格局: 3LDK~
 详情点击
 和泉市富秋町1丁目
+
+## 大阪府的房产01 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/pref/list01.html
+
 新建一户建,车站・超市・教育设施步行圈内,生活便利
 ■房产类型:新建一户建■房产售价: 2,280万日元■地址: 和泉市富秋町1丁目■交通:JR阪和線「信太山」歩9分■土地面积: 81.90m2■建物面积: 87.38m2■格局: 3LDK
 详情点击
@@ -10072,6 +10180,10 @@ OrientCity 忠岡
 详情点击
 岸和田市磯上町5丁目
 看房活动开展中・装修完成・即刻交付,车站・商业设施・教育设施在步行圈内
+
+## 大阪府的房产01 - オリエント住宅販売（続き 3）
+公式ページ: https://cn.orijyu.com/objects/pref/list01.html
+
 ■房产类型:中古一户建■房产售价: 1,370万日元■地址: 岸和田市磯上町5丁目■交通:南海本線「忠岡」歩12分■土地面积: 106.37m2■建物面积: 90.31m2■格局: 4LDK
 详情点击
 岸和田市吉井町1丁目
@@ -10127,7 +10239,7 @@ to-top
 公司简介
 
 ## 大阪府的房产02 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/list02.html
+公式ページ: https://cn.orijyu.com/objects/pref/list02.html
 
 recommend
 貝塚市的房产
@@ -10169,6 +10281,10 @@ OrientCity 和泉橋本
 详情点击
 OrientCity 和泉橋本 Part2
 车站・超市步行圈内,生活便利,自由设计
+
+## 大阪府的房产02 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/pref/list02.html
+
 ■房产类型:新建一户建■销售价格:1,980万日元~■地址:貝塚市王子■交通:JR阪和線「和泉橋本」歩12分■土地面积: 57.86m2■建物面积: 86.00m2 ~■格局:3LDK
 详情点击
 OrientCity 貝塚駅
@@ -10209,6 +10325,10 @@ OrientCity 貝塚駅
 详情点击
 貝塚市近木町
 车站步行1分・土地130坪・住宅地,超市步行3分,生活便利,无建筑条件
+
+## 大阪府的房产02 - オリエント住宅販売（続き 3）
+公式ページ: https://cn.orijyu.com/objects/pref/list02.html
+
 ■房产类型:土地■销售价格: 19,800万日元■地址:貝塚市近木町■交通: 南海本線「貝塚」歩1分■土地面积: 430.04m2
 详情点击
 泉佐野市的房产
@@ -10250,6 +10370,10 @@ OrientCity 泉佐野
 详情点击
 泉佐野市泉ケ丘3丁目
 娴静的住宅地・无建筑条件・平地344坪,车站步行5分・靠近车站
+
+## 大阪府的房产02 - オリエント住宅販売（続き 4）
+公式ページ: https://cn.orijyu.com/objects/pref/list02.html
+
 ■房产类型:土地■销售价格:2,480万日元■地址:泉佐野市泉ケ丘3丁目■交通: JR阪和線「東佐野」歩5分■土地面积:1,139.02m2
 详情点击
 泉南市的房产
@@ -10293,7 +10417,7 @@ to-top
 公司简介
 
 ## 大阪府的房产03 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/list03.html
+公式ページ: https://cn.orijyu.com/objects/pref/list03.html
 
 recommend
 泉南郡的房产
@@ -10335,6 +10459,10 @@ OrientCity 尾崎町 Part2
 ■房产类型:新独立式住宅■销售价格:1,980万日元■地址:阪南市尾崎町8丁目■交通:南海本線「尾崎」歩20分■土地面积: 62.10m2■建物面积: 91.90m2■格局: 3LDK
 详情点击
 OrientCity 箱作
+
+## 大阪府的房产03 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/pref/list03.html
+
 第一期分售地开盘!车站步行3分・土地45坪,标准搭配碳酸净水系统・自由设计・梦想的家
 ■房产类型:新建一户建■销售价格: 2,880万日元~■地址:阪南市箱作■交通: 南海本線「箱作」歩3分■土地面积:150.00m2■建物面积:88.00m2~■格局:4LDK
 详情点击
@@ -10377,6 +10505,10 @@ OrientCity 箱作
 详情点击
 高槻市津之江町3丁目
 2026年6月装修・可看房,超市步行5分,购物方便,靠近小中学校,即刻交付
+
+## 大阪府的房产03 - オリエント住宅販売（続き 3）
+公式ページ: https://cn.orijyu.com/objects/pref/list03.html
+
 ■房产类型:中古一户建■销售价格: 3,249万日元■地址: 高槻市津之江町3丁目■交通:阪急京都線「富田」歩18分■土地面积: 76.69m2■建筑面积: 78.16m2■格局: 3LDK
 详情点击
 豊中市的房产
@@ -10416,6 +10548,10 @@ OrientCity 菱江
 详情点击
 東大阪市昭和町
 2026年4月装修・可看房,钢架造・四室一厅・停车位2台,车站・超市步行圈内,即刻交付
+
+## 大阪府的房产03 - オリエント住宅販売（続き 4）
+公式ページ: https://cn.orijyu.com/objects/pref/list03.html
+
 ■房产类型:中古一户建■销售价格: 3,049万日元■地址: 東大阪市昭和町■交通: 近鉄奈良線「瓢箪山」歩9分■土地面积: 77.89m2■建物面积: 133.65m2■格局: 4LDK
 详情点击
 東大阪市若江南2丁目
@@ -10453,6 +10589,10 @@ OrientCity 加美
 详情点击
 八尾市南植松町2丁目
 室内装修两室一厅住宅・可看房,超市・教育设施步行圈内,生活便利
+
+## 大阪府的房产03 - オリエント住宅販売（続き 5）
+公式ページ: https://cn.orijyu.com/objects/pref/list03.html
+
 ■房产类型:中古一户建■销售价格: 1,080万日元■地址: 八尾市南植松町2丁目■交通: JR関西本線「八尾」駅歩15分■土地面积: 44.85m2■建筑面积: 44.07m2■格局: 2LDK
 详情点击
 八尾市竹渕1丁目
@@ -10516,7 +10656,7 @@ to-top
 公司简介
 
 ## 大阪府的房产04 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/list04.html
+公式ページ: https://cn.orijyu.com/objects/pref/list04.html
 
 recommend
 松原市的房产
@@ -10559,6 +10699,10 @@ OrientCity 藤井寺
 详情点击
 藤井寺市藤ヶ丘1丁目1期2号地
 2026年6月建造,停车位2台,车站・超市步行圈内・紧邻商业设施,生活便利
+
+## 大阪府的房产04 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/pref/list04.html
+
 ■房产类型:新建一户建■销售价格: 3,998万日元■地址: 藤井寺市藤ヶ丘1丁目■交通: 近鉄南大阪線「藤井寺」駅歩13分■土地面积: 110.65m2■建筑面积: 87.77m2■格局:4LDK
 详情点击
 藤井寺市野中1丁目 1期 1号地
@@ -10600,6 +10744,10 @@ OrientCity 藤井寺
 详情点击
 羽曳野市島泉4丁目
 无建筑条件土地,小学校步行5分,超市步行6分,购物方便
+
+## 大阪府的房产04 - オリエント住宅販売（続き 3）
+公式ページ: https://cn.orijyu.com/objects/pref/list04.html
+
 ■房产类型:土地■销售价格: 990万日元■地址: 羽曳野市島泉4丁目■交通:近鉄南大阪線「恵我ノ荘」歩14分■土地面积: 92.23m2
 详情点击
 富田林市的房产
@@ -10674,7 +10822,7 @@ to-top
 公司简介
 
 ## 大阪府的房产05 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/list05.html
+公式ページ: https://cn.orijyu.com/objects/pref/list05.html
 
 recommend
 大阪府其他地方房产
@@ -10715,6 +10863,10 @@ OrientCity 樟葉
 ■房产类型:新建一户建■销售价格: 4,030万日元■地址: 寝屋川市成田町■交通:京阪本線「香里園」歩19分■土地面积: 100.24m2■建筑面积: 92.33m2■格局: 3SLDK
 详情点击
 寝屋川市成田町 C号棟
+
+## 大阪府的房产05 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/pref/list05.html
+
 2026年3月建造・设计性住宅,超市步行圈内,购物方便,教育设施步行圈内
 ■房产类型:新建一户建■销售价格: 3,980万日元■地址: 寝屋川市成田町■交通:京阪本線「香里園」歩19分■土地面积: 100.24m2■建筑面积: 90.71m2■格局: 3SLDK
 详情点击
@@ -10763,7 +10915,7 @@ to-top
 公司简介
 
 ## OrientCity 岸和田- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/nakakitacho-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/nakakitacho-ori/detail.html
 
 OrientCity 岸和田
 画像01
@@ -10823,7 +10975,7 @@ to-top
 公司简介
 
 ## OrientCity 下松- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/obucho2-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/obucho2-ori/detail.html
 
 OrientCity 下松
 画像01
@@ -10887,7 +11039,7 @@ to-top
 公司简介
 
 ## 岸和田市尾生町4丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/obucho4-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/obucho4-u/detail.html
 
 岸和田市尾生町4丁目
 information
@@ -10945,7 +11097,7 @@ to-top
 公司简介
 
 ## OrientCity 北信太- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/saiwai3-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/saiwai3-ori/detail.html
 
 OrientCity 北信太
 画像01
@@ -11012,7 +11164,7 @@ to-top
 公司简介
 
 ## オレンヂタウン 北信太 Part2- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/saiwai3-part2-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/saiwai3-part2-ori/detail.html
 
 オレンヂタウン 北信太 Part2
 画像01
@@ -11077,7 +11229,7 @@ to-top
 公司简介
 
 ## 泉北郡忠岡町忠岡中1丁目 1号棟- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/tadaokanaka1-1/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/tadaokanaka1-1/detail.html
 
 泉北郡忠岡町忠岡中1丁目 1号棟
 information
@@ -11145,7 +11297,7 @@ to-top
 公司简介
 
 ## 高槻市西冠1丁目 2号棟- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/takashinohama2-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/takashinohama2-2/detail.html
 
 高槻市西冠1丁目 2号棟
 information
@@ -11211,7 +11363,7 @@ to-top
 公司简介
 
 ## OrientCity 富秋町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/tomiaki1-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/tomiaki1-ori/detail.html
 
 OrientCity 富秋町
 画像01
@@ -11275,7 +11427,7 @@ to-top
 公司简介
 
 ## 和泉市富秋町1丁目 1期 1号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/tomiakicho1-1-1-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/tomiakicho1-1-1-u/detail.html
 
 和泉市富秋町1丁目 1期 1号地
 information
@@ -11335,7 +11487,7 @@ to-top
 公司简介
 
 ## 和泉市富秋町1丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/tomiakicho1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/tomiakicho1-s/detail.html
 
 和泉市富秋町1丁目
 information
@@ -11402,7 +11554,7 @@ to-top
 公司简介
 
 ## 和泉市富秋町1丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/tomiakicho1/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/tomiakicho1/detail.html
 
 和泉市富秋町1丁目
 information
@@ -11470,7 +11622,7 @@ to-top
 
 ## OrientCity 取石 Part2
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/toriishi1-part2-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/toriishi1-part2-ori/detail.html
 
 OrientCity 取石 Part2
 画像01
@@ -11535,7 +11687,7 @@ to-top
 公司简介
 
 ## 高石市取石3丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/toriishi3-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/toriishi3-s/detail.html
 
 高石市取石3丁目
 information
@@ -11603,7 +11755,7 @@ to-top
 
 ## 高石市取石4丁目
 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/toriishi4-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/toriishi4-s/detail.html
 
 高石市取石4丁目
 information
@@ -11665,7 +11817,7 @@ to-top
 公司简介
 
 ## OrientCity 鶴山台- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/tsuruyamadai1-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/tsuruyamadai1-ori/detail.html
 
 OrientCity 鶴山台
 画像01
@@ -11730,7 +11882,7 @@ to-top
 公司简介
 
 ## 和泉市鶴山台1丁目- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/tsuruyamadai1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/tsuruyamadai1-s/detail.html
 
 和泉市鶴山台1丁目
 画像01
@@ -11797,7 +11949,7 @@ to-top
 公司简介
 
 ## 岸和田市吉井町1丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/pref/yoshiicho1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/pref/yoshiicho1-s/detail.html
 
 岸和田市吉井町1丁目
 information
@@ -11860,7 +12012,7 @@ to-top
 公司简介
 
 ## 【賃貸】オリエントシティ 姫島 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/himejima1-kariya/detail.html
+公式ページ: https://cn.orijyu.com/objects/rental/himejima1-kariya/detail.html
 
 【賃貸】オリエントシティ 姫島
 information
@@ -11915,7 +12067,7 @@ to-top
 公司简介
 
 ## 房屋租赁01 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/list01.html
+公式ページ: https://cn.orijyu.com/objects/rental/list01.html
 
 recommend
 大阪市生野区的房产
@@ -11974,7 +12126,7 @@ to-top
 公司简介
 
 ## 房屋租赁02 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/list02.html
+公式ページ: https://cn.orijyu.com/objects/rental/list02.html
 
 recommend
 大阪市中央区的房产
@@ -12018,7 +12170,7 @@ to-top
 公司简介
 
 ## 房屋租赁03 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/list03.html
+公式ページ: https://cn.orijyu.com/objects/rental/list03.html
 
 recommend
 大阪市西区的房产
@@ -12072,7 +12224,7 @@ to-top
 公司简介
 
 ## 房屋租赁04 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/list04.html
+公式ページ: https://cn.orijyu.com/objects/rental/list04.html
 
 recommend
 大阪市港区的房产
@@ -12138,7 +12290,7 @@ to-top
 公司简介
 
 ## 房屋租赁05 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/list05.html
+公式ページ: https://cn.orijyu.com/objects/rental/list05.html
 
 recommend
 泉北郡的房产
@@ -12195,6 +12347,10 @@ recommend
 松原市的房产
 【賃貸】松原市立部1丁目
 装修完成,超市步行6分,购物方便,可养宠物,即刻入住
+
+## 房屋租赁05 - オリエント住宅販売（続き 2）
+公式ページ: https://cn.orijyu.com/objects/rental/list05.html
+
 ■房产类型:借家■租金: 63,000日元■地址: 松原市立部1丁目■交通: 近鉄南大阪線「河内松原」歩23分■格局:4DK
 详情点击
 大阪府其他地区的房产
@@ -12235,7 +12391,7 @@ to-top
 公司简介
 
 ## 【賃貸】中川2丁目 店舗・事務所 1F - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/nakagawa2-t-1F/detail.html
+公式ページ: https://cn.orijyu.com/objects/rental/nakagawa2-t-1F/detail.html
 
 【賃貸】中川2丁目 店舗・事務所 1F
 information
@@ -12278,7 +12434,7 @@ to-top
 公司简介
 
 ## 【賃貸】中川2丁目 店舗・事務所 2F - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/nakagawa2-t-2F/detail.html
+公式ページ: https://cn.orijyu.com/objects/rental/nakagawa2-t-2F/detail.html
 
 【賃貸】中川2丁目 店舗・事務所 2F
 information
@@ -12321,7 +12477,7 @@ to-top
 公司简介
 
 ## 【賃貸】KEEP 新今里 702号室- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/shinimazato5-702/detail.html
+公式ページ: https://cn.orijyu.com/objects/rental/shinimazato5-702/detail.html
 
 【賃貸】KEEP 新今里 702号室
 information
@@ -12371,7 +12527,7 @@ to-top
 公司简介
 
 ## 【賃貸】大阪市住吉区墨江3丁目 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/rental/sumie3-kariya/detail.html
+公式ページ: https://cn.orijyu.com/objects/rental/sumie3-kariya/detail.html
 
 【賃貸】大阪市住吉区墨江3丁目
 information
@@ -12418,7 +12574,7 @@ to-top
 公司简介
 
 ## 堺市南区赤坂台5丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/akasakadai5-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/akasakadai5-s/detail.html
 
 堺市南区赤坂台5丁
 格局図
@@ -12484,7 +12640,7 @@ to-top
 公司简介
 
 ## 堺市美原区阿弥- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/ami-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/ami-s/detail.html
 
 堺市美原区阿弥
 格局図
@@ -12546,7 +12702,7 @@ to-top
 公司简介
 
 ## 堺市堺区旭ヶ丘北町2丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/asahigaokakitamachi2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/asahigaokakitamachi2-s/detail.html
 
 堺市堺区旭ヶ丘北町2丁
 格局図
@@ -12609,7 +12765,7 @@ to-top
 公司简介
 
 ## 堺市堺区旭ヶ丘北町4丁 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/asahigaokakitamachi4-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/asahigaokakitamachi4-u/detail.html
 
 堺市堺区旭ヶ丘北町4丁
 房屋信息
@@ -12668,7 +12824,7 @@ to-top
 公司简介
 
 ## 堺市堺区浅香山町1丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/asakayamacho1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/asakayamacho1-s/detail.html
 
 堺市堺区浅香山町1丁
 格局図
@@ -12731,7 +12887,7 @@ to-top
 公司简介
 
 ## 堺市東区菩提町5丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/bodaicho5-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/bodaicho5-s/detail.html
 
 堺市東区菩提町5丁
 房屋信息
@@ -12796,7 +12952,7 @@ to-top
 公司简介
 
 ## 堺市南区茶山台3丁 2号棟- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/chayamadai3-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/chayamadai3-2/detail.html
 
 堺市南区茶山台3丁 2号棟
 格局図
@@ -12859,7 +13015,7 @@ to-top
 公司简介
 
 ## 堺市堺区出島町2丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/dejimacho2-t/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/dejimacho2-t/detail.html
 
 堺市堺区出島町2丁
 房屋信息
@@ -12918,7 +13074,7 @@ to-top
 公司简介
 
 ## OrientCity 初芝- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/dotocho-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/dotocho-ori/detail.html
 
 OrientCity 初芝
 information
@@ -12985,7 +13141,7 @@ to-top
 公司简介
 
 ## 堺市中区土塔町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/dotocho-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/dotocho-s/detail.html
 
 堺市中区土塔町
 房屋信息
@@ -13048,7 +13204,7 @@ to-top
 公司简介
 
 ## 堺市堺区永代町2丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/eitaicho2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/eitaicho2-s/detail.html
 
 堺市堺区永代町2丁
 房屋信息
@@ -13116,7 +13272,7 @@ to-top
 公司简介
 
 ## 堺市中区深井東町 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukaihigashimachi-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukaihigashimachi-u/detail.html
 
 堺市中区深井東町
 房屋信息
@@ -13172,7 +13328,7 @@ to-top
 公司简介
 
 ## OrientCity 深井北町II- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukaikitamachi-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukaikitamachi-ori/detail.html
 
 OrientCity 深井北町II
 information
@@ -13237,7 +13393,7 @@ to-top
 公司简介
 
 ## OrientCity 深井北町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukaikitamachi-part2-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukaikitamachi-part2-ori/detail.html
 
 OrientCity 深井北町
 information
@@ -13302,7 +13458,7 @@ to-top
 公司简介
 
 ## 堺市中区深井北町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukaikitamachi-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukaikitamachi-s/detail.html
 
 堺市中区深井北町
 格局図
@@ -13367,7 +13523,7 @@ to-top
 公司简介
 
 ## 堺市中区深井水池町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukaimizugaikecho-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukaimizugaikecho-s/detail.html
 
 堺市中区深井水池町
 房屋信息
@@ -13427,7 +13583,7 @@ to-top
 公司简介
 
 ## 堺市中区深阪1丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukasaka1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukasaka1-s/detail.html
 
 堺市中区深阪1丁
 房屋信息
@@ -13489,7 +13645,7 @@ to-top
 公司简介
 
 ## 堺市中区深阪2丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukasaka2-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukasaka2-s/detail.html
 
 堺市中区深阪2丁
 房屋信息
@@ -13553,7 +13709,7 @@ to-top
 公司简介
 
 ## 堺市中区深阪 A号地- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukasaka2-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukasaka2-u/detail.html
 
 堺市中区深阪 A号地
 房屋信息
@@ -13609,7 +13765,7 @@ to-top
 公司简介
 
 ## 堺市中区深阪3丁 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukasaka3-u/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukasaka3-u/detail.html
 
 堺市中区深阪3丁
 房屋信息
@@ -13663,7 +13819,7 @@ to-top
 公司简介
 
 ## 堺市中区深阪4丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukasaka4-s-3/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukasaka4-s-3/detail.html
 
 堺市中区深阪4丁
 房屋信息
@@ -13727,7 +13883,7 @@ to-top
 公司简介
 
 ## 堺市中区深阪6丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukasaka6-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukasaka6-2/detail.html
 
 堺市中区深阪6丁
 格局図
@@ -13798,7 +13954,7 @@ to-top
 公司简介
 
 ## 堺市南区深阪南- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukasakaminami/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukasakaminami/detail.html
 
 堺市南区深阪南
 格局図
@@ -13861,7 +14017,7 @@ to-top
 公司简介
 
 ## 堺市中区福田- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/fukuda-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/fukuda-s/detail.html
 
 堺市中区福田
 房屋信息
@@ -13925,7 +14081,7 @@ to-top
 公司简介
 
 ## 御陵前ハイツ - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/goryomaehaitu-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/goryomaehaitu-m/detail.html
 
 御陵前ハイツ
 格局図
@@ -13990,7 +14146,7 @@ to-top
 公司简介
 
 ## 堺市西区船尾町西1丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hamaderafunaochonishi1-s-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hamaderafunaochonishi1-s-2/detail.html
 
 堺市西区船尾町西1丁
 房屋信息
@@ -14054,7 +14210,7 @@ to-top
 公司简介
 
 ## 堺市西区浜寺船尾町西1丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hamaderafunaochonishi1-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hamaderafunaochonishi1-s/detail.html
 
 堺市西区浜寺船尾町西1丁
 格局図
@@ -14118,7 +14274,7 @@ to-top
 公司简介
 
 ## 堺市西区浜寺船尾町西4丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hamaderafunaochonishi4-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hamaderafunaochonishi4-s/detail.html
 
 堺市西区浜寺船尾町西4丁
 房屋信息
@@ -14179,7 +14335,7 @@ to-top
 公司简介
 
 ## 堺市西区浜寺石津町東4丁 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hamaderaishizuchohigashi4-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hamaderaishizuchohigashi4-s/detail.html
 
 堺市西区浜寺石津町東4丁
 房屋信息
@@ -14241,7 +14397,7 @@ to-top
 公司简介
 
 ## 堺市西区浜寺石津町西4丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hamaderaishizuchonishi4-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hamaderaishizuchonishi4-s/detail.html
 
 堺市西区浜寺石津町西4丁
 格局図
@@ -14306,7 +14462,7 @@ to-top
 公司简介
 
 ## 堺市西区浜寺昭和町2丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hamaderashowacho2/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hamaderashowacho2/detail.html
 
 堺市西区浜寺昭和町2丁
 格局図
@@ -14371,7 +14527,7 @@ to-top
 公司简介
 
 ## 堺市西区浜寺昭和町4丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hamaderashowacho4-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hamaderashowacho4-s/detail.html
 
 堺市西区浜寺昭和町4丁
 房屋信息
@@ -14428,7 +14584,7 @@ to-top
 公司简介
 
 ## 堺市中区八田北町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/handakitacho-s-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/handakitacho-s-2/detail.html
 
 堺市中区八田北町
 房屋信息
@@ -14490,7 +14646,7 @@ to-top
 公司简介
 
 ## 堺市中区八田北町- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/handakitacho/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/handakitacho/detail.html
 
 堺市中区八田北町
 房屋信息
@@ -14550,7 +14706,7 @@ to-top
 公司简介
 
 ## 堺市西区原田 1期 1号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/harada1-1/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/harada1-1/detail.html
 
 堺市西区原田 1期 1号地
 房屋信息
@@ -14602,7 +14758,7 @@ to-top
 公司简介
 
 ## 堺市西区原田 1期 2号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/harada1-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/harada1-2/detail.html
 
 堺市西区原田 1期 2号地
 房屋信息
@@ -14654,7 +14810,7 @@ to-top
 公司简介
 
 ## 堺市西区原田 1期 4号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/harada1-4/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/harada1-4/detail.html
 
 堺市西区原田 1期 4号地
 房屋信息
@@ -14706,7 +14862,7 @@ to-top
 公司简介
 
 ## 堺市中区土師町5丁- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hazecho5/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hazecho5/detail.html
 
 堺市中区土師町5丁
 房屋信息
@@ -14767,7 +14923,7 @@ to-top
 公司简介
 
 ## 堺市中区東山2期1号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/higashiyama2-1/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/higashiyama2-1/detail.html
 
 堺市中区東山2期1号地
 房屋信息
@@ -14823,7 +14979,7 @@ to-top
 公司简介
 
 ## 堺市中区東山2期2号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/higashiyama2-2/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/higashiyama2-2/detail.html
 
 堺市中区東山2期2号地
 房屋信息
@@ -14879,7 +15035,7 @@ to-top
 公司简介
 
 ## 堺市中区東山2期3号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/higashiyama2-3/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/higashiyama2-3/detail.html
 
 堺市中区東山2期3号地
 房屋信息
@@ -14935,7 +15091,7 @@ to-top
 公司简介
 
 ## 堺市中区東山2期4号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/higashiyama2-4/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/higashiyama2-4/detail.html
 
 堺市中区東山2期4号地
 房屋信息
@@ -14991,7 +15147,7 @@ to-top
 公司简介
 
 ## 堺市中区東山2期5号地 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/higashiyama2-5/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/higashiyama2-5/detail.html
 
 堺市中区東山2期5号地
 房屋信息
@@ -15047,7 +15203,7 @@ to-top
 公司简介
 
 ## 堺市美原区平尾- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hirao-s/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hirao-s/detail.html
 
 堺市美原区平尾
 格局図
@@ -15113,7 +15269,7 @@ to-top
 公司简介
 
 ## 津久野台ファミリーマンションA棟 - オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/hiraokacho-m/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/hiraokacho-m/detail.html
 
 津久野台ファミリーマンションA棟
 格局図
@@ -15179,7 +15335,7 @@ to-top
 公司简介
 
 ## 堺市的房产01 - オリエント住宅销售
-URL: https://cn.orijyu.com/objects/sakai/list01.html
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
 
 recommend
 堺市堺区的房产
@@ -15218,6 +15374,10 @@ OrientCity 堺駅
 堺市堺区旭ヶ丘北町2丁
 2026年3月装修・看房活动开展中,全电化住宅・太阳光发电板,即刻交付
 ■房产类型:中古一户建■销售价格: 3,249万日元■地址: 堺市堺区旭ヶ丘北町2丁■交通: JR阪和線「上野芝」歩20分■土地面积: 108.69m2■建筑面积: 92.74m2■格局: 4LDK
+
+## 堺市的房产01 - オリエント住宅销售（続き 2）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 详情点击
 堺市堺区永代町2丁
 可看房,车站・超市步行圈内,生活便利,收益物件,预想回利约13.28%
@@ -15261,6 +15421,10 @@ OrientCity 堺駅
 详情点击
 堺市堺区住吉橋町1丁
 看房活动开展中,车站步行4分,超市步行5分,生活便利,作为收益物件也很推荐
+
+## 堺市的房产01 - オリエント住宅销售（続き 3）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 ■房产类型:联排住宅■销售价格: 850万日元■地址: 堺市堺区住吉橋町1丁■交通: 南海本線「堺」歩4分■土地面积:46.44m2■建筑面积: 79.41m2■格局:4DK
 详情点击
 堺市堺区出島町2丁
@@ -15302,6 +15466,10 @@ OrientCity 堺駅
 详情点击
 堺市西区上野芝向ヶ丘町4丁
 换房东物件・表面利润回利8%,娴静的住宅地,车站・超市步行圈内
+
+## 堺市的房产01 - オリエント住宅销售（続き 4）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 ■房产类型:中古一户建■销售价格:1,080万日元■地址: 堺市西区上野芝向ヶ丘町4丁■交通:JR阪和線「上野芝」歩14分■土地面积: 68.00m2■建物面积: 82.62m2■格局: 5DK
 详情点击
 堺市西区上野芝向ヶ丘町4丁
@@ -15338,6 +15506,10 @@ OrientCity 堺駅
 详情点击
 堺市西区浜寺昭和町4丁
 车站步行2分的店铺式住宅,土地44.69坪,作为新建户建用地和翻新物件都可,超市步行8分
+
+## 堺市的房产01 - オリエント住宅销售（続き 5）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 ■房产类型:中古一户建■销售价格: 2,280万日元■地址: 堺市西区浜寺昭和町4丁■交通: 南海本線「浜寺公園」歩2分■土地面积: 147.76m2■建物面积: 152.56m2
 详情点击
 堺市西区原田 1期 1号地
@@ -15379,6 +15551,10 @@ OrientCity 北野田
 详情点击
 堺市東区野尻町 1期 1号地
 2025年11月建造・看房活动开展中,超市步行5分,购物方便,全电化
+
+## 堺市的房产01 - オリエント住宅销售（続き 6）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 ■房产类型:新建一户建■销售价格: 2,898万日元■地址: 堺市東区野尻町■交通:南海高野線「初芝」歩10分■土地面积: 90.81m2■建物面积:100.19m2■格局: 4LDK
 详情点击
 堺市東区北野田
@@ -15416,6 +15592,10 @@ OrientCity 光明池
 详情点击
 堺市南区赤坂台5丁
 土地70坪・娴静的住宅地,建筑物146m2・带庭院住宅,超市步行圈内,购物方便,看房活动开展中
+
+## 堺市的房产01 - オリエント住宅销售（続き 7）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 ■房产类型:中古一户建■销售价格: 2,380万日元■地址: 堺市南区赤坂台5丁■交通:南海泉北線「光明池」巴士8分■土地面积: 233.71m2■建筑面积: 146.23m2■格局: 5LDK
 详情点击
 堺市南区鴨谷台1丁
@@ -15459,6 +15639,10 @@ OrientCity 光明池
 ■房产类型:土地■销售价格: 5,380万日元■地址: 堺市南区竹城台4丁■交通: 南海泉北線「泉ケ丘」歩20分■土地面积: 305.44m2
 详情点击
 堺市南区竹城台4丁
+
+## 堺市的房产01 - オリエント住宅销售（続き 8）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 朝南向・日照良好・娴静的住宅地・土地78坪,超市步行5分,购物方便
 ■房产类型:土地■销售价格: 3,980万日元■地址: 堺市南区竹城台4丁■交通: 南海泉北線「泉ケ丘」歩18分■土地面积: 258.19m2
 详情点击
@@ -15501,6 +15685,10 @@ OrientCity 深井北町II
 详情点击
 堺市中区堀上町
 2025年7月建造・看房活动开展中,西南角地・日照良好,超市・教育设施步行圈内
+
+## 堺市的房产01 - オリエント住宅销售（続き 9）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 ■房产类型:新建一户建■销售价格: 2,980万日元■地址: 堺市中区堀上町■交通: 南海泉北線「深井」歩23分■土地面积: 59.99m2■建筑面积:93.54m2■格局: 3LDK
 详情点击
 堺市中区堀上町
@@ -15540,6 +15728,10 @@ OrientCity 深井北町II
 ■房产类型:中古一户建■销售价格: 2,278万日元■地址: 堺市中区深阪4丁■交通:南海泉北線「泉ヶ丘」駅歩20分■土地面积: 75.89m2■建筑面积: 95.85m2■格局: 4LDK
 详情点击
 堺市中区深阪6丁
+
+## 堺市的房产01 - オリエント住宅销售（続き 10）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 2024年12月建造・未入住物件・看房活动开展中,超市步行6分,购物方便,步入式衣帽间,即刻入住可
 ■房产类型:新建一户建■销售价格: 2,780万日元■地址: 堺市中区深阪6丁■交通: 南海泉北線「泉ヶ丘」駅歩20分■土地面积: 94.52m2■建筑面积: 114.59m2■格局: 4LDK
 详情点击
@@ -15585,6 +15777,10 @@ OrientCity 深井北町II
 详情点击
 堺市中区見野山
 住宅地・土地45坪・无建筑条件,按自己喜好选择建筑公司
+
+## 堺市的房产01 - オリエント住宅销售（続き 11）
+公式ページ: https://cn.orijyu.com/objects/sakai/list01.html
+
 ■房产类型:土地■销售价格: 1,480万日元■地址: 堺市中区見野山■交通:南海泉北線「深井」巴士18分■土地面积: 150.41m2
 详情点击
 堺市北区的房产
@@ -15628,7 +15824,7 @@ to-top
 公司简介
 
 ## OrientCity 泉ケ丘- オリエント住宅販売
-URL: https://cn.orijyu.com/objects/sakai/takeshirodai3-ori/detail.html
+公式ページ: https://cn.orijyu.com/objects/sakai/takeshirodai3-ori/detail.html
 
 OrientCity 泉ケ丘
 information

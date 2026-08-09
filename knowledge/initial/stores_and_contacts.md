@@ -1,11 +1,11 @@
 # Orient Group Initial Knowledge: stores_and_contacts
 
-生成日時(UTC): 2026-08-09T17:07:46.233063+00:00
+生成日時(UTC): 2026-08-09T20:03:32.095709+00:00
 収録ページ数: 2
 出典: 各節のURLに記載されたオリエントグループ公式公開ページ
 
 ## 店舗紹介
-URL: https://orijyu.com/branch.html
+公式ページ: https://orijyu.com/branch.html
 更新日: 2025-07-11T02:10:01+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -34,7 +34,7 @@ TEL:0798-33-4508/FAX:0798-33-4507
 電話でお問い合わせ
 
 ## お問合せ総合窓口
-URL: https://orijyu.com/reception.html
+公式ページ: https://orijyu.com/reception.html
 更新日: 2026-05-07T00:39:09+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売

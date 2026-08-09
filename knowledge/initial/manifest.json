@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "started_at": "2026-08-09T17:03:55.089092+00:00",
-  "finished_at": "2026-08-09T17:07:46.382504+00:00",
+  "started_at": "2026-08-09T19:59:07.473156+00:00",
+  "finished_at": "2026-08-09T20:03:32.392547+00:00",
   "source_roots": [
     "https://orijyu.com/",
     "https://orichin.com/",
@@ -29,80 +29,80 @@
     {
       "file": "corporate_and_policies.md",
       "category": "corporate_and_policies",
-      "bytes": 4944,
-      "sha256": "3d85bd8197d44c617869c033988da1c2b1eaae37309f87a513d13f82e6b85e36"
+      "bytes": 4968,
+      "sha256": "dfe3da67faf985b5d785ca9054cb6db5fbf4bd3079b7c0a896f3aa033aa00cfa"
     },
     {
       "file": "stores_and_contacts.md",
       "category": "stores_and_contacts",
-      "bytes": 2449,
-      "sha256": "d9ddcbc13997972537bff5992217d0532551d5ec11d4d5711f0bdb70861e2f2c"
+      "bytes": 2473,
+      "sha256": "385a38eef76e2bc3ed1ab01a40e84f2428970a5bb9f5cc4accb93560744ec38c"
     },
     {
       "file": "services_and_guides.md",
       "category": "services_and_guides",
-      "bytes": 15793,
-      "sha256": "c8e8630bf08ed5c725ffb1b6b312042d523f64b704f3ac75431e9ea696814a73"
+      "bytes": 15985,
+      "sha256": "863a36db71b8e997b6648c8b498cf567e940e2e0f2fb74b6e869e531b7f84d6c"
     },
     {
       "file": "homebuilding_and_renovation.md",
       "category": "homebuilding_and_renovation",
-      "bytes": 12146,
-      "sha256": "c8358ef7f9603ce9b3ba4aa73ec659f9b10953840f2f047f1be2574c93e0cc4e"
+      "bytes": 12254,
+      "sha256": "93dfb062aa24f96dbb1e8b65ee0dc177761bab106f7c6d6fada07bac5afb925f"
     },
     {
       "file": "property_search_guides.md",
       "category": "property_search_guides",
-      "bytes": 125580,
-      "sha256": "5717253b1ae365f3bac0fe30840eead7e1e616eb45a3d6035ed649463d5effd2"
+      "bytes": 127652,
+      "sha256": "d01affaf1af119e204047bba743dd0893b5ff95cdac6d69ac8b507088ab31203"
     },
     {
       "file": "properties_for_sale.md",
       "category": "properties_for_sale",
-      "bytes": 1450247,
-      "sha256": "e5f111b92a5edacab7c483a68328e7b4747a9231f6fea22ef2b5bf971dbfc73f"
+      "bytes": 1469852,
+      "sha256": "0f3f37309fc5ccf377594f6529b4631724d054fd8d2435bcfd8bb60d9c3c83fb"
     },
     {
       "file": "properties_for_rent.md",
       "category": "properties_for_rent",
-      "bytes": 59545,
-      "sha256": "0f1f4c0cd719f73176423b0fb2695a67b7b4bfb5cedb7899795e8b7e149cbd37"
+      "bytes": 59857,
+      "sha256": "0341a10e07b6f4699d52bd16485d1e6369e74ac60e745f4c29399ffb72844615"
     },
     {
       "file": "recruitment.md",
       "category": "recruitment",
-      "bytes": 47235,
-      "sha256": "bd5f67a6776632edfcc461c6f79357891c4c15e7cffe9921a7cafa50c1a70915"
+      "bytes": 48206,
+      "sha256": "c056ebda1a9e5bdd6b4e54cbe74615f7fe32e4b43b351ea405354f92fd76d834"
     },
     {
       "file": "orichin_real_estate.md",
       "category": "orichin_real_estate",
-      "bytes": 164206,
-      "sha256": "46d8c1afeb54332d5ab1957353862126e0fa7eedc8ebab40e910ec6379a18ed9"
+      "bytes": 170861,
+      "sha256": "2e29e8e9943322643d69ea1f75f0cbd9b735bf871bbf4b24e221037618bbf652"
     },
     {
       "file": "origumi_construction.md",
       "category": "origumi_construction",
-      "bytes": 67472,
-      "sha256": "6b66f75ec453f5010c4633f37acfb412774fda9c072b9551ee20388f04c69ae3"
+      "bytes": 68873,
+      "sha256": "f1797cb53e87cdbe1900e01457356c7f1016abd32fc3f5935491456de36105ef"
     },
     {
       "file": "oriho_homebuilding.md",
       "category": "oriho_homebuilding",
-      "bytes": 1306710,
-      "sha256": "96ae701a11f4471652b20ed52678f1e402a31792c1d861387f056ed053b3ea3a"
+      "bytes": 1327529,
+      "sha256": "5e34f522955b02615bd45479a04f08e990e654f943ab1da5e77df0d5ade9ae82"
     },
     {
       "file": "international_chinese.md",
       "category": "international_chinese",
-      "bytes": 428279,
-      "sha256": "ddb7be1351e19d5b29bd4c03d4fbae0e7e611c47b83088ae28333244cafe94bf"
+      "bytes": 438040,
+      "sha256": "4bbe6f5a5e855ad1844a3aa8af1366f8d11947f5c8e2454b3c1a801ceb525555"
     },
     {
       "file": "news_and_general.md",
       "category": "news_and_general",
-      "bytes": 10035,
-      "sha256": "7a36ff2f155c95648ed2dc09e82f5070cf31ab2976fa2aaa387fb25daa896310"
+      "bytes": 10256,
+      "sha256": "20276b6d1c9477c223f672c049742ef4fcd568c54a8782473288cdf935b02016"
     }
   ],
   "failures": []

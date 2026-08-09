@@ -1,11 +1,11 @@
 # Orient Group Initial Knowledge: properties_for_rent
 
-生成日時(UTC): 2026-08-09T17:07:46.272669+00:00
+生成日時(UTC): 2026-08-09T20:03:32.204474+00:00
 収録ページ数: 26
 出典: 各節のURLに記載されたオリエントグループ公式公開ページ
 
 ## 【賃貸】丹波篠山市魚屋町
-URL: https://orijyu.com/rent/post-125914.html
+公式ページ: https://orijyu.com/rent/post-125914.html
 更新日: 2025-10-05T04:47:30+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -83,7 +83,7 @@ JR福知山線「篠山口」徒歩13分
 電話でお問い合わせ
 
 ## 【賃貸】阪南市箱の浦 駐車場・倉庫
-URL: https://orijyu.com/rent/post-126080.html
+公式ページ: https://orijyu.com/rent/post-126080.html
 更新日: 2025-10-09T07:11:34+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -129,7 +129,7 @@ URL: https://orijyu.com/rent/post-126080.html
 電話でお問い合わせ
 
 ## 【賃貸】プリッ2 少林寺町西 101号室
-URL: https://orijyu.com/rent/post-126092.html
+公式ページ: https://orijyu.com/rent/post-126092.html
 更新日: 2026-04-04T03:54:21+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -218,7 +218,7 @@ URL: https://orijyu.com/rent/post-126092.html
 電話でお問い合わせ
 
 ## 【賃貸】プリッ2 少林寺町西 201号室
-URL: https://orijyu.com/rent/post-126095.html
+公式ページ: https://orijyu.com/rent/post-126095.html
 更新日: 2026-04-04T03:54:31+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -311,7 +311,7 @@ URL: https://orijyu.com/rent/post-126095.html
 電話でお問い合わせ
 
 ## 【賃貸】オリエントシティ 船岡 2F事務所
-URL: https://orijyu.com/rent/post-129169.html
+公式ページ: https://orijyu.com/rent/post-129169.html
 更新日: 2026-01-29T08:16:48+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -362,7 +362,7 @@ FOOD SHOP エムジー徒歩4分、ファミリーマート徒歩5分、ライ�
 電話でお問い合わせ
 
 ## 【賃貸】中川2丁目 店舗・事務所 1F
-URL: https://orijyu.com/rent/post-130174.html
+公式ページ: https://orijyu.com/rent/post-130174.html
 更新日: 2026-04-28T08:16:21+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -421,7 +421,7 @@ URL: https://orijyu.com/rent/post-130174.html
 電話でお問い合わせ
 
 ## 【賃貸】三ツ松 資材置き場
-URL: https://orijyu.com/rent/post-130333.html
+公式ページ: https://orijyu.com/rent/post-130333.html
 更新日: 2026-02-26T03:29:01+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -463,7 +463,7 @@ URL: https://orijyu.com/rent/post-130333.html
 電話でお問い合わせ
 
 ## 【賃貸】姫島テラスハウス
-URL: https://orijyu.com/rent/post-131006.html
+公式ページ: https://orijyu.com/rent/post-131006.html
 更新日: 2026-07-10T05:39:17+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -529,7 +529,7 @@ URL: https://orijyu.com/rent/post-131006.html
 電話でお問い合わせ
 
 ## 【賃貸】蔦屋
-URL: https://orijyu.com/rent/post-131017.html
+公式ページ: https://orijyu.com/rent/post-131017.html
 更新日: 2026-03-20T08:28:15+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -605,7 +605,7 @@ URL: https://orijyu.com/rent/post-131017.html
 電話でお問い合わせ
 
 ## 【賃貸】オリエントシティ勝山 101号室
-URL: https://orijyu.com/rent/post-132332.html
+公式ページ: https://orijyu.com/rent/post-132332.html
 更新日: 2026-08-06T01:56:19+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -687,7 +687,7 @@ URL: https://orijyu.com/rent/post-132332.html
 電話でお問い合わせ
 
 ## 【賃貸】オリエントシティ勝山 102号室
-URL: https://orijyu.com/rent/post-132348.html
+公式ページ: https://orijyu.com/rent/post-132348.html
 更新日: 2026-08-06T01:56:10+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -771,7 +771,7 @@ URL: https://orijyu.com/rent/post-132348.html
 電話でお問い合わせ
 
 ## 【賃貸】オリエントシティ勝山 202号室
-URL: https://orijyu.com/rent/post-132354.html
+公式ページ: https://orijyu.com/rent/post-132354.html
 更新日: 2026-08-06T01:55:52+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -855,7 +855,7 @@ URL: https://orijyu.com/rent/post-132354.html
 電話でお問い合わせ
 
 ## 【賃貸】オリエントシティ勝山 301号室
-URL: https://orijyu.com/rent/post-132356.html
+公式ページ: https://orijyu.com/rent/post-132356.html
 更新日: 2026-08-06T01:55:41+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -937,7 +937,7 @@ URL: https://orijyu.com/rent/post-132356.html
 電話でお問い合わせ
 
 ## 【賃貸】オリエントシティ勝山 302号室
-URL: https://orijyu.com/rent/post-132360.html
+公式ページ: https://orijyu.com/rent/post-132360.html
 更新日: 2026-08-06T01:55:31+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1021,7 +1021,7 @@ URL: https://orijyu.com/rent/post-132360.html
 電話でお問い合わせ
 
 ## 【賃貸】HOUSE EGRET 405号室
-URL: https://orijyu.com/rent/post-132634.html
+公式ページ: https://orijyu.com/rent/post-132634.html
 更新日: 2026-05-15T03:57:27+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1086,7 +1086,7 @@ SOHO利用可(家賃1万円UP、各消費税)
 電話でお問い合わせ
 
 ## 【賃貸】高鷲 貸家
-URL: https://orijyu.com/rent/post-132644.html
+公式ページ: https://orijyu.com/rent/post-132644.html
 更新日: 2026-05-15T04:34:10+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1168,7 +1168,7 @@ URL: https://orijyu.com/rent/post-132644.html
 電話でお問い合わせ
 
 ## 【賃貸】木戸 貸家
-URL: https://orijyu.com/rent/post-132660.html
+公式ページ: https://orijyu.com/rent/post-132660.html
 更新日: 2026-05-15T05:14:03+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1235,7 +1235,7 @@ URL: https://orijyu.com/rent/post-132660.html
 電話でお問い合わせ
 
 ## 【賃貸】天下茶屋東アパート 101号室
-URL: https://orijyu.com/rent/post-133416.html
+公式ページ: https://orijyu.com/rent/post-133416.html
 更新日: 2026-06-20T02:43:10+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1308,7 +1308,7 @@ URL: https://orijyu.com/rent/post-133416.html
 電話でお問い合わせ
 
 ## 【賃貸】天下茶屋東アパート 201号室
-URL: https://orijyu.com/rent/post-133426.html
+公式ページ: https://orijyu.com/rent/post-133426.html
 更新日: 2026-06-20T02:43:26+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1379,7 +1379,7 @@ URL: https://orijyu.com/rent/post-133426.html
 電話でお問い合わせ
 
 ## 【賃貸】三軒家東貸戸建
-URL: https://orijyu.com/rent/post-133536.html
+公式ページ: https://orijyu.com/rent/post-133536.html
 更新日: 2026-06-26T08:00:33+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1493,7 +1493,7 @@ JR大阪環状線「大正」バス4分
 電話でお問い合わせ
 
 ## 【賃貸】中道レナハウス
-URL: https://orijyu.com/rent/post-133873.html
+公式ページ: https://orijyu.com/rent/post-133873.html
 更新日: 2026-07-10T08:15:40+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1573,7 +1573,7 @@ JR大阪環状線「森ノ宮」徒歩9分
 電話でお問い合わせ
 
 ## 【賃貸】天下茶屋北 事務所・倉庫
-URL: https://orijyu.com/rent/post-133939.html
+公式ページ: https://orijyu.com/rent/post-133939.html
 更新日: 2026-07-12T05:58:52+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1636,7 +1636,7 @@ URL: https://orijyu.com/rent/post-133939.html
 電話でお問い合わせ
 
 ## 【賃貸】千本北1丁目 貸家
-URL: https://orijyu.com/rent/post-133945.html
+公式ページ: https://orijyu.com/rent/post-133945.html
 更新日: 2026-07-12T08:22:53+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1703,7 +1703,7 @@ URL: https://orijyu.com/rent/post-133945.html
 電話でお問い合わせ
 
 ## 【賃貸】三軒家西2丁目 貸戸建
-URL: https://orijyu.com/rent/post-133982.html
+公式ページ: https://orijyu.com/rent/post-133982.html
 更新日: 2026-07-13T04:30:48+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1769,7 +1769,7 @@ JR大阪環状線「大正」徒歩8分
 電話でお問い合わせ
 
 ## 【賃貸】KEEP 新今里 702号室
-URL: https://orijyu.com/rent/post-377.html
+公式ページ: https://orijyu.com/rent/post-377.html
 更新日: 2026-02-20T07:58:26+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
@@ -1821,7 +1821,7 @@ URL: https://orijyu.com/rent/post-377.html
 電話でお問い合わせ
 
 ## 【賃貸】オリエントシティ 池田 401号室
-URL: https://orijyu.com/rent/post-49933.html
+公式ページ: https://orijyu.com/rent/post-49933.html
 更新日: 2026-07-10T05:59:12+09:00
 
 大阪・堺の新築一戸建て、中古住宅はオリエントホールディングス・オリエント住宅販売
