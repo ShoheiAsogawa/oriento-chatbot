@@ -53,7 +53,7 @@ export async function generateGroundedAnswer(
       model: env.GENERATION_MODEL,
       store: false,
       reasoning_effort: 'minimal',
-      max_completion_tokens: 1_500,
+      max_completion_tokens: 500,
       messages: [
         { role: 'system', content: systemPrompt },
         {

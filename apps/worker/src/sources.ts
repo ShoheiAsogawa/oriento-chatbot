@@ -3,7 +3,6 @@ import type { SearchChunk } from './types';
 const OFFICIAL_SOURCE_HOSTS = new Set([
   'orijyu.com',
   'www.orijyu.com',
-  'cn.orijyu.com',
   'orichin.com',
   'www.orichin.com',
   'origumi.jp',
@@ -87,6 +86,23 @@ function sourceEntityKey(title: string) {
 
 function propertyUnitNumbers(value: string) {
   return new Set(Array.from(value.matchAll(/(\d+)\s*号棟/gu), (match) => match[1]));
+}
+
+function hasPropertyDetails(value: string) {
+  return /(?:号棟|号地|販売価格|間取り|物件価格)/u.test(value);
+}
+
+export function filterAnswerableChunks(chunks: SearchChunk[], question: string) {
+  const requestedUnits = propertyUnitNumbers(question);
+  return chunks.filter((chunk, index) => {
+    if (!hasPropertyDetails(chunk.text || '')) return true;
+    const source = sourceFromChunk(chunk, index);
+    if (!source.url) return false;
+    const sourceUnits = propertyUnitNumbers(source.title);
+    return requestedUnits.size === 0
+      || sourceUnits.size === 0
+      || [...sourceUnits].some((unit) => requestedUnits.has(unit));
+  });
 }
 
 export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit = 2, question = '') {

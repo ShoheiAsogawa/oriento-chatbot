@@ -6,7 +6,7 @@ import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-c
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
 import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
-import { attachMissingSourceMarkers, safeSourceUrl, selectAnswerSources, sourceFromChunk } from './sources';
+import { attachMissingSourceMarkers, filterAnswerableChunks, safeSourceUrl, selectAnswerSources, sourceFromChunk } from './sources';
 import {
   createSessionToken,
   decryptPII,
@@ -258,7 +258,7 @@ app.post('/api/chat/message', async (context) => {
       cache: { enabled: true, cache_threshold: 'super_strict_match' },
     },
   });
-  const chunks = searchResult.chunks || [];
+  const chunks = filterAnswerableChunks(searchResult.chunks || [], redacted);
   const bestScore = Math.max(0, ...chunks.map((chunk) => chunk.score));
   if (chunks.length === 0 || bestScore < 0.48) {
     const refusal = noGroundingDecision();

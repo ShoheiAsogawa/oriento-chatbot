@@ -36,7 +36,7 @@ describe('generateGroundedAnswer', () => {
     expect(url).toBe('https://gateway.ai.cloudflare.com/v1/account-id/orient-chat/openai/chat/completions');
     expect(new Headers(init?.headers).get('cf-aig-authorization')).toBe('Bearer gateway-token');
     const body = JSON.parse(String(init?.body));
-    expect(body).toMatchObject({ model: 'gpt-5-mini-2025-08-07', store: false, reasoning_effort: 'minimal', max_completion_tokens: 1500 });
+    expect(body).toMatchObject({ model: 'gpt-5-mini-2025-08-07', store: false, reasoning_effort: 'minimal', max_completion_tokens: 500 });
     expect(body.messages[1].content).toContain('営業時間は午前9時から午後6時までです。');
   });
 

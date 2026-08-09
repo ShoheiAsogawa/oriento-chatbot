@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attachMissingSourceMarkers, safeSourceUrl, selectAnswerSources, sourceFromChunk } from '../src/sources';
+import { attachMissingSourceMarkers, filterAnswerableChunks, safeSourceUrl, selectAnswerSources, sourceFromChunk } from '../src/sources';
 import type { SearchChunk } from '../src/types';
 
 function chunk(text: string, score = 0.9): SearchChunk {
@@ -98,5 +98,18 @@ describe('answer sources', () => {
 
   it('rejects non-official links', () => {
     expect(safeSourceUrl('https://example.com/property/1')).toBeUndefined();
+  });
+
+  it('rejects the Chinese site', () => {
+    expect(safeSourceUrl('https://cn.orijyu.com/buy/123/')).toBeUndefined();
+  });
+
+  it('removes property chunks that do not have a Japanese detail page', () => {
+    const chunks = [
+      chunk('## 物件A 1号棟\n公式ページ: https://orijyu.com/buy/a/\n\n販売価格 3,000万円\n間取り 3LDK'),
+      chunk('## 物件B 2号棟\n公式ページ: https://cn.orijyu.com/buy/b/\n\n販売価格 4,000万円\n間取り 4LDK'),
+      chunk('店舗へのアクセス方法'),
+    ];
+    expect(filterAnswerableChunks(chunks, '物件を紹介して')).toEqual([chunks[0], chunks[2]]);
   });
 });

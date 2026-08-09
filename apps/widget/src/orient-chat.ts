@@ -60,7 +60,6 @@ template.innerHTML = `
         </button>
       </form>
       <p class="privacy">
-        <span class="privacy-copy">入力内容は品質管理のため記録されます。</span>
         <a class="privacy-link" target="_blank" rel="noopener">プライバシーポリシー・免責事項</a>
       </p>
       <div class="escalation">
@@ -265,8 +264,6 @@ class OrientChat extends HTMLElement {
 
   connectedCallback() {
     this.applyConfiguration();
-    const privacyCopy = this.root.querySelector<HTMLElement>('.privacy-copy');
-    if (privacyCopy && this.demoMode) privacyCopy.textContent = 'プレビューで入力した内容は保存されません。';
     this.bindEvents();
     this.messages = [{
       id: crypto.randomUUID(),
@@ -595,7 +592,7 @@ class OrientChat extends HTMLElement {
         link.target = '_blank';
         link.rel = 'noopener';
         link.title = source.title;
-        link.textContent = '物件詳細を見る ↗';
+        link.textContent = '詳細を見る ↗';
         fragment.append(link);
       }
       cursor = index + match[0].length;
