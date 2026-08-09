@@ -79,6 +79,12 @@ function questionTitleScore(question: string, title: string) {
   return tokens.reduce((score, token) => score + (normalizedTitle.includes(token) ? token.length : 0), 0);
 }
 
+function sourceEntityKey(title: string) {
+  return (title.split(/\s+-\s+|\s+\|/u)[0] || title)
+    .replace(/[\s　・,，.。()（）\-_ー]/gu, '')
+    .toLowerCase();
+}
+
 export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit = 2, question = '') {
   const cited = Array.from(answer.matchAll(/(?:\[(\d+)\]|【(\d+)】)/gu), (match) => Number(match[1] || match[2]) - 1)
     .filter((index, position, all) => index >= 0 && index < chunks.length && all.indexOf(index) === position);
@@ -94,12 +100,15 @@ export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit
   ranked.sort((left, right) => right.relevance - left.relevance || left.order - right.order);
 
   const seen = new Set<string>();
+  const seenEntities = new Set<string>();
   const selected: AnswerSource[] = [];
   for (const entry of ranked) {
     const { source, relevance } = entry;
     if (bestRelevance > 0 && relevance === 0) continue;
-    if (!source.url || seen.has(source.url)) continue;
+    const entityKey = sourceEntityKey(source.title);
+    if (!source.url || seen.has(source.url) || (entityKey.length >= 4 && seenEntities.has(entityKey))) continue;
     seen.add(source.url);
+    if (entityKey.length >= 4) seenEntities.add(entityKey);
     selected.push(source);
     if (selected.length >= limit) break;
   }
