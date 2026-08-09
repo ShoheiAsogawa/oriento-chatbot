@@ -85,6 +85,10 @@ function sourceEntityKey(title: string) {
     .toLowerCase();
 }
 
+function propertyUnitNumbers(value: string) {
+  return new Set(Array.from(value.matchAll(/(\d+)\s*号棟/gu), (match) => match[1]));
+}
+
 export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit = 2, question = '') {
   const cited = Array.from(answer.matchAll(/(?:\[(\d+)\]|【(\d+)】)/gu), (match) => Number(match[1] || match[2]) - 1)
     .filter((index, position, all) => index >= 0 && index < chunks.length && all.indexOf(index) === position);
@@ -101,10 +105,13 @@ export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit
 
   const seen = new Set<string>();
   const seenEntities = new Set<string>();
+  const requestedUnits = propertyUnitNumbers(question);
   const selected: AnswerSource[] = [];
   for (const entry of ranked) {
     const { source, relevance } = entry;
     if (bestRelevance > 0 && relevance === 0) continue;
+    const sourceUnits = propertyUnitNumbers(source.title);
+    if (requestedUnits.size > 0 && sourceUnits.size > 0 && ![...sourceUnits].some((unit) => requestedUnits.has(unit))) continue;
     const entityKey = sourceEntityKey(source.title);
     if (!source.url || seen.has(source.url) || (entityKey.length >= 4 && seenEntities.has(entityKey))) continue;
     seen.add(source.url);

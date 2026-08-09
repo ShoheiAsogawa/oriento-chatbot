@@ -55,6 +55,16 @@ describe('answer sources', () => {
     ]);
   });
 
+  it('excludes a different building number at the same address', () => {
+    const chunks = [
+      chunk('## 大阪市東住吉区公園南矢田3丁目 1期 7号棟\n公式ページ: https://orijyu.com/buy/target/\n\n販売価格 5,899万円'),
+      chunk('## 大阪市東住吉区公園南矢田3丁目 1期 1号棟 - 大阪・兵庫の新築一戸建て\n公式ページ: https://oriho.com/buy/wrong-unit/\n\n販売価格 5,699万円'),
+    ];
+    expect(selectAnswerSources('価格は5,899万円です。', chunks, 2, '大阪市東住吉区公園南矢田3丁目 1期 7号棟の価格')).toEqual([
+      expect.objectContaining({ title: '大阪市東住吉区公園南矢田3丁目 1期 7号棟', url: 'https://orijyu.com/buy/target/' }),
+    ]);
+  });
+
   it('accepts full-width citation markers for source selection', () => {
     const chunks = [chunk('## 物件A\n公式ページ: https://orijyu.com/buy/a/\n\nA')];
     expect(selectAnswerSources('物件Aです。【1】', chunks)).toEqual([
