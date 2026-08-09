@@ -499,9 +499,9 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
       const key = `${entry.sha256!.slice(0, 12)}-${filename}`;
       const assetResponse = await context.env.STATIC_ASSETS.fetch(new Request(new URL(`/knowledge/${filename}`, baseUrl)));
       if (!assetResponse.ok) throw new Error(`初期ナレッジを読み込めません: ${filename}`);
-      const body = await assetResponse.arrayBuffer();
-      if (body.byteLength > 4 * 1024 * 1024) throw new Error(`初期ナレッジが4MBを超えています: ${filename}`);
-      const result = await items.upload(key, new File([body], key, { type: 'text/markdown' }), {
+      const body = await assetResponse.text();
+      if (new TextEncoder().encode(body).byteLength > 4 * 1024 * 1024) throw new Error(`初期ナレッジが4MBを超えています: ${filename}`);
+      const result = await items.upload(key, body, {
         metadata: {
           category: entry.category || knowledgeCategoryFromFilename(filename),
           language: 'ja',
