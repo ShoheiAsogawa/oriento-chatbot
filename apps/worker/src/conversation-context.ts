@@ -3,7 +3,7 @@ export type ConversationContextMessage = {
   content: string;
 };
 
-const HISTORY_MESSAGE_LIMIT = 6;
+const HISTORY_MESSAGE_LIMIT = 10;
 const HISTORY_MESSAGE_CHAR_LIMIT = 500;
 
 type StoredMessage = {
