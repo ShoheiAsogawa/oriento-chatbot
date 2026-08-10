@@ -57,11 +57,17 @@ export function buildContextualQuestion(
   currentMessage: string,
   rentalOnly = false,
 ) {
+  if (rentalOnly) {
+    const userCriteria = [
+      ...history.filter((message) => message.role === 'user').map((message) => message.content),
+      currentMessage,
+    ].slice(-4);
+    return `賃貸物件 希望条件: ${userCriteria.join(' / ')}`;
+  }
   const transcript = history.slice(-6).map((message) => {
     const speaker = message.role === 'user' ? '利用者' : '案内';
     return `${speaker}: ${message.content}`;
   }).join('\n');
-  const scope = rentalOnly ? '検索対象: 日本語公式サイトに掲載された居住用の賃貸物件のみ\n' : '';
-  if (!transcript) return `${scope}${currentMessage}`;
-  return `${scope}これまでの会話:\n${transcript}\n現在の質問: ${currentMessage}`;
+  if (!transcript) return currentMessage;
+  return `これまでの会話:\n${transcript}\n現在の質問: ${currentMessage}`;
 }

@@ -279,13 +279,19 @@ app.post('/api/chat/message', async (context) => {
     ai_search_options: {
       retrieval: {
         retrieval_type: 'hybrid',
-        max_num_results: 6,
-        match_threshold: 0.4,
-        context_expansion: 1,
-        boost_by: [{ field: 'timestamp', direction: 'desc' }],
+        max_num_results: rentalConsultation.active ? 10 : 6,
+        match_threshold: rentalConsultation.active ? 0.2 : 0.4,
+        context_expansion: rentalConsultation.active ? 2 : 1,
+        ...(rentalConsultation.active
+          ? { keyword_match_mode: 'or' as const }
+          : { boost_by: [{ field: 'timestamp', direction: 'desc' as const }] }),
       },
       query_rewrite: { enabled: true },
-      reranking: { enabled: true, model: '@cf/baai/bge-reranker-base', match_threshold: 0.4 },
+      reranking: {
+        enabled: true,
+        model: '@cf/baai/bge-reranker-base',
+        match_threshold: rentalConsultation.active ? 0.2 : 0.4,
+      },
       cache: { enabled: true, cache_threshold: 'super_strict_match' },
     },
   });

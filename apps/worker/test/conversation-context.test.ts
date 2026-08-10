@@ -42,4 +42,19 @@ describe('conversation context', () => {
       '現在の質問: その物件の間取りは？',
     ].join('\n') }]);
   });
+
+  it('builds a concise rental search query from visitor criteria only', () => {
+    const history = [
+      { role: 'user' as const, content: '一人暮らししたい' },
+      { role: 'assistant' as const, content: '住みたい地域を教えてにゃん。' },
+      { role: 'user' as const, content: '大阪市がいい' },
+      { role: 'assistant' as const, content: '家賃上限を教えてにゃん。' },
+      { role: 'user' as const, content: '家賃5万円まで' },
+    ];
+
+    expect(buildSearchMessages(history, '1Kで駅徒歩10分以内', true)).toEqual([{
+      role: 'user',
+      content: '賃貸物件 希望条件: 一人暮らししたい / 大阪市がいい / 家賃5万円まで / 1Kで駅徒歩10分以内',
+    }]);
+  });
 });
