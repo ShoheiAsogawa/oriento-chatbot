@@ -7,6 +7,7 @@ import { buildContextualQuestion, buildSearchMessages, loadConversationContext }
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
 import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
+import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
 import { attachMissingSourceMarkers, filterAnswerableChunks, safeSourceUrl, selectAnswerSources, sourceFromChunk } from './sources';
 import {
@@ -259,6 +260,32 @@ app.post('/api/chat/message', async (context) => {
       policy: 'allow',
       messageId,
     });
+  }
+
+  if (rentalConsultation.active) {
+    const criteria = extractRentalCriteria(conversationHistory, redacted);
+    const recommendations = recommendRentalProperties(await loadRentalCatalog(context.env), criteria);
+    const answer = formatRentalAnswer(recommendations, criteria);
+    const chunks = recommendations.map(rentalPropertyChunk);
+    const sources = chunks.map(sourceFromChunk);
+    const messageId = await recordTurn(
+      context.env,
+      input.conversationId,
+      redacted,
+      answer,
+      'allow',
+      'rental-catalog-v1',
+      Date.now() - startedAt,
+      chunks,
+    );
+    await appendAudit(context.env, {
+      eventType: 'chat.answered',
+      actorType: 'visitor',
+      subjectType: 'message',
+      subjectId: messageId,
+      metadata: { model: 'rental-catalog-v1', sourceCount: sources.length, flow: 'rental_consultation' },
+    });
+    return context.json({ answer, sources, action: 'none', policy: 'allow', messageId });
   }
 
   const dailyAi = await consumeDailyAllowance(

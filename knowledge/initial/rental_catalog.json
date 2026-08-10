@@ -1,0 +1,440 @@
+{
+  "version": 1,
+  "source": "properties_for_rent.md",
+  "properties": [
+    {
+      "id": "125914",
+      "title": "【賃貸】丹波篠山市魚屋町",
+      "url": "https://orijyu.com/rent/post-125914.html",
+      "property_type": "店舗・事務所",
+      "rent_yen": 110000,
+      "common_fee": "",
+      "address": "丹波篠山市魚屋町",
+      "transport": [
+        "JR福知山線「篠山口」徒歩13分",
+        "バス停「二階町」徒歩3分"
+      ],
+      "layout": "",
+      "walk_minutes": 3,
+      "status": "即入居可"
+    },
+    {
+      "id": "126080",
+      "title": "【賃貸】阪南市箱の浦 駐車場・倉庫",
+      "url": "https://orijyu.com/rent/post-126080.html",
+      "property_type": "その他",
+      "rent_yen": 165000,
+      "common_fee": "",
+      "address": "阪南市箱の浦",
+      "transport": [
+        "南海本線「淡輪」徒歩26分"
+      ],
+      "layout": "",
+      "walk_minutes": 26,
+      "status": "即入居可"
+    },
+    {
+      "id": "126092",
+      "title": "【賃貸】プリッ2 少林寺町西 101号室",
+      "url": "https://orijyu.com/rent/post-126092.html",
+      "property_type": "貸家,貸家",
+      "rent_yen": 65000,
+      "common_fee": "共益費込み",
+      "address": "堺市堺区少林寺町西4丁",
+      "transport": [
+        "阪堺線「寺地町」徒歩6分",
+        "南海本線「湊」徒歩9分",
+        "南海本線「堺」徒歩13分"
+      ],
+      "layout": "1R",
+      "walk_minutes": 6,
+      "status": "相談"
+    },
+    {
+      "id": "126095",
+      "title": "【賃貸】プリッ2 少林寺町西 201号室",
+      "url": "https://orijyu.com/rent/post-126095.html",
+      "property_type": "貸家",
+      "rent_yen": 65000,
+      "common_fee": "共益費込み",
+      "address": "堺市堺区少林寺町西4丁",
+      "transport": [
+        "阪堺線「寺地町」徒歩6分",
+        "南海本線「湊」徒歩9分",
+        "南海本線「堺」徒歩13分"
+      ],
+      "layout": "1R",
+      "walk_minutes": 6,
+      "status": "相談"
+    },
+    {
+      "id": "129169",
+      "title": "【賃貸】オリエントシティ 船岡 2F事務所",
+      "url": "https://orijyu.com/rent/post-129169.html",
+      "property_type": "店舗・事務所",
+      "rent_yen": 319000,
+      "common_fee": "13,200円",
+      "address": "京都市北区紫野西藤ノ森町",
+      "transport": [
+        "地下鉄烏丸線「鞍馬口」徒歩18分",
+        "地下鉄烏丸線「北大路」徒歩22分"
+      ],
+      "layout": "",
+      "walk_minutes": 18,
+      "status": "相談"
+    },
+    {
+      "id": "130174",
+      "title": "【賃貸】中川2丁目 店舗・事務所 1F",
+      "url": "https://orijyu.com/rent/post-130174.html",
+      "property_type": "店舗・事務所",
+      "rent_yen": 110000,
+      "common_fee": "",
+      "address": "大阪市生野区中川2丁目",
+      "transport": [
+        "地下鉄千日前線・今里筋線「今里」徒歩10分",
+        "近鉄奈良線・大阪線「今里」徒歩11分"
+      ],
+      "layout": "",
+      "walk_minutes": 10,
+      "status": "即入居可"
+    },
+    {
+      "id": "130333",
+      "title": "【賃貸】三ツ松 資材置き場",
+      "url": "https://orijyu.com/rent/post-130333.html",
+      "property_type": "土地",
+      "rent_yen": 55000,
+      "common_fee": "",
+      "address": "貝塚市三ツ松",
+      "transport": [
+        "水間線「三ツ松」徒歩5分"
+      ],
+      "layout": "",
+      "walk_minutes": 5,
+      "status": ""
+    },
+    {
+      "id": "131006",
+      "title": "【賃貸】姫島テラスハウス",
+      "url": "https://orijyu.com/rent/post-131006.html",
+      "property_type": "テラスハウス",
+      "rent_yen": 70000,
+      "common_fee": "",
+      "address": "大阪市西淀川区姫島1丁目",
+      "transport": [
+        "阪神本線「姫島」徒歩6分"
+      ],
+      "layout": "3DK",
+      "walk_minutes": 6,
+      "status": "即入居可"
+    },
+    {
+      "id": "131017",
+      "title": "【賃貸】蔦屋",
+      "url": "https://orijyu.com/rent/post-131017.html",
+      "property_type": "テラスハウス",
+      "rent_yen": 200000,
+      "common_fee": "",
+      "address": "大阪市西成区天下茶屋2丁目",
+      "transport": [
+        "南海本線・高野線「天下茶屋」徒歩3分",
+        "地下鉄堺筋線「天下茶屋」徒歩3分",
+        "阪堺線「北天下茶屋」・「松田町」徒歩3分"
+      ],
+      "layout": "2LDK",
+      "walk_minutes": 3,
+      "status": "即入居可"
+    },
+    {
+      "id": "132332",
+      "title": "【賃貸】オリエントシティ勝山 101号室",
+      "url": "https://orijyu.com/rent/post-132332.html",
+      "property_type": "アパート,アパート",
+      "rent_yen": 100000,
+      "common_fee": "5,000円",
+      "address": "大阪市生野区勝山北5丁目",
+      "transport": [
+        "大阪環状線「桃谷駅」徒歩12分",
+        "大阪メトロ千日前線「鶴橋駅」徒歩18分",
+        "大阪メトロ今里筋線「今里駅」徒歩20分"
+      ],
+      "layout": "2DK",
+      "walk_minutes": 12,
+      "status": ""
+    },
+    {
+      "id": "132348",
+      "title": "【賃貸】オリエントシティ勝山 102号室",
+      "url": "https://orijyu.com/rent/post-132348.html",
+      "property_type": "アパート,アパート",
+      "rent_yen": 98000,
+      "common_fee": "5,000円",
+      "address": "大阪市生野区勝山北5丁目",
+      "transport": [
+        "大阪環状線「桃谷駅」徒歩12分",
+        "大阪メトロ千日前線「鶴橋駅」徒歩18分",
+        "大阪メトロ今里筋線「今里駅」徒歩20分"
+      ],
+      "layout": "1LDK",
+      "walk_minutes": 12,
+      "status": ""
+    },
+    {
+      "id": "132354",
+      "title": "【賃貸】オリエントシティ勝山 202号室",
+      "url": "https://orijyu.com/rent/post-132354.html",
+      "property_type": "アパート,アパート",
+      "rent_yen": 98000,
+      "common_fee": "5,000円",
+      "address": "大阪市生野区勝山北5丁目",
+      "transport": [
+        "大阪環状線「桃谷駅」徒歩12分",
+        "大阪メトロ千日前線「鶴橋駅」徒歩18分",
+        "大阪メトロ今里筋線「今里駅」徒歩20分"
+      ],
+      "layout": "1LDK",
+      "walk_minutes": 12,
+      "status": ""
+    },
+    {
+      "id": "132356",
+      "title": "【賃貸】オリエントシティ勝山 301号室",
+      "url": "https://orijyu.com/rent/post-132356.html",
+      "property_type": "アパート,アパート",
+      "rent_yen": 115000,
+      "common_fee": "5,000円",
+      "address": "大阪市生野区勝山北5丁目",
+      "transport": [
+        "大阪環状線「桃谷駅」徒歩12分",
+        "大阪メトロ千日前線「鶴橋駅」徒歩18分",
+        "大阪メトロ今里筋線「今里駅」徒歩20分"
+      ],
+      "layout": "2DK",
+      "walk_minutes": 12,
+      "status": ""
+    },
+    {
+      "id": "132360",
+      "title": "【賃貸】オリエントシティ勝山 302号室",
+      "url": "https://orijyu.com/rent/post-132360.html",
+      "property_type": "アパート,アパート",
+      "rent_yen": 98000,
+      "common_fee": "5,000円",
+      "address": "大阪市生野区勝山北5丁目",
+      "transport": [
+        "大阪環状線「桃谷駅」徒歩12分",
+        "大阪メトロ千日前線「鶴橋駅」徒歩18分",
+        "大阪メトロ今里筋線「今里駅」徒歩20分"
+      ],
+      "layout": "1LDK",
+      "walk_minutes": 12,
+      "status": ""
+    },
+    {
+      "id": "132634",
+      "title": "【賃貸】HOUSE EGRET 405号室",
+      "url": "https://orijyu.com/rent/post-132634.html",
+      "property_type": "マンション",
+      "rent_yen": 40000,
+      "common_fee": "5,000円",
+      "address": "大阪市港区波除5丁目",
+      "transport": [
+        "JR大阪環状線「弁天町」徒歩6分",
+        "地下鉄中央線「弁天町」徒歩9分"
+      ],
+      "layout": "1K",
+      "walk_minutes": 6,
+      "status": "即入居可"
+    },
+    {
+      "id": "132644",
+      "title": "【賃貸】高鷲 貸家",
+      "url": "https://orijyu.com/rent/post-132644.html",
+      "property_type": "貸家",
+      "rent_yen": 50000,
+      "common_fee": "",
+      "address": "羽曳野市高鷲10丁目",
+      "transport": [
+        "近鉄南大阪線「恵我ノ荘」徒歩7分",
+        "近鉄南大阪線「高鷲」徒歩12分"
+      ],
+      "layout": "2LDK",
+      "walk_minutes": 7,
+      "status": "即入居可"
+    },
+    {
+      "id": "132660",
+      "title": "【賃貸】木戸 貸家",
+      "url": "https://orijyu.com/rent/post-132660.html",
+      "property_type": "貸家",
+      "rent_yen": 46000,
+      "common_fee": "",
+      "address": "河内長野市木戸3丁目",
+      "transport": [
+        "南海高野線「滝谷」徒歩7分",
+        "南海高野線「千代田」徒歩16分"
+      ],
+      "layout": "4DK",
+      "walk_minutes": 7,
+      "status": "即入居可"
+    },
+    {
+      "id": "133416",
+      "title": "【賃貸】天下茶屋東アパート 101号室",
+      "url": "https://orijyu.com/rent/post-133416.html",
+      "property_type": "アパート",
+      "rent_yen": 46000,
+      "common_fee": "3,000円",
+      "address": "大阪市西成区天下茶屋東2丁目",
+      "transport": [
+        "阪堺線「松田町」徒歩5分",
+        "阪堺線「今船」徒歩7分",
+        "南海本線「天下茶屋」徒歩13分",
+        "地下鉄堺筋線「天下茶屋」徒歩13分"
+      ],
+      "layout": "1DK",
+      "walk_minutes": 5,
+      "status": "即入居可"
+    },
+    {
+      "id": "133426",
+      "title": "【賃貸】天下茶屋東アパート 201号室",
+      "url": "https://orijyu.com/rent/post-133426.html",
+      "property_type": "アパート",
+      "rent_yen": 48000,
+      "common_fee": "3,000円",
+      "address": "大阪市西成区天下茶屋東2丁目",
+      "transport": [
+        "阪堺線「松田町」徒歩5分",
+        "阪堺線「今船」徒歩7分",
+        "南海本線「天下茶屋」徒歩13分",
+        "地下鉄堺筋線「天下茶屋」徒歩13分"
+      ],
+      "layout": "1DK",
+      "walk_minutes": 5,
+      "status": "即入居可"
+    },
+    {
+      "id": "133536",
+      "title": "【賃貸】三軒家東貸戸建",
+      "url": "https://orijyu.com/rent/post-133536.html",
+      "property_type": "貸家",
+      "rent_yen": 119000,
+      "common_fee": "10,000円",
+      "address": "大阪市大正区三軒家東6丁目",
+      "transport": [
+        "JR大阪環状線「大正」徒歩15分",
+        "JR大阪環状線「大正」バス4分",
+        "地下鉄長堀鶴見緑地線「大正」徒歩15分",
+        "地下鉄長堀鶴見緑地線「大正」バス4分",
+        "地下鉄長堀鶴見緑地線「ドーム前千代崎」バス9分",
+        "阪神なんば線「ドーム前」バス9分",
+        "バス停「永楽橋」徒歩3分",
+        "南海汐見橋線「木津川」徒歩14分"
+      ],
+      "layout": "1LDK",
+      "walk_minutes": 3,
+      "status": "即入居可"
+    },
+    {
+      "id": "133873",
+      "title": "【賃貸】中道レナハウス",
+      "url": "https://orijyu.com/rent/post-133873.html",
+      "property_type": "貸家",
+      "rent_yen": 148000,
+      "common_fee": "10,000円",
+      "address": "大阪市東成区中道2丁目",
+      "transport": [
+        "地下鉄中央線「森ノ宮」徒歩9分",
+        "JR大阪環状線「森ノ宮」徒歩9分",
+        "地下鉄中央線・今里筋線「緑橋」徒歩11分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 9,
+      "status": "相談"
+    },
+    {
+      "id": "133939",
+      "title": "【賃貸】天下茶屋北 事務所・倉庫",
+      "url": "https://orijyu.com/rent/post-133939.html",
+      "property_type": "その他",
+      "rent_yen": 110000,
+      "common_fee": "3,300円",
+      "address": "大阪市西成区天下茶屋北2丁目",
+      "transport": [
+        "地下鉄御堂筋線・堺筋線「動物園前」徒歩5分",
+        "阪堺線「今船」徒歩2分",
+        "南海高野線「萩ノ茶屋」徒歩7分",
+        "地下鉄四つ橋線「花園町」徒歩8分"
+      ],
+      "layout": "1R",
+      "walk_minutes": 2,
+      "status": "即入居可"
+    },
+    {
+      "id": "133945",
+      "title": "【賃貸】千本北1丁目 貸家",
+      "url": "https://orijyu.com/rent/post-133945.html",
+      "property_type": "貸家",
+      "rent_yen": 95000,
+      "common_fee": "",
+      "address": "大阪市西成区千本北1丁目",
+      "transport": [
+        "地下鉄四つ橋線「岸里」徒歩9分",
+        "南海汐見橋線「西天下茶屋」徒歩3分",
+        "南海高野線「天下茶屋」徒歩12分",
+        "地下鉄堺筋線「天下茶屋」徒歩12分"
+      ],
+      "layout": "3SDK",
+      "walk_minutes": 3,
+      "status": "相談"
+    },
+    {
+      "id": "133982",
+      "title": "【賃貸】三軒家西2丁目 貸戸建",
+      "url": "https://orijyu.com/rent/post-133982.html",
+      "property_type": "貸家",
+      "rent_yen": 350000,
+      "common_fee": "",
+      "address": "大阪市大正区三軒家西2丁目",
+      "transport": [
+        "JR大阪環状線「大正」徒歩8分",
+        "地下鉄長堀鶴見緑地線「大正」徒歩8分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 8,
+      "status": "相談"
+    },
+    {
+      "id": "377",
+      "title": "【賃貸】KEEP 新今里 702号室",
+      "url": "https://orijyu.com/rent/post-377.html",
+      "property_type": ",マンション",
+      "rent_yen": 40000,
+      "common_fee": "5,000円",
+      "address": "大阪市生野区新今里5丁目",
+      "transport": [
+        "近鉄大阪線「今里」徒歩5分"
+      ],
+      "layout": "1K",
+      "walk_minutes": 5,
+      "status": "相談"
+    },
+    {
+      "id": "49933",
+      "title": "【賃貸】オリエントシティ 池田 401号室",
+      "url": "https://orijyu.com/rent/post-49933.html",
+      "property_type": "マンション",
+      "rent_yen": 120000,
+      "common_fee": "5,000円",
+      "address": "池田市池田市菅原町",
+      "transport": [
+        "阪急宝塚線「池田」徒歩1分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 1,
+      "status": "即入居可"
+    }
+  ]
+}
