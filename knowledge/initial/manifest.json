@@ -6,14 +6,12 @@
     "https://orijyu.com/",
     "https://orichin.com/",
     "https://origumi.jp/",
-    "https://oriho.com/",
-    "https://cn.orijyu.com/"
+    "https://oriho.com/"
   ],
-  "page_count": 2520,
+  "page_count": 2276,
   "category_counts": {
     "corporate_and_policies": 2,
     "homebuilding_and_renovation": 9,
-    "international_chinese": 244,
     "news_and_general": 9,
     "orichin_real_estate": 38,
     "origumi_construction": 24,
@@ -91,12 +89,6 @@
       "category": "oriho_homebuilding",
       "bytes": 1327529,
       "sha256": "5e34f522955b02615bd45479a04f08e990e654f943ab1da5e77df0d5ade9ae82"
-    },
-    {
-      "file": "international_chinese.md",
-      "category": "international_chinese",
-      "bytes": 438040,
-      "sha256": "4bbe6f5a5e855ad1844a3aa8af1366f8d11947f5c8e2454b3c1a801ceb525555"
     },
     {
       "file": "news_and_general.md",

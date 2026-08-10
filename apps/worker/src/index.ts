@@ -3,10 +3,11 @@ import { cors } from 'hono/cors';
 import { z } from 'zod';
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
 import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-controls';
-import { buildSearchMessages, loadConversationContext } from './conversation-context';
+import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
 import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
+import { evaluateRentalConsultation } from './rental-consultation';
 import { attachMissingSourceMarkers, filterAnswerableChunks, safeSourceUrl, selectAnswerSources, sourceFromChunk } from './sources';
 import {
   createSessionToken,
@@ -232,6 +233,34 @@ app.post('/api/chat/message', async (context) => {
     return context.json({ answer: policy.response, sources: [], action: 'escalate', policy: policy.code });
   }
 
+  const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);
+  const rentalConsultation = evaluateRentalConsultation(conversationHistory, redacted);
+  if (rentalConsultation.response) {
+    const messageId = await recordTurn(
+      context.env,
+      input.conversationId,
+      redacted,
+      rentalConsultation.response,
+      'allow',
+      null,
+      Date.now() - startedAt,
+    );
+    await appendAudit(context.env, {
+      eventType: 'chat.clarification_requested',
+      actorType: 'visitor',
+      subjectType: 'message',
+      subjectId: messageId,
+      metadata: { flow: 'rental_consultation' },
+    });
+    return context.json({
+      answer: rentalConsultation.response,
+      sources: [],
+      action: 'none',
+      policy: 'allow',
+      messageId,
+    });
+  }
+
   const dailyAi = await consumeDailyAllowance(
     context.env.DB,
     'ai_requests',
@@ -243,10 +272,10 @@ app.post('/api/chat/message', async (context) => {
     return context.json({ error: '本日のAI回答上限に達しました。公式LINEまたはお問い合わせフォームをご利用ください。' }, 429);
   }
 
-  const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);
+  const contextualQuestion = buildContextualQuestion(conversationHistory, redacted, rentalConsultation.active);
   const search = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE);
   const searchResult = await search.search({
-    messages: buildSearchMessages(conversationHistory, redacted),
+    messages: buildSearchMessages(conversationHistory, redacted, rentalConsultation.active),
     ai_search_options: {
       retrieval: {
         retrieval_type: 'hybrid',
@@ -260,7 +289,9 @@ app.post('/api/chat/message', async (context) => {
       cache: { enabled: true, cache_threshold: 'super_strict_match' },
     },
   });
-  const chunks = filterAnswerableChunks(searchResult.chunks || [], redacted);
+  const chunks = filterAnswerableChunks(searchResult.chunks || [], contextualQuestion, {
+    rentalOnly: rentalConsultation.active,
+  });
   const bestScore = Math.max(0, ...chunks.map((chunk) => chunk.score));
   if (chunks.length === 0 || bestScore < 0.48) {
     const refusal = noGroundingDecision();
@@ -294,7 +325,7 @@ app.post('/api/chat/message', async (context) => {
     throw error;
   }
   const voicedAnswer = ensureOrinyanEnding(completion.answer);
-  const sources = selectAnswerSources(voicedAnswer, chunks, 2, redacted);
+  const sources = selectAnswerSources(voicedAnswer, chunks, 2, contextualQuestion);
   const answer = attachMissingSourceMarkers(voicedAnswer, sources);
   const messageId = await recordTurn(
     context.env,

@@ -31,12 +31,15 @@ describe('conversation context', () => {
       content: `message-${index}`,
     }));
 
-    expect(buildSearchMessages(history, 'その物件の間取りは？')).toEqual([
-      { role: 'user', content: 'message-2' },
-      { role: 'assistant', content: 'message-3' },
-      { role: 'user', content: 'message-4' },
-      { role: 'assistant', content: 'message-5' },
-      { role: 'user', content: 'その物件の間取りは？' },
-    ]);
+    expect(buildSearchMessages(history, 'その物件の間取りは？')).toEqual([{ role: 'user', content: [
+      'これまでの会話:',
+      '利用者: message-0',
+      '案内: message-1',
+      '利用者: message-2',
+      '案内: message-3',
+      '利用者: message-4',
+      '案内: message-5',
+      '現在の質問: その物件の間取りは？',
+    ].join('\n') }]);
   });
 });

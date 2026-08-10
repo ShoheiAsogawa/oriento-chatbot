@@ -89,18 +89,25 @@ function propertyUnitNumbers(value: string) {
 }
 
 function hasPropertyDetails(value: string) {
-  return /(?:号棟|号地|販売価格|間取り|物件価格)/u.test(value);
+  return /(?:号棟|号地|販売価格|間取り|物件価格|賃料|家賃|賃貸状況)/u.test(value);
 }
 
-export function filterAnswerableChunks(chunks: SearchChunk[], question: string) {
+const CHINESE_SOURCE_CONTENT = /(?:简体中文|簡体中文|房产|房屋租赁|销售价格|建筑面积|万日元|格局[:：])/u;
+
+export function filterAnswerableChunks(
+  chunks: SearchChunk[],
+  question: string,
+  options: { rentalOnly?: boolean } = {},
+) {
   const requestedUnits = propertyUnitNumbers(question);
   return chunks.filter((chunk, index) => {
-    if (!hasPropertyDetails(chunk.text || '')) return true;
+    if (CHINESE_SOURCE_CONTENT.test(chunk.text || '')) return false;
+    if (!hasPropertyDetails(chunk.text || '')) return !options.rentalOnly;
     const source = sourceFromChunk(chunk, index);
     if (!source.url) return false;
-    const sourceUnits = propertyUnitNumbers(source.title);
+    if (options.rentalOnly && new URL(source.url).pathname.startsWith('/rent/') === false) return false;
+    const sourceUnits = propertyUnitNumbers(`${source.title}\n${chunk.text || ''}`);
     return requestedUnits.size === 0
-      || sourceUnits.size === 0
       || [...sourceUnits].some((unit) => requestedUnits.has(unit));
   });
 }
@@ -114,7 +121,7 @@ export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit
     const chunk = chunks[index];
     if (!chunk) return undefined;
     const source = sourceFromChunk(chunk, index);
-    return { source, order, relevance: questionTitleScore(question, source.title) };
+    return { source, chunk, order, relevance: questionTitleScore(question, source.title) };
   }).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
   const bestRelevance = Math.max(0, ...ranked.map((entry) => entry.relevance));
   ranked.sort((left, right) => right.relevance - left.relevance || left.order - right.order);
@@ -124,10 +131,10 @@ export function selectAnswerSources(answer: string, chunks: SearchChunk[], limit
   const requestedUnits = propertyUnitNumbers(question);
   const selected: AnswerSource[] = [];
   for (const entry of ranked) {
-    const { source, relevance } = entry;
+    const { source, chunk, relevance } = entry;
     if (bestRelevance > 0 && relevance === 0) continue;
-    const sourceUnits = propertyUnitNumbers(source.title);
-    if (requestedUnits.size > 0 && sourceUnits.size > 0 && ![...sourceUnits].some((unit) => requestedUnits.has(unit))) continue;
+    const sourceUnits = propertyUnitNumbers(`${source.title}\n${chunk.text || ''}`);
+    if (requestedUnits.size > 0 && ![...sourceUnits].some((unit) => requestedUnits.has(unit))) continue;
     const entityKey = sourceEntityKey(source.title);
     if (!source.url || seen.has(source.url) || (entityKey.length >= 4 && seenEntities.has(entityKey))) continue;
     seen.add(source.url);

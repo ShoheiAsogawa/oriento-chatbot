@@ -38,7 +38,6 @@ OFFICIAL_ROOTS = (
     "https://orichin.com/",
     "https://origumi.jp/",
     "https://oriho.com/",
-    "https://cn.orijyu.com/",
 )
 OFFICIAL_HOSTS = {urllib.parse.urlparse(url).hostname for url in OFFICIAL_ROOTS}
 ASSET_SUFFIXES = {
@@ -254,8 +253,6 @@ def classify(url: str, title: str, text: str) -> str:
         return "origumi_construction"
     if host == "oriho.com":
         return "oriho_homebuilding"
-    if host == "cn.orijyu.com":
-        return "international_chinese"
     if path.startswith("/buy/"):
         return "properties_for_sale"
     if path.startswith("/rent/"):
@@ -370,7 +367,7 @@ def write_outputs(output_dir: Path, pages: list[Page], failures: list[dict[str, 
     category_order = [
         "corporate_and_policies", "stores_and_contacts", "services_and_guides", "homebuilding_and_renovation",
         "property_search_guides", "properties_for_sale", "properties_for_rent", "land_properties", "recruitment",
-        "orichin_real_estate", "origumi_construction", "oriho_homebuilding", "international_chinese", "news_and_general",
+        "orichin_real_estate", "origumi_construction", "oriho_homebuilding", "news_and_general",
     ]
     for category in category_order:
         category_pages = sorted(grouped.get(category, []), key=lambda item: (item.url, item.title))

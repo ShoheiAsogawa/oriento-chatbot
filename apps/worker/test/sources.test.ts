@@ -65,6 +65,14 @@ describe('answer sources', () => {
     ]);
   });
 
+  it('excludes property sources without the requested building number', () => {
+    const chunks = [
+      chunk('## 大阪市東住吉区の別物件\n公式ページ: https://orijyu.com/buy/wrong/\n\n販売価格 4,000万円'),
+      chunk('## 大阪市東住吉区公園南矢田3丁目 1期 7号棟\n公式ページ: https://orijyu.com/buy/target/\n\n販売価格 5,899万円'),
+    ];
+    expect(filterAnswerableChunks(chunks, '大阪市東住吉区公園南矢田3丁目 1期 7号棟の間取り')).toEqual([chunks[1]]);
+  });
+
   it('accepts full-width citation markers for source selection', () => {
     const chunks = [chunk('## 物件A\n公式ページ: https://orijyu.com/buy/a/\n\nA')];
     expect(selectAnswerSources('物件Aです。【1】', chunks)).toEqual([
@@ -111,5 +119,16 @@ describe('answer sources', () => {
       chunk('店舗へのアクセス方法'),
     ];
     expect(filterAnswerableChunks(chunks, '物件を紹介して')).toEqual([chunks[0], chunks[2]]);
+  });
+
+  it('removes Chinese content even when metadata points to a Japanese root', () => {
+    const chinese = chunk('## 房产信息\n销售价格: 3,480万日元\n格局: 3LDK');
+    expect(filterAnswerableChunks([chinese], '賃貸を探して')).toEqual([]);
+  });
+
+  it('keeps only Japanese rental detail pages in rental consultation mode', () => {
+    const rental = chunk('## 【賃貸】物件A\n公式ページ: https://orijyu.com/rent/a/\n\n賃料 8万円\n間取り 1K');
+    const sale = chunk('## 新築物件B\n公式ページ: https://orijyu.com/buy/b/\n\n販売価格 3,000万円\n間取り 3LDK');
+    expect(filterAnswerableChunks([rental, sale], '大阪市で家賃8万円の1K', { rentalOnly: true })).toEqual([rental]);
   });
 });

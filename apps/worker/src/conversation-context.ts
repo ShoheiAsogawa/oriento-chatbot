@@ -44,9 +44,24 @@ export async function loadConversationContext(
 export function buildSearchMessages(
   history: ConversationContextMessage[],
   currentMessage: string,
+  rentalOnly = false,
 ): AiSearchMessage[] {
-  return [
-    ...history.slice(-4),
-    { role: 'user', content: currentMessage } as const,
-  ];
+  return [{
+    role: 'user',
+    content: buildContextualQuestion(history, currentMessage, rentalOnly),
+  }];
+}
+
+export function buildContextualQuestion(
+  history: ConversationContextMessage[],
+  currentMessage: string,
+  rentalOnly = false,
+) {
+  const transcript = history.slice(-6).map((message) => {
+    const speaker = message.role === 'user' ? '利用者' : '案内';
+    return `${speaker}: ${message.content}`;
+  }).join('\n');
+  const scope = rentalOnly ? '検索対象: 日本語公式サイトに掲載された居住用の賃貸物件のみ\n' : '';
+  if (!transcript) return `${scope}${currentMessage}`;
+  return `${scope}これまでの会話:\n${transcript}\n現在の質問: ${currentMessage}`;
 }

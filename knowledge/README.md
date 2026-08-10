@@ -8,7 +8,8 @@
 - https://orichin.com/
 - https://origumi.jp/
 - https://oriho.com/
-- https://cn.orijyu.com/
+
+中国語サイト（`cn.orijyu.com`）および中国語由来の情報は収録しません。
 
 更新方法:
 
