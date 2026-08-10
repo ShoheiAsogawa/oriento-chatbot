@@ -26,7 +26,10 @@ describe('generateGroundedAnswer', () => {
       choices: [{ message: { content: '営業時間は9時から18時までです。[1]' } }],
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
 
-    const result = await generateGroundedAnswer(env, '営業時間は？', chunks, 'system prompt');
+    const result = await generateGroundedAnswer(env, '営業時間は？', chunks, 'system prompt', [
+      { role: 'user', content: '大阪市の物件を探しています' },
+      { role: 'assistant', content: 'ご希望の地域を教えてくださいにゃん。' },
+    ]);
 
     expect(result.answer).toContain('[1]');
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -37,7 +40,9 @@ describe('generateGroundedAnswer', () => {
     expect(new Headers(init?.headers).get('cf-aig-authorization')).toBe('Bearer gateway-token');
     const body = JSON.parse(String(init?.body));
     expect(body).toMatchObject({ model: 'gpt-5.4-nano', store: false, reasoning_effort: 'none', max_completion_tokens: 500 });
-    expect(body.messages[1].content).toContain('営業時間は午前9時から午後6時までです。');
+    expect(body.messages[1]).toEqual({ role: 'user', content: '大阪市の物件を探しています' });
+    expect(body.messages[2]).toEqual({ role: 'assistant', content: 'ご希望の地域を教えてくださいにゃん。' });
+    expect(body.messages[3].content).toContain('営業時間は午前9時から午後6時までです。');
   });
 
   it('preserves the gateway status without exposing provider response text', async () => {

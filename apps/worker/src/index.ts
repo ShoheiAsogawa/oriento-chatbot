@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { z } from 'zod';
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
 import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-controls';
+import { buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
 import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
@@ -242,9 +243,10 @@ app.post('/api/chat/message', async (context) => {
     return context.json({ error: '本日のAI回答上限に達しました。公式LINEまたはお問い合わせフォームをご利用ください。' }, 429);
   }
 
+  const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);
   const search = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE);
   const searchResult = await search.search({
-    messages: [{ role: 'user', content: redacted }],
+    messages: buildSearchMessages(conversationHistory, redacted),
     ai_search_options: {
       retrieval: {
         retrieval_type: 'hybrid',
@@ -283,7 +285,7 @@ app.post('/api/chat/message', async (context) => {
 
   let completion: { answer: string; model: string };
   try {
-    completion = await generateGroundedAnswer(context.env, redacted, chunks, SYSTEM_PROMPT);
+    completion = await generateGroundedAnswer(context.env, redacted, chunks, SYSTEM_PROMPT, conversationHistory);
   } catch (error) {
     if (error instanceof AiGatewayError && error.status === 429) {
       console.warn(JSON.stringify({ level: 'warn', event: 'cost_guard.gateway_spend_limit', requestId: context.get('requestId') }));
