@@ -105,7 +105,10 @@ export function noGroundingDecision(): PolicyDecision {
 }
 
 export function ensureOrinyanEnding(input: string) {
-  const answer = input.trim();
+  const answer = input.trim().replace(
+    /([。！!？?])\s*にゃん([。！!？?]?)(?=(?:\s*(?:\[\d+\]|【\d+】))*$)/u,
+    (_match, punctuation: string, trailingPunctuation: string) => `にゃん${trailingPunctuation || punctuation}`,
+  );
   if (!answer) return answer;
 
   const trailingCitations = answer.match(/(?:\s*(?:\[\d+\]|【\d+】))+$/u)?.[0] || '';

@@ -39,4 +39,8 @@ describe('ensureOrinyanEnding', () => {
   it('preserves full-width citations without displaying a malformed ending', () => {
     expect(ensureOrinyanEnding('営業時間は午前9時からです。【1】')).toBe('営業時間は午前9時からですにゃん。【1】');
   });
+
+  it('normalizes punctuation placed before the character ending', () => {
+    expect(ensureOrinyanEnding('間取りは4LDKです。にゃん[1]')).toBe('間取りは4LDKですにゃん。[1]');
+  });
 });
