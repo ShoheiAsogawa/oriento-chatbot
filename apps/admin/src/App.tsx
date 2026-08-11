@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity, Archive, BookOpen, Bot, Check, ChevronDown, ChevronLeft, ChevronRight,
   CircleAlert, Database, EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
@@ -66,6 +66,47 @@ function FileIcon({ name }: { name: string }) {
   if (/\.pdf$/i.test(name)) return <FileText className="file-icon pdf" />;
   if (/\.(docx?|txt|md)$/i.test(name)) return <FileText className="file-icon doc" />;
   return <File className="file-icon" />;
+}
+
+const KNOWLEDGE_PAGE_SIZE = 50;
+const propertyNameCollator = new Intl.Collator('ja-JP', { numeric: true, sensitivity: 'base' });
+
+type KnowledgeFilter = 'all' | 'properties_for_sale' | 'properties_for_rent' | 'other';
+type KnowledgeSortOrder = 'title_asc' | 'title_desc' | 'recent';
+
+function knowledgeValue(item: KnowledgeItem, field: 'title' | 'category' | 'source_url') {
+  const direct = item[field];
+  if (typeof direct === 'string' && direct.trim()) return direct.trim();
+  const metadataValue = item.metadata?.[field];
+  return typeof metadataValue === 'string' ? metadataValue.trim() : '';
+}
+
+function knowledgeTitle(item: KnowledgeItem) {
+  return knowledgeValue(item, 'title') || item.key;
+}
+
+function knowledgeCategory(item: KnowledgeItem) {
+  const category = knowledgeValue(item, 'category');
+  if (category === 'sale') return 'properties_for_sale';
+  if (category === 'rent') return 'properties_for_rent';
+  return category || 'general';
+}
+
+function knowledgeCategoryLabel(item: KnowledgeItem) {
+  switch (knowledgeCategory(item)) {
+    case 'properties_for_sale': return '売買物件';
+    case 'properties_for_rent': return '賃貸物件';
+    default: return '一般資料';
+  }
+}
+
+function knowledgeSourceUrl(item: KnowledgeItem) {
+  return knowledgeValue(item, 'source_url');
+}
+
+function isPropertyKnowledge(item: KnowledgeItem) {
+  const category = knowledgeCategory(item);
+  return category === 'properties_for_sale' || category === 'properties_for_rent';
 }
 
 function Sidebar({ page, onPage, collapsed, onToggle }: { page: PageKey; onPage: (page: PageKey) => void; collapsed: boolean; onToggle: () => void }) {
@@ -155,47 +196,228 @@ function KnowledgePage() {
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<KnowledgeItem | null>(null);
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
+  const [filter, setFilter] = useState<KnowledgeFilter>('all');
+  const [sort, setSort] = useState<KnowledgeSortOrder>('title_asc');
+  const [page, setPage] = useState(1);
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [seeded, setSeeded] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState<'properties_for_sale' | 'properties_for_rent' | 'general'>('properties_for_sale');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const load = async () => { const data = await api.knowledge(); setItems(data.result); setTotal(Number(data.result_info.total_count || data.result.length)); setSelected((current) => current || data.result[0] || null); };
-  useEffect(() => { void load(); }, []);
-  const filtered = useMemo(() => items.filter((item) => item.key.toLowerCase().includes(search.toLowerCase())), [items, search]);
-  const upload = async (files: FileList | null) => {
-    const file = files?.[0]; if (!file) return; setBusy(true);
-    try { await api.uploadKnowledge(file); await load(); } finally { setBusy(false); }
-  };
-  const remove = async () => { if (!selected) return; setBusy(true); try { await api.deleteKnowledge(selected.id); setItems((current) => current.filter((item) => item.id !== selected.id)); setSelected(null); } finally { setBusy(false); } };
-  const reindex = async () => { if (!selected) return; setBusy(true); try { await api.reindexKnowledge(selected.id); await load(); } finally { setBusy(false); } };
-  const seed = async () => { setBusy(true); try { await api.seedKnowledge(); setSeeded(true); await load(); } finally { setBusy(false); } };
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.knowledge({ perPage: 1000 });
+      setItems(data.result);
+      setTotal(Number(data.result_info.total_count || data.result.length));
+      setSelected((current) => {
+        if (!current) return data.result[0] || null;
+        return data.result.find((item) => item.id === current.id) || data.result[0] || null;
+      });
+    } catch (error) {
+      setNotice(error instanceof Error ? `ナレッジを読み込めませんでした: ${error.message}` : 'ナレッジを読み込めませんでした。');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  return <div className="split-page">
+  useEffect(() => { void load(); }, [load]);
+
+  const filteredItems = useMemo(() => {
+    const query = deferredSearch.trim().toLocaleLowerCase('ja-JP');
+    const rows = items.filter((item) => {
+      const itemCategory = knowledgeCategory(item);
+      const categoryMatches = filter === 'all'
+        || (filter === 'other' ? !isPropertyKnowledge(item) : itemCategory === filter);
+      if (!categoryMatches) return false;
+      if (!query) return true;
+      return [knowledgeTitle(item), item.key, knowledgeSourceUrl(item)]
+        .some((value) => value.toLocaleLowerCase('ja-JP').includes(query));
+    });
+
+    return rows.sort((left, right) => {
+      if (sort === 'recent') {
+        const recentFirst = Date.parse(right.last_seen_at) - Date.parse(left.last_seen_at);
+        return recentFirst || propertyNameCollator.compare(knowledgeTitle(left), knowledgeTitle(right));
+      }
+      const compared = propertyNameCollator.compare(knowledgeTitle(left), knowledgeTitle(right));
+      return sort === 'title_desc' ? -compared : compared;
+    });
+  }, [deferredSearch, filter, items, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredItems.length / KNOWLEDGE_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pageItems = useMemo(
+    () => filteredItems.slice((currentPage - 1) * KNOWLEDGE_PAGE_SIZE, currentPage * KNOWLEDGE_PAGE_SIZE),
+    [currentPage, filteredItems],
+  );
+  const firstItem = filteredItems.length ? (currentPage - 1) * KNOWLEDGE_PAGE_SIZE + 1 : 0;
+  const lastItem = Math.min(currentPage * KNOWLEDGE_PAGE_SIZE, filteredItems.length);
+
+  const updateFilter = (next: KnowledgeFilter) => { setFilter(next); setPage(1); setSelected(null); };
+  const updateSort = (next: KnowledgeSortOrder) => { setSort(next); setPage(1); };
+  const updateSearch = (next: string) => { setSearch(next); setPage(1); setSelected(null); };
+
+  const upload = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    const property = category !== 'general';
+    if (property && !title.trim()) {
+      setNotice('物件を登録する場合は、ナレッジのタイトルに物件名を入力してください。');
+      return;
+    }
+    if (property && !sourceUrl.trim()) {
+      setNotice('物件を登録する場合は、公式の詳細ページURLを入力してください。');
+      return;
+    }
+    setBusy(true);
+    setNotice(null);
+    try {
+      await api.uploadKnowledge(file, { title: title.trim() || file.name, category, sourceUrl });
+      setTitle('');
+      setSourceUrl('');
+      setAddOpen(false);
+      setNotice(`「${title.trim() || file.name}」を登録しました。インデックス作成後に回答へ反映されます。`);
+      await load();
+    } catch (error) {
+      setNotice(error instanceof Error ? `登録できませんでした: ${error.message}` : '登録できませんでした。');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!selected) return;
+    if (!window.confirm(`「${knowledgeTitle(selected)}」を削除します。成約済みとしてチャットの候補から外す場合に実行してください。`)) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      await api.deleteKnowledge(selected.id);
+      setItems((current) => current.filter((item) => item.id !== selected.id));
+      setTotal((current) => Math.max(0, current - 1));
+      setSelected(null);
+      setNotice(`「${knowledgeTitle(selected)}」を削除しました。`);
+    } catch (error) {
+      setNotice(error instanceof Error ? `削除できませんでした: ${error.message}` : '削除できませんでした。');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reindex = async () => {
+    if (!selected) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      await api.reindexKnowledge(selected.id);
+      setNotice(`「${knowledgeTitle(selected)}」の再インデックスを開始しました。`);
+      await load();
+    } catch (error) {
+      setNotice(error instanceof Error ? `再インデックスを開始できませんでした: ${error.message}` : '再インデックスを開始できませんでした。');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const seed = async () => {
+    setBusy(true);
+    setNotice(null);
+    try {
+      await api.seedKnowledge();
+      setSeeded(true);
+      setNotice('初期ナレッジの同期を開始しました。');
+      await load();
+    } catch (error) {
+      setNotice(error instanceof Error ? `同期を開始できませんでした: ${error.message}` : '同期を開始できませんでした。');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const selectedSourceUrl = selected ? knowledgeSourceUrl(selected) : '';
+
+  return <div className="split-page knowledge-page">
     <main className="split-main">
-      <PageHeader title="ナレッジ" description="チャットボットの回答に利用する資料を管理します。" action={<><button className="secondary-button" onClick={() => void seed()} disabled={busy}><Database />{seeded ? '初期ナレッジ登録済み' : '初期ナレッジを登録'}</button><button className="primary-button" onClick={() => fileInput.current?.click()} disabled={busy}><Plus />資料を追加</button></>} />
-      <input ref={fileInput} type="file" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.webp" onChange={(event) => void upload(event.target.files)} />
-      <button className={`dropzone ${dragging ? 'dragging' : ''}`} onClick={() => fileInput.current?.click()} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); void upload(event.dataTransfer.files); }} disabled={busy}>
-        <UploadCloud /><span><strong>{busy ? '処理しています…' : '資料をドラッグ＆ドロップするか、クリックして選択'}</strong><small>PDF、DOCX、XLSX、CSV、画像（最大4MB / 1ファイル）</small></span>
-      </button>
-      <div className="table-tools"><label className="search-field"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="資料名で検索" /></label><button className="select-button">すべての状態 <ChevronDown /></button><button className="square-button" onClick={() => void load()} aria-label="再読み込み"><RefreshCw /></button></div>
-      <div className="data-table knowledge-table" role="table">
-        <div className="table-head" role="row"><span>資料名</span><span>状態</span><span>更新日</span><span>チャンク</span><span>操作</span></div>
-        {filtered.map((item) => <button className={`table-row ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} onClick={() => setSelected(item)} role="row">
-          <span className="file-cell"><FileIcon name={item.key} /><span><strong>{item.key}</strong><small>{formatBytes(item.file_size)}</small></span></span>
+      <PageHeader
+        title="物件ナレッジ"
+        description="物件は1件ごとに管理します。成約済みになった物件だけを削除し、必要な物件だけを追加できます。"
+        action={<div className="page-actions">
+          <button className="secondary-button" onClick={() => void seed()} disabled={busy}><Database />{seeded ? '初期ナレッジ同期済み' : '初期ナレッジを同期'}</button>
+          <button className="primary-button" onClick={() => { setAddOpen(true); setNotice(null); }} disabled={busy}><Plus />物件・資料を追加</button>
+        </div>}
+      />
+      <input
+        ref={fileInput}
+        type="file"
+        hidden
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.webp"
+        onChange={(event) => {
+          void upload(event.target.files);
+          event.target.value = '';
+        }}
+      />
+
+      {addOpen ? <section className="knowledge-add surface" aria-label="物件・資料を1件追加">
+        <div className="section-heading"><div><h2>物件・資料を1件追加</h2><p>物件名・分類・公式詳細ページを紐づけて登録します。</p></div><button className="square-button" type="button" onClick={() => setAddOpen(false)} aria-label="追加フォームを閉じる"><X /></button></div>
+        <div className="knowledge-add-body">
+          <label className="knowledge-field"><span>ナレッジのタイトル（物件名）</span><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例：オリエント梅田レジデンス 502号室" autoComplete="off" /></label>
+          <label className="knowledge-field"><span>分類</span><select value={category} onChange={(event) => setCategory(event.target.value as typeof category)}><option value="properties_for_sale">売買物件</option><option value="properties_for_rent">賃貸物件</option><option value="general">一般資料</option></select></label>
+          <label className="knowledge-field knowledge-field-wide"><span>公式詳細ページURL</span><input value={sourceUrl} onChange={(event) => setSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /><small>物件の場合は必須です。チャットの「詳細を見る」リンクに使用します。</small></label>
+          <button
+            type="button"
+            className={`dropzone knowledge-dropzone ${dragging ? 'dragging' : ''}`}
+            onClick={() => fileInput.current?.click()}
+            onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => { event.preventDefault(); setDragging(false); void upload(event.dataTransfer.files); }}
+            disabled={busy}
+          >
+            <UploadCloud /><span><strong>{busy ? '処理しています…' : 'ファイルを選択して登録'}</strong><small>PDF、DOCX、XLSX、CSV、画像（最大4MB / 1ファイル）</small></span>
+          </button>
+        </div>
+      </section> : null}
+
+      {notice ? <p className="knowledge-notice" role="status">{notice}</p> : null}
+
+      <div className="table-tools knowledge-tools">
+        <label className="search-field"><Search /><input value={search} onChange={(event) => updateSearch(event.target.value)} placeholder="物件名・資料名で検索" /></label>
+        <label className="knowledge-select"><span>分類</span><select value={filter} onChange={(event) => updateFilter(event.target.value as KnowledgeFilter)}><option value="all">すべて</option><option value="properties_for_sale">売買物件</option><option value="properties_for_rent">賃貸物件</option><option value="other">一般資料</option></select></label>
+        <label className="knowledge-select"><span>並び順</span><select value={sort} onChange={(event) => updateSort(event.target.value as KnowledgeSortOrder)}><option value="title_asc">物件名（昇順）</option><option value="title_desc">物件名（降順）</option><option value="recent">更新日時（新しい順）</option></select></label>
+        <button className="square-button" onClick={() => void load()} aria-label="再読み込み" disabled={loading || busy}><RefreshCw /></button>
+      </div>
+
+      <div className="knowledge-result-summary"><strong>{filteredItems.length.toLocaleString()}件</strong><span>全{total.toLocaleString()}件のナレッジから表示</span></div>
+      <div className="data-table knowledge-table" role="table" aria-label="物件ナレッジ一覧">
+        <div className="table-head" role="row"><span>物件名・資料名</span><span>分類</span><span>状態</span><span>更新日</span><span>チャンク</span><span>操作</span></div>
+        {pageItems.map((item) => <button className={`table-row ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} onClick={() => setSelected(item)} role="row">
+          <span className="file-cell"><FileIcon name={item.key} /><span><strong>{knowledgeTitle(item)}</strong><small>{formatBytes(item.file_size)}</small></span></span>
+          <span><i className={`knowledge-category ${knowledgeCategory(item)}`}>{knowledgeCategoryLabel(item)}</i></span>
           <span><Status value={item.status} /></span><time>{formatDate(item.last_seen_at)}</time><span>{item.chunks_count ? item.chunks_count.toLocaleString() : '—'}</span><span className="row-action"><EllipsisVertical /></span>
         </button>)}
+        {!loading && pageItems.length === 0 ? <div className="knowledge-empty" role="row"><FileCheck2 /><p>条件に一致する物件・資料はありません。</p></div> : null}
       </div>
-      <footer className="pagination"><span>{filtered.length ? `1–${filtered.length}` : '0'} / {search ? filtered.length : total}件</span><div><button aria-label="前へ" disabled><ChevronLeft /></button><button className="current">1</button><button aria-label="次へ" disabled><ChevronRight /></button></div></footer>
+      <footer className="pagination"><span>{filteredItems.length ? `${firstItem}–${lastItem}` : '0'} / {filteredItems.length.toLocaleString()}件</span><div><button aria-label="前へ" disabled={currentPage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft /></button><button className="current">{currentPage}</button><button aria-label="次へ" disabled={currentPage >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}><ChevronRight /></button></div></footer>
     </main>
     <aside className={`detail-drawer ${selected ? 'open' : ''}`}>
       {selected ? <>
-        <div className="drawer-heading"><h2>資料の詳細</h2><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>
-        <div className="drawer-file"><FileIcon name={selected.key} /><div><strong>{selected.key}</strong><small>{formatBytes(selected.file_size)}</small></div></div>
-        <dl className="detail-list"><div><dt>ソース</dt><dd><Link2 />管理画面からアップロード</dd></div><div><dt>アクセス範囲</dt><dd><ShieldCheck />orijyu.com のみ</dd></div><div><dt>アップロード日</dt><dd>{formatDate(selected.created_at)}</dd></div><div><dt>インデックス状態</dt><dd><Status value={selected.status} /><small>{selected.chunks_count.toLocaleString()} チャンク</small></dd></div></dl>
-        <div className="drawer-actions"><h3>アクション</h3><button onClick={() => void reindex()} disabled={busy}><RefreshCw />再インデックス</button><button className="danger" onClick={() => void remove()} disabled={busy}><Trash2 />資料を削除</button><p>削除後はチャットボットの回答に利用されなくなります。</p></div>
+        <div className="drawer-heading"><h2>ナレッジの詳細</h2><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>
+        <div className="drawer-file"><FileIcon name={selected.key} /><div><strong>{knowledgeTitle(selected)}</strong><small>{formatBytes(selected.file_size)}</small></div></div>
+        <dl className="detail-list">
+          <div><dt>分類</dt><dd><i className={`knowledge-category ${knowledgeCategory(selected)}`}>{knowledgeCategoryLabel(selected)}</i></dd></div>
+          <div><dt>公式詳細ページ</dt><dd className="source-url">{selectedSourceUrl ? <><Link2 /><a href={selectedSourceUrl} target="_blank" rel="noreferrer">{selectedSourceUrl}</a></> : '未登録'}</dd></div>
+          <div><dt>登録日</dt><dd>{formatDate(selected.created_at)}</dd></div>
+          <div><dt>インデックス状態</dt><dd><Status value={selected.status} /><small>{selected.chunks_count.toLocaleString()} チャンク</small></dd></div>
+        </dl>
+        <div className="drawer-actions"><h3>アクション</h3><button onClick={() => void reindex()} disabled={busy}><RefreshCw />再インデックス</button><button className="danger" onClick={() => void remove()} disabled={busy}><Trash2 />この物件・資料を削除</button><p>成約済みの物件は削除してください。以後の回答候補から外れます。</p></div>
         <WidgetPreview />
-      </> : <div className="empty-detail"><FileCheck2 /><p>資料を選択すると詳細が表示されます。</p></div>}
+      </> : <div className="empty-detail"><FileCheck2 /><p>物件・資料を選択すると詳細が表示されます。</p></div>}
     </aside>
   </div>;
 }

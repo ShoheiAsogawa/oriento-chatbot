@@ -12,6 +12,7 @@ import hashlib
 import html
 import json
 import re
+import shutil
 import sys
 import time
 import unicodedata
@@ -255,7 +256,7 @@ def classify(url: str, title: str, text: str) -> str:
         return "oriho_homebuilding"
     # `pri2/post-*` is an investment-property detail route even though it does
     # not live below the normal `/buy/` URL hierarchy.
-    if path.startswith("/buy/") or re.fullmatch(r"/pri2/post-\d+\.html", path):
+    if path.startswith("/buy/") or re.fullmatch(r"/pri2/post-\d+(?:-\d+)?\.html", path):
         return "properties_for_sale"
     if path.startswith("/rent/"):
         return "properties_for_rent"
@@ -420,6 +421,122 @@ def write_outputs(output_dir: Path, pages: list[Page], failures: list[dict[str, 
     return manifest
 
 
+PROPERTY_CATEGORIES = {"properties_for_sale", "properties_for_rent"}
+
+
+def property_item_filename(page: Page, used_filenames: set[str]) -> tuple[str, str]:
+    """Return a readable, collision-safe file name for one property."""
+    kind = "sale" if page.category == "properties_for_sale" else "rent"
+    match = re.search(r"/post-(\d+(?:-\d+)?)\.html$", urllib.parse.urlparse(page.url).path, re.I)
+    stem = f"{kind}-{match.group(1)}" if match else f"{kind}-{hashlib.sha256(page.url.encode('utf-8')).hexdigest()[:12]}"
+    filename = f"{stem}.md"
+    if filename in used_filenames:
+        filename = f"{stem}-{hashlib.sha256(page.url.encode('utf-8')).hexdigest()[:8]}.md"
+    used_filenames.add(filename)
+    return kind, filename
+
+
+def write_property_outputs(output_dir: Path, pages: list[Page], started_at: str) -> dict[str, object]:
+    """Replace aggregate property files with one AI Search item per property.
+
+    The non-property initial knowledge remains untouched. A temporary sibling
+    directory is fully generated and validated before the old property files
+    are removed, so a partial crawl cannot erase the existing catalog.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = output_dir / "manifest.json"
+    if not manifest_path.exists():
+        raise RuntimeError(f"Initial knowledge manifest is missing: {manifest_path}")
+    existing_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    property_pages = [page for page in pages if page.category in PROPERTY_CATEGORIES]
+    grouped: dict[str, list[Page]] = defaultdict(list)
+    for page in property_pages:
+        grouped[page.category].append(page)
+    if len(property_pages) != len(pages):
+        unexpected = sorted({page.category for page in pages if page.category not in PROPERTY_CATEGORIES})
+        raise RuntimeError(f"Property-only crawl produced unexpected categories: {unexpected}")
+    if not grouped["properties_for_sale"] or not grouped["properties_for_rent"]:
+        raise RuntimeError("Property-only crawl did not produce both sale and rental properties")
+
+    staging_root = output_dir / ".property-items-staging"
+    if staging_root.exists():
+        shutil.rmtree(staging_root)
+    staging_root.mkdir(parents=True)
+
+    files: list[dict[str, object]] = []
+    used_filenames: set[str] = set()
+    try:
+        for category in ("properties_for_sale", "properties_for_rent"):
+            for page in sorted(grouped[category], key=lambda item: (item.title, item.url)):
+                kind, filename = property_item_filename(page, used_filenames)
+                relative_path = Path("properties") / kind / filename
+                path = staging_root / kind / filename
+                path.parent.mkdir(parents=True, exist_ok=True)
+                content = (
+                    f"# {page.title}\n\n"
+                    f"Source URL: {page.url}\n"
+                    f"Knowledge category: {category}\n\n"
+                    f"{render_page(page)}"
+                )
+                raw = content.encode("utf-8")
+                if len(raw) > 4 * 1024 * 1024:
+                    raise RuntimeError(f"Property item exceeds AI Search 4 MB limit: {page.url}")
+                path.write_text(content, encoding="utf-8", newline="\n")
+                files.append({
+                    "file": relative_path.as_posix(),
+                    "category": category,
+                    "title": page.title,
+                    "source_url": page.url,
+                    "bytes": len(raw),
+                    "sha256": hashlib.sha256(raw).hexdigest(),
+                })
+
+        expected_count = len(property_pages)
+        if len(files) != expected_count or len({entry["file"] for entry in files}) != expected_count:
+            raise RuntimeError("Property item generation did not produce one unique file per property")
+
+        target_root = output_dir / "properties"
+        if target_root.exists():
+            shutil.rmtree(target_root)
+        staging_root.rename(target_root)
+    except Exception:
+        if staging_root.exists():
+            shutil.rmtree(staging_root)
+        raise
+
+    old_counts = existing_manifest.get("category_counts", {})
+    old_property_count = sum(int(old_counts.get(category, 0)) for category in PROPERTY_CATEGORIES)
+    next_counts = {key: int(value) for key, value in old_counts.items()}
+    next_counts.update({category: len(grouped[category]) for category in PROPERTY_CATEGORIES})
+    preserved_files = [
+        entry for entry in existing_manifest.get("files", [])
+        if entry.get("category") not in PROPERTY_CATEGORIES
+    ]
+    finished_at = datetime.now(timezone.utc).isoformat()
+    next_manifest = {
+        **existing_manifest,
+        "version": max(2, int(existing_manifest.get("version", 1))),
+        "property_refresh_started_at": started_at,
+        "property_refreshed_at": finished_at,
+        "property_itemized_at": finished_at,
+        "property_item_count": len(files),
+        "page_count": int(existing_manifest.get("page_count", 0)) - old_property_count + len(files),
+        "category_counts": dict(sorted(next_counts.items())),
+        "files": [*preserved_files, *files],
+    }
+    manifest_path.write_text(
+        json.dumps(next_manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    for legacy in (output_dir / "properties_for_sale.md", output_dir / "properties_for_rent.md"):
+        if legacy.exists():
+            legacy.unlink()
+    return next_manifest
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default="knowledge/initial", help="Output directory")
@@ -429,7 +546,14 @@ def main() -> int:
         action="store_true",
         help="Fetch only current Japanese property detail pages from orijyu.com",
     )
+    parser.add_argument(
+        "--individual-properties",
+        action="store_true",
+        help="Write property-only results as one individual knowledge file per property",
+    )
     args = parser.parse_args()
+    if args.individual_properties and not args.property_only:
+        parser.error("--individual-properties requires --property-only")
     started_at = datetime.now(timezone.utc).isoformat()
     discovered: dict[str, str | None] = {}
     roots = ("https://orijyu.com/",) if args.property_only else OFFICIAL_ROOTS
@@ -465,7 +589,20 @@ def main() -> int:
                 failures.append({"url": url, "error": str(exc)})
             if completed % 100 == 0 or completed == len(futures):
                 print(f"Fetched {completed}/{len(futures)} pages ({len(failures)} failures)", flush=True)
-    manifest = write_outputs(Path(args.output), pages, failures, started_at)
+    if args.individual_properties:
+        fetched_urls = {page.url for page in pages}
+        expected_urls = set(discovered)
+        missing_urls = sorted(expected_urls - fetched_urls)
+        if failures or missing_urls:
+            print(json.dumps({
+                "error": "Property refresh aborted; existing knowledge was left unchanged",
+                "failures": len(failures),
+                "missing_pages": len(missing_urls),
+            }, ensure_ascii=False), flush=True)
+            return 2
+        manifest = write_property_outputs(Path(args.output), pages, started_at)
+    else:
+        manifest = write_outputs(Path(args.output), pages, failures, started_at)
     print(json.dumps({
         "page_count": manifest["page_count"],
         "file_count": len(manifest["files"]),

@@ -114,6 +114,20 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .dropzone strong { font-size: 14px; }
 .dropzone small { color: var(--muted); font-size: 11px; }
 
+.page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+.knowledge-add { margin: 0 0 18px; }
+.knowledge-add .section-heading { padding: 16px 18px; }
+.knowledge-add .section-heading h2 { font-size: 14px; }
+.knowledge-add-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(210px, .8fr); gap: 14px; padding: 18px; }
+.knowledge-field { display: grid; gap: 7px; min-width: 0; color: var(--ink); font-size: 11px; font-weight: 800; }
+.knowledge-field input, .knowledge-field select { width: 100%; min-height: 40px; padding: 0 11px; border: 1px solid #d7d9e0; border-radius: 7px; background: #fff; outline: 0; font-size: 12px; font-weight: 500; }
+.knowledge-field input:focus, .knowledge-field select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,104,11,.1); }
+.knowledge-field small { color: var(--muted); font-size: 9px; font-weight: 500; }
+.knowledge-field-wide { grid-column: 1 / -1; }
+.knowledge-dropzone { grid-column: 1 / -1; min-height: 90px; }
+.knowledge-notice { margin: 0 0 16px; padding: 10px 12px; color: #8a4a00; border: 1px solid #f3d098; border-radius: 8px; background: #fff8ea; font-size: 11px; line-height: 1.55; }
+
 .table-tools { display: flex; align-items: center; gap: 10px; margin: 22px 0 14px; }
 .search-field { min-width: 240px; flex: 1; min-height: 42px; display: flex; align-items: center; gap: 9px; padding: 0 12px; border: 1px solid #d7d9e0; border-radius: 8px; background: #fff; }
 .search-field:focus-within { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,104,11,.1); }
@@ -125,12 +139,20 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .square-button { width: 42px; justify-content: center; }
 .square-button svg { width: 17px; }
 
+.knowledge-tools { flex-wrap: wrap; margin-top: 0; }
+.knowledge-select { min-height: 42px; display: flex; align-items: center; gap: 7px; padding: 0 9px 0 11px; color: var(--muted); border: 1px solid #d7d9e0; border-radius: 8px; background: #fff; font-size: 10px; font-weight: 800; }
+.knowledge-select select { min-height: 30px; max-width: 154px; padding: 0 21px 0 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 11px; font-weight: 700; }
+.knowledge-result-summary { display: flex; align-items: baseline; gap: 7px; margin: 0 0 8px; color: var(--muted); font-size: 10px; }
+.knowledge-result-summary strong { color: var(--ink); font-size: 13px; }
+
 .data-table, .conversation-list, .customer-table, .audit-table { width: 100%; font-size: 12px; }
 .table-head, .table-row { display: grid; grid-template-columns: minmax(230px, 2fr) 90px 112px 80px 44px; align-items: center; column-gap: 15px; }
 .table-head { min-height: 42px; padding: 0 14px; color: #545663; border-bottom: 1px solid #cfd1d9; font-weight: 700; }
 .table-row { width: 100%; min-height: 62px; padding: 7px 14px; border: 0; border-bottom: 1px solid var(--border); background: #fff; text-align: left; }
 .table-row:hover { background: #fafafa; }
 .table-row.selected { position: relative; background: #fff6ef; box-shadow: inset 0 0 0 1px #ffb27f; }
+.knowledge-table .table-head, .knowledge-table .table-row { grid-template-columns: minmax(230px, 2fr) 92px 78px 112px 70px 34px; }
+.knowledge-table .table-row { content-visibility: auto; contain-intrinsic-size: 62px; }
 .file-cell, .drawer-file { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .file-cell > span, .drawer-file > div { min-width: 0; display: grid; gap: 2px; }
 .file-cell strong, .drawer-file strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
@@ -147,6 +169,9 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .status.error { color: #c93434; background: #ffe7e7; }
 .status.warning { color: #aa6510; background: #fff0d9; }
 .status.muted { color: #686a75; background: #ededf0; }
+.knowledge-category { width: fit-content; display: inline-flex; align-items: center; padding: 3px 7px; border-radius: 5px; color: #555765; background: #eff0f3; font-size: 9px; font-style: normal; font-weight: 800; white-space: nowrap; }
+.knowledge-category.properties_for_sale { color: #a34b00; background: #fff0e2; }
+.knowledge-category.properties_for_rent { color: #1d619a; background: #e8f2ff; }
 .pagination { min-height: 58px; display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 11px; }
 .pagination div { display: flex; align-items: center; gap: 2px; }
 .pagination button { width: 31px; height: 31px; display: grid; place-items: center; border: 0; border-radius: 6px; background: #fff; font-size: 11px; }
@@ -166,6 +191,8 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .detail-list dd { margin: 0; display: flex; align-items: center; gap: 7px; color: #555765; font-size: 11px; }
 .detail-list dd svg { width: 15px; color: var(--success); }
 .detail-list dd small { margin-left: 5px; color: var(--muted); }
+.detail-list .source-url { align-items: flex-start; line-height: 1.55; }
+.source-url a { min-width: 0; color: var(--blue); overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 2px; }
 .drawer-actions { padding: 18px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .drawer-actions h3, .widget-preview h3 { margin: 0 0 11px; font-size: 12px; }
 .drawer-actions > button { width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 8px; border: 1px solid #d5d7de; border-radius: 7px; background: #fff; font-size: 11px; font-weight: 700; }
@@ -174,6 +201,9 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .drawer-actions p { margin: 8px 0 0; color: var(--muted); font-size: 9px; }
 .empty-detail { height: 100%; display: grid; place-content: center; justify-items: center; color: var(--muted); text-align: center; }
 .empty-detail svg { width: 40px; height: 40px; }
+.knowledge-empty { min-height: 164px; display: grid; place-content: center; justify-items: center; gap: 8px; color: var(--muted); border-bottom: 1px solid var(--border); text-align: center; }
+.knowledge-empty svg { width: 30px; height: 30px; color: var(--orange); }
+.knowledge-empty p { margin: 0; font-size: 11px; }
 
 .widget-preview { margin-top: 20px; }
 .preview-title { display: flex; align-items: center; justify-content: space-between; }

@@ -165,9 +165,161 @@ app.post('/api/chat/session', async (context) => {
 
 function knowledgeCategoryFromFilename(filename: string) {
   const category = filename
-    .replace(/\.md$/iu, '')
-    .replace(/-part-\d+$/iu, '');
+    .split('/')
+    .at(-1)
+    ?.replace(/\.md$/iu, '')
+    .replace(/-part-\d+$/iu, '') || 'general';
   return /^[a-z0-9_]{1,64}$/u.test(category) ? category : 'general';
+}
+
+const MAX_KNOWLEDGE_ITEM_SIZE = 4 * 1024 * 1024;
+const INITIAL_KNOWLEDGE_PATH = /^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.md$/iu;
+const PROPERTY_KNOWLEDGE_CATEGORY = /^properties_for_(?:sale|rent)$/u;
+const KNOWLEDGE_LIST_STATUS = ['queued', 'running', 'completed', 'error', 'skipped', 'outdated'] as const;
+
+const initialKnowledgeEntrySchema = z.object({
+  file: z.string().trim().min(1).max(240),
+  category: z.string().trim().min(1).max(64).optional(),
+  bytes: z.number().int().nonnegative().optional(),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/iu).optional(),
+  title: z.string().trim().min(1).max(500).optional(),
+  source_url: z.string().url().max(1000).optional(),
+});
+
+const initialKnowledgeManifestSchema = z.object({
+  files: z.array(initialKnowledgeEntrySchema).default([]),
+});
+
+type InitialKnowledgeEntry = z.infer<typeof initialKnowledgeEntrySchema>;
+type KnowledgeListStatus = (typeof KNOWLEDGE_LIST_STATUS)[number];
+
+function isSafeInitialKnowledgePath(value: string) {
+  return INITIAL_KNOWLEDGE_PATH.test(value);
+}
+
+function normalizeKnowledgeCategory(value: unknown, fallback = 'general') {
+  const category = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return /^[a-z0-9_]{1,64}$/u.test(category) ? category : fallback;
+}
+
+function metadataString(metadata: Record<string, unknown> | undefined, key: string) {
+  const value = metadata?.[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function initialKnowledgeCategory(entry: InitialKnowledgeEntry) {
+  return normalizeKnowledgeCategory(entry.category, knowledgeCategoryFromFilename(entry.file));
+}
+
+function initialKnowledgeTitle(entry: InitialKnowledgeEntry) {
+  return entry.title?.trim() || entry.file.split('/').at(-1) || entry.file;
+}
+
+function initialKnowledgeSourceUrl(entry: InitialKnowledgeEntry) {
+  return safeSourceUrl(entry.source_url) || 'https://orijyu.com/';
+}
+
+function initialKnowledgeItemKey(entry: InitialKnowledgeEntry) {
+  const filename = entry.file.replaceAll('/', '__');
+  return entry.sha256 ? `${entry.sha256.slice(0, 12)}-${filename}` : filename;
+}
+
+function isPropertyKnowledgeCategory(category: string | undefined) {
+  return Boolean(category && PROPERTY_KNOWLEDGE_CATEGORY.test(category));
+}
+
+function isManagedInitialKnowledgeItem(item: AiSearchItemInfo) {
+  return Boolean(metadataString(item.metadata, 'manifest_sha256'));
+}
+
+async function readInitialKnowledgeManifest(env: Env, baseUrl: URL) {
+  const manifestResponse = await env.STATIC_ASSETS.fetch(new Request(new URL('/knowledge/manifest.json', baseUrl)));
+  if (!manifestResponse.ok) throw new Error('Initial knowledge manifest could not be loaded');
+  const parsed = initialKnowledgeManifestSchema.safeParse(await manifestResponse.json<unknown>());
+  if (!parsed.success) throw new Error('Initial knowledge manifest has an invalid format');
+  const unsafePath = parsed.data.files.find((entry) => !isSafeInitialKnowledgePath(entry.file));
+  if (unsafePath) throw new Error(`Initial knowledge manifest contains an unsafe path: ${unsafePath.file}`);
+  const invalidPropertySource = parsed.data.files.find((entry) => {
+    return isPropertyKnowledgeCategory(initialKnowledgeCategory(entry)) && !safeSourceUrl(entry.source_url);
+  });
+  if (invalidPropertySource) throw new Error(`Property knowledge is missing an official source URL: ${invalidPropertySource.file}`);
+  return parsed.data.files;
+}
+
+async function readKnowledgeSourceExclusions(env: Env) {
+  const result = await env.DB.prepare(
+    `SELECT source_url FROM knowledge_source_exclusions`,
+  ).all<{ source_url: string }>();
+  return new Set(result.results
+    .map((row) => safeSourceUrl(row.source_url))
+    .filter((url): url is string => Boolean(url)));
+}
+
+function excludeRemovedInitialKnowledge(entries: InitialKnowledgeEntry[], exclusions: Set<string>) {
+  return entries.filter((entry) => {
+    const category = initialKnowledgeCategory(entry);
+    return !isPropertyKnowledgeCategory(category) || !exclusions.has(initialKnowledgeSourceUrl(entry));
+  });
+}
+
+async function fetchInitialKnowledgeAsset(env: Env, baseUrl: URL, entry: InitialKnowledgeEntry) {
+  const filename = entry.file;
+  const assetResponse = await env.STATIC_ASSETS.fetch(new Request(new URL(`/knowledge/${filename}`, baseUrl)));
+  if (!assetResponse.ok) throw new Error(`初期ナレッジを読み込めません: ${filename}`);
+  const body = await assetResponse.arrayBuffer();
+  if (body.byteLength > MAX_KNOWLEDGE_ITEM_SIZE) throw new Error(`初期ナレッジが4MBを超えています: ${filename}`);
+  return new File([body], filename.split('/').at(-1) || filename, { type: 'text/markdown' });
+}
+
+function initialKnowledgeMetadata(entry: InitialKnowledgeEntry) {
+  return {
+    category: initialKnowledgeCategory(entry),
+    language: 'ja',
+    source_url: initialKnowledgeSourceUrl(entry),
+    title: initialKnowledgeTitle(entry),
+    ...(entry.sha256 ? { manifest_sha256: entry.sha256 } : {}),
+  };
+}
+
+async function listAllKnowledgeItems(items: AiSearchItems, status?: KnowledgeListStatus) {
+  const perPage = 50;
+  const all: AiSearchItemInfo[] = [];
+  let page = 1;
+  let totalCount = Number.POSITIVE_INFINITY;
+  while (all.length < totalCount) {
+    const response = await items.list({ page, per_page: perPage, status });
+    all.push(...response.result);
+    const reportedTotal = response.result_info?.total_count;
+    totalCount = typeof reportedTotal === 'number' ? reportedTotal : all.length + (response.result.length === perPage ? 1 : 0);
+    if (response.result.length < perPage) break;
+    page += 1;
+  }
+  return all;
+}
+
+function boundedPositiveInteger(value: string | undefined, fallback: number, maximum: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
+}
+
+function projectKnowledgeItem(item: AiSearchItemInfo) {
+  const title = metadataString(item.metadata, 'title') || item.key;
+  const category = normalizeKnowledgeCategory(metadataString(item.metadata, 'category'));
+  const sourceUrl = safeSourceUrl(metadataString(item.metadata, 'source_url')) || '';
+  return {
+    ...item,
+    chunks_count: item.chunks_count || 0,
+    file_size: item.file_size || 0,
+    created_at: item.created_at || '',
+    last_seen_at: item.last_seen_at || item.created_at || '',
+    title,
+    category,
+    source_url: sourceUrl,
+  };
+}
+
+function knowledgeItemUpdatedAt(item: AiSearchItemInfo) {
+  return item.last_seen_at || item.created_at || '';
 }
 
 async function recordTurn(
@@ -480,6 +632,7 @@ app.post('/api/admin/knowledge/bootstrap', async (context) => {
         { field_name: 'language', data_type: 'text' },
         { field_name: 'source_url', data_type: 'text' },
         { field_name: 'title', data_type: 'text' },
+        { field_name: 'manifest_sha256', data_type: 'text' },
       ],
     });
   }
@@ -495,39 +648,31 @@ app.post('/api/admin/knowledge/bootstrap', async (context) => {
 
 app.post('/api/admin/knowledge/seed', async (context) => {
   const baseUrl = new URL(context.req.url);
-  const manifestUrl = new URL('/knowledge/manifest.json', baseUrl);
-  const manifestResponse = await context.env.STATIC_ASSETS.fetch(new Request(manifestUrl));
-  if (!manifestResponse.ok) return context.json({ error: '初期ナレッジのマニフェストを読み込めません' }, 500);
-  const manifest = await manifestResponse.json<{
-    files?: Array<{ file?: string; category?: string; bytes?: number; sha256?: string }>;
-  }>();
-  const files = (manifest.files || []).filter((entry) => entry.file && /^[a-z0-9_-]+\.md$/u.test(entry.file));
+  const [manifestEntries, exclusions] = await Promise.all([
+    readInitialKnowledgeManifest(context.env, baseUrl),
+    readKnowledgeSourceExclusions(context.env),
+  ]);
+  const files = excludeRemovedInitialKnowledge(manifestEntries, exclusions);
   const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
-  const accepted: Array<{ file: string; id: string }> = [];
+  const existingKeys = new Set((await listAllKnowledgeItems(items)).map((item) => item.key));
+  const accepted: Array<{ file: string; key: string; id: string; status: string }> = [];
   const skipped: string[] = [];
 
-  for (const entry of files) {
-    const filename = entry.file!;
-    const existing = await items.list({ page: 1, per_page: 50, search: filename });
-    if (existing.result.some((item) => item.key === filename)) {
-      skipped.push(filename);
-      continue;
-    }
-    const assetUrl = new URL(`/knowledge/${filename}`, baseUrl);
-    const assetResponse = await context.env.STATIC_ASSETS.fetch(new Request(assetUrl));
-    if (!assetResponse.ok) throw new Error(`初期ナレッジを読み込めません: ${filename}`);
-    const body = await assetResponse.arrayBuffer();
-    if (body.byteLength > 4 * 1024 * 1024) throw new Error(`初期ナレッジが4MBを超えています: ${filename}`);
-    const file = new File([body], filename, { type: 'text/markdown' });
-    const result = await items.upload(filename, file, {
-      metadata: {
-        category: entry.category || knowledgeCategoryFromFilename(filename),
-        language: 'ja',
-        source_url: 'https://orijyu.com/',
-        title: filename,
-      },
+  for (let offset = 0; offset < files.length; offset += 3) {
+    const batch = files.slice(offset, offset + 3);
+    const uploads = batch.filter((entry) => {
+      const key = initialKnowledgeItemKey(entry);
+      if (!existingKeys.has(key)) return true;
+      skipped.push(entry.file);
+      return false;
     });
-    accepted.push({ file: filename, id: result.id });
+    const results = await Promise.all(uploads.map(async (entry) => {
+      const key = initialKnowledgeItemKey(entry);
+      const file = await fetchInitialKnowledgeAsset(context.env, baseUrl, entry);
+      const result = await items.upload(key, file, { metadata: initialKnowledgeMetadata(entry) });
+      return { file: entry.file, key, id: result.id, status: result.status };
+    }));
+    accepted.push(...results);
   }
 
   await appendAudit(context.env, {
@@ -536,9 +681,9 @@ app.post('/api/admin/knowledge/seed', async (context) => {
     actorId: context.get('admin').email,
     subjectType: 'ai_search_instance',
     subjectId: context.env.AI_SEARCH_INSTANCE,
-    metadata: { accepted: accepted.length, skipped: skipped.length },
+    metadata: { accepted: accepted.length, skipped: skipped.length, excluded: manifestEntries.length - files.length },
   });
-  return context.json({ ok: true, accepted, skipped }, 202);
+  return context.json({ ok: true, accepted, skipped, excluded: manifestEntries.length - files.length }, 202);
 });
 
 app.post('/api/internal/knowledge/reseed', async (context) => {
@@ -549,53 +694,46 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
   }
   const input = knowledgeReseedSchema.parse(await context.req.json().catch(() => ({})));
   const baseUrl = new URL(context.req.url);
-  const manifestResponse = await context.env.STATIC_ASSETS.fetch(new Request(new URL('/knowledge/manifest.json', baseUrl)));
-  if (!manifestResponse.ok) return context.json({ error: '初期ナレッジのマニフェストを読み込めません' }, 500);
-  const manifest = await manifestResponse.json<{
-    files?: Array<{ file?: string; category?: string; bytes?: number; sha256?: string }>;
-  }>();
-  const files = (manifest.files || []).filter((entry) => entry.file && entry.sha256 && /^[a-z0-9_-]+\.md$/u.test(entry.file));
+  const [manifestEntries, exclusions] = await Promise.all([
+    readInitialKnowledgeManifest(context.env, baseUrl),
+    readKnowledgeSourceExclusions(context.env),
+  ]);
+  const files = excludeRemovedInitialKnowledge(manifestEntries, exclusions)
+    .filter((entry): entry is InitialKnowledgeEntry & { sha256: string } => Boolean(entry.sha256));
   const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
-  const desiredKeys = new Set(files.map((entry) => `${entry.sha256!.slice(0, 12)}-${entry.file!}`));
+  const existingItems = await listAllKnowledgeItems(items);
+  const existingByKey = new Map(existingItems.map((item) => [item.key, item]));
+  const desiredKeys = new Set(files.map((entry) => initialKnowledgeItemKey(entry)));
   const accepted: Array<{ file: string; key: string; id: string; status: string }> = [];
+  const skipped: Array<{ file: string; key: string; id: string; status: string }> = [];
 
   for (let offset = 0; offset < files.length; offset += 3) {
     const batch = files.slice(offset, offset + 3);
-    const results = await Promise.all(batch.map(async (entry) => {
-      const filename = entry.file!;
-      const key = `${entry.sha256!.slice(0, 12)}-${filename}`;
-      const assetResponse = await context.env.STATIC_ASSETS.fetch(new Request(new URL(`/knowledge/${filename}`, baseUrl)));
-      if (!assetResponse.ok) throw new Error(`初期ナレッジを読み込めません: ${filename}`);
-      const body = await assetResponse.text();
-      if (new TextEncoder().encode(body).byteLength > 4 * 1024 * 1024) throw new Error(`初期ナレッジが4MBを超えています: ${filename}`);
-      const result = await items.upload(key, body, {
-        metadata: {
-          category: entry.category || knowledgeCategoryFromFilename(filename),
-          language: 'ja',
-          source_url: 'https://orijyu.com/',
-          title: filename,
-          manifest_sha256: entry.sha256,
-        },
-      });
-      return { file: filename, key, id: result.id, status: result.status };
+    const uploads = batch.filter((entry) => {
+      const key = initialKnowledgeItemKey(entry);
+      const existing = existingByKey.get(key);
+      const isCurrent = existing
+        && metadataString(existing.metadata, 'manifest_sha256') === entry.sha256
+        && existing.status !== 'error';
+      if (!isCurrent) return true;
+      skipped.push({ file: entry.file, key, id: existing.id, status: existing.status });
+      return false;
+    });
+    const results = await Promise.all(uploads.map(async (entry) => {
+      const key = initialKnowledgeItemKey(entry);
+      const file = await fetchInitialKnowledgeAsset(context.env, baseUrl, entry);
+      const result = await items.upload(key, file, { metadata: initialKnowledgeMetadata(entry) });
+      return { file: entry.file, key, id: result.id, status: result.status };
     }));
     accepted.push(...results);
   }
 
-  const incomplete = accepted.filter((item) => item.status !== 'completed');
+  const incomplete = [...accepted, ...skipped].filter((item) => item.status !== 'completed');
   const deleted: string[] = [];
   if (input.prune && incomplete.length === 0) {
-    let page = 1;
-    let totalPages = 1;
-    const existingItems: Array<{ id: string; key: string }> = [];
-    do {
-      const listed = await items.list({ page, per_page: 50 });
-      totalPages = Math.max(1, Math.ceil((listed.result_info?.total_count || listed.result.length) / 50));
-      existingItems.push(...listed.result.map((item) => ({ id: item.id, key: item.key })));
-      page += 1;
-    } while (page <= totalPages);
     for (const item of existingItems) {
       if (desiredKeys.has(item.key)) continue;
+      if (!isManagedInitialKnowledgeItem(item)) continue;
       await items.delete(item.id);
       deleted.push(item.key);
     }
@@ -606,9 +744,22 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
     actorType: 'system',
     subjectType: 'ai_search_instance',
     subjectId: context.env.AI_SEARCH_INSTANCE,
-    metadata: { accepted: accepted.length, incomplete: incomplete.length, deleted: deleted.length },
+    metadata: {
+      accepted: accepted.length,
+      skipped: skipped.length,
+      incomplete: incomplete.length,
+      deleted: deleted.length,
+      excluded: manifestEntries.length - files.length,
+    },
   });
-  return context.json({ ok: incomplete.length === 0, accepted, incomplete, deleted }, incomplete.length ? 202 : 200);
+  return context.json({
+    ok: incomplete.length === 0,
+    accepted,
+    skipped,
+    incomplete,
+    deleted,
+    excluded: manifestEntries.length - files.length,
+  }, incomplete.length ? 202 : 200);
 });
 
 app.get('/api/admin/overview', async (context) => {
@@ -636,32 +787,89 @@ app.get('/api/admin/overview', async (context) => {
 
 app.get('/api/admin/knowledge', async (context) => {
   const query = context.req.query();
-  const status = z.enum(['queued', 'running', 'completed', 'error', 'skipped', 'outdated']).safeParse(query.status);
-  const result = await context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.list({
-    page: Number(query.page || 1),
-    per_page: Math.min(50, Number(query.perPage || 20)),
-    status: status.success ? status.data : undefined,
-    search: query.search || undefined,
-    sort_by: 'modified_at',
+  const status = KNOWLEDGE_LIST_STATUS.includes(query.status as KnowledgeListStatus)
+    ? query.status as KnowledgeListStatus
+    : undefined;
+  const requestedCategory = query.category?.trim().toLowerCase();
+  const category = requestedCategory && /^[a-z0-9_]{1,64}$/u.test(requestedCategory)
+    ? requestedCategory
+    : undefined;
+  const search = (query.search || query.q || '').trim().slice(0, 250).toLocaleLowerCase('ja-JP');
+  const sort = query.sort === 'title_asc' || query.sort === 'title_desc' || query.sort === 'updated_asc'
+    ? query.sort
+    : 'updated_desc';
+  const page = boundedPositiveInteger(query.page, 1, 1000);
+  const perPage = boundedPositiveInteger(query.perPage, 20, 1000);
+  const allItems = await listAllKnowledgeItems(
+    context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items,
+    status,
+  );
+  const projected = allItems.map(projectKnowledgeItem);
+  const categories = Object.entries(projected.reduce<Record<string, number>>((counts, item) => {
+    counts[item.category] = (counts[item.category] || 0) + 1;
+    return counts;
+  }, {})).map(([value, count]) => ({ value, count })).sort((left, right) => left.value.localeCompare(right.value, 'ja'));
+
+  const filtered = projected.filter((item) => {
+    if (category && item.category !== category) return false;
+    if (!search) return true;
+    return [item.title, item.key, item.source_url]
+      .some((value) => value.toLocaleLowerCase('ja-JP').includes(search));
   });
-  return context.json(result);
+  filtered.sort((left, right) => {
+    if (sort === 'title_asc' || sort === 'title_desc') {
+      const compared = left.title.localeCompare(right.title, 'ja') || left.key.localeCompare(right.key, 'ja');
+      return sort === 'title_asc' ? compared : -compared;
+    }
+    const compared = knowledgeItemUpdatedAt(left).localeCompare(knowledgeItemUpdatedAt(right));
+    return sort === 'updated_asc' ? compared : -compared;
+  });
+  const offset = (page - 1) * perPage;
+  const result = filtered.slice(offset, offset + perPage);
+  return context.json({
+    result,
+    result_info: {
+      count: result.length,
+      page,
+      per_page: perPage,
+      total_count: filtered.length,
+    },
+    categories,
+  });
 });
 
 app.post('/api/admin/knowledge', async (context) => {
   const form = await context.req.formData();
   const file = form.get('file');
-  if (!(file instanceof File)) return context.json({ error: 'ファイルが必要です' }, 400);
-  if (file.size > 4 * 1024 * 1024) return context.json({ error: 'AI Searchの上限は1ファイル4MBです' }, 413);
-  const sourceUrl = safeSourceUrl(form.get('sourceUrl'));
-  if (form.get('sourceUrl') && !sourceUrl) return context.json({ error: 'ソースURLはorijyu.comのHTTPS URLを指定してください' }, 400);
-  const result = await context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.upload(file.name, file, {
+  if (!(file instanceof File)) return context.json({ error: 'A file is required' }, 400);
+  if (file.size > MAX_KNOWLEDGE_ITEM_SIZE) return context.json({ error: 'AI Search accepts files up to 4 MB' }, 413);
+
+  const sourceValue = form.get('sourceUrl');
+  const sourceUrl = safeSourceUrl(sourceValue);
+  if (typeof sourceValue === 'string' && sourceValue.trim() && !sourceUrl) {
+    return context.json({ error: 'The source URL must be an official HTTPS URL' }, 400);
+  }
+  const titleValue = form.get('title');
+  const title = typeof titleValue === 'string' && titleValue.trim()
+    ? titleValue.trim().replace(/\s+/gu, ' ').slice(0, 500)
+    : file.name;
+  const category = normalizeKnowledgeCategory(form.get('category'), knowledgeCategoryFromFilename(file.name));
+  const itemName = file.name.trim().slice(0, 240);
+  if (!itemName) return context.json({ error: 'A file name is required' }, 400);
+
+  const result = await context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.upload(itemName, file, {
     metadata: {
-      category: String(form.get('category') || knowledgeCategoryFromFilename(file.name)),
+      category,
       language: 'ja',
       source_url: sourceUrl || '',
-      title: String(form.get('title') || file.name),
+      title,
     },
   });
+  if (isPropertyKnowledgeCategory(category) && sourceUrl) {
+    await context.env.DB.prepare(
+      'DELETE FROM knowledge_source_exclusions WHERE source_url = ?',
+    ).bind(sourceUrl).run();
+  }
   const admin = context.get('admin');
   await appendAudit(context.env, {
     eventType: 'knowledge.uploaded',
@@ -669,22 +877,37 @@ app.post('/api/admin/knowledge', async (context) => {
     actorId: admin.email,
     subjectType: 'knowledge_item',
     subjectId: result.id,
-    metadata: { filename: file.name, size: file.size, type: file.type },
+    metadata: { filename: itemName, size: file.size, type: file.type, title, category, sourceUrl: sourceUrl || null },
   });
-  return context.json(result, 202);
+  return context.json({ ...result, title, category, source_url: sourceUrl || '' }, 202);
 });
 
 app.delete('/api/admin/knowledge/:id', async (context) => {
   const id = context.req.param('id');
-  await context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.delete(id);
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const existing = await items.get(id).info();
+  const category = normalizeKnowledgeCategory(metadataString(existing.metadata, 'category'));
+  const sourceUrl = safeSourceUrl(metadataString(existing.metadata, 'source_url'));
+  const title = metadataString(existing.metadata, 'title') || existing.key;
+  const persistExclusion = isPropertyKnowledgeCategory(category)
+    && Boolean(sourceUrl)
+    && new URL(sourceUrl!).pathname !== '/';
+
+  await items.delete(id);
+  if (persistExclusion && sourceUrl) {
+    await context.env.DB.prepare(
+      'INSERT INTO knowledge_source_exclusions (source_url, category, title, deleted_by, deleted_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(source_url) DO UPDATE SET category = excluded.category, title = excluded.title, deleted_by = excluded.deleted_by, deleted_at = CURRENT_TIMESTAMP',
+    ).bind(sourceUrl, category, title, context.get('admin').email).run();
+  }
   await appendAudit(context.env, {
     eventType: 'knowledge.deleted',
     actorType: 'admin',
     actorId: context.get('admin').email,
     subjectType: 'knowledge_item',
     subjectId: id,
+    metadata: { key: existing.key, title, category, sourceUrl: sourceUrl || null, persistedExclusion: persistExclusion },
   });
-  return context.json({ ok: true });
+  return context.json({ ok: true, persistedExclusion: persistExclusion });
 });
 
 app.post('/api/admin/knowledge/:id/reindex', async (context) => {

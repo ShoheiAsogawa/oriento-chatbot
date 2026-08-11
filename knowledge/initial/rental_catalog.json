@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "source": "properties_for_rent.md",
+  "version": 2,
+  "source": "knowledge/initial/properties/rent",
   "properties": [
     {
       "id": "125914",

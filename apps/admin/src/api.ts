@@ -1,12 +1,35 @@
 export interface KnowledgeItem {
   id: string;
   key: string;
+  /** Human-readable item name. Property entries use the property name here. */
+  title?: string;
+  /** `properties_for_sale`, `properties_for_rent`, or a general knowledge category. */
+  category?: string;
+  /** The official source/detail page, when the entry represents a property. */
+  source_url?: string;
   status: 'queued' | 'running' | 'completed' | 'error' | 'skipped' | 'outdated';
   chunks_count: number;
   file_size: number;
   created_at: string;
   last_seen_at: string;
   metadata?: Record<string, unknown>;
+}
+
+export type KnowledgeCategory = 'properties_for_sale' | 'properties_for_rent' | 'general';
+export type KnowledgeSort = 'title_asc' | 'title_desc' | 'recent';
+
+export interface KnowledgeListOptions {
+  query?: string;
+  category?: 'all' | KnowledgeCategory | 'other';
+  sort?: KnowledgeSort;
+  /** The management screen keeps its local 50-row pager, so it needs the full property set. */
+  perPage?: number;
+}
+
+export interface KnowledgeUploadOptions {
+  title: string;
+  category: KnowledgeCategory;
+  sourceUrl?: string;
 }
 
 export interface ConversationSummary {
@@ -145,9 +168,20 @@ export const api = {
   }),
   bootstrapKnowledge: () => request('/api/admin/knowledge/bootstrap', { method: 'POST' }),
   seedKnowledge: () => request<{ ok: boolean; accepted: Array<{ file: string; id: string }>; skipped: string[] }>('/api/admin/knowledge/seed', { method: 'POST' }, { ok: true, accepted: [], skipped: [] }),
-  knowledge: () => request<{ result: KnowledgeItem[]; result_info: Record<string, number> }>('/api/admin/knowledge', undefined, { result: mockKnowledge, result_info: { total_count: 28, page: 1, per_page: 20 } }),
-  uploadKnowledge: (file: File) => {
-    const form = new FormData(); form.set('file', file); form.set('title', file.name); form.set('category', 'general');
+  knowledge: (options: KnowledgeListOptions = {}) => {
+    const params = new URLSearchParams();
+    if (options.query) params.set('q', options.query);
+    if (options.category && options.category !== 'all') params.set('category', options.category);
+    if (options.sort) params.set('sort', options.sort);
+    params.set('perPage', String(options.perPage ?? 1000));
+    return request<{ result: KnowledgeItem[]; result_info: Record<string, number> }>(`/api/admin/knowledge?${params.toString()}`, undefined, { result: mockKnowledge, result_info: { total_count: 28, page: 1, per_page: 20 } });
+  },
+  uploadKnowledge: (file: File, options: KnowledgeUploadOptions) => {
+    const form = new FormData();
+    form.set('file', file);
+    form.set('title', options.title || file.name);
+    form.set('category', options.category);
+    if (options.sourceUrl?.trim()) form.set('sourceUrl', options.sourceUrl.trim());
     return request('/api/admin/knowledge', { method: 'POST', body: form });
   },
   deleteKnowledge: (id: string) => request(`/api/admin/knowledge/${id}`, { method: 'DELETE' }, { ok: true }),
