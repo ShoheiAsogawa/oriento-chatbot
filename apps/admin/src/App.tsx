@@ -16,6 +16,7 @@ import {
   type KnowledgeItem,
   type MonthlyReport,
   type OverviewData,
+  type PropertyKnowledgeInput,
   mockAudit,
   mockConversations,
   mockCustomers,
@@ -73,6 +74,65 @@ const propertyNameCollator = new Intl.Collator('ja-JP', { numeric: true, sensiti
 
 type KnowledgeFilter = 'all' | 'properties_for_sale' | 'properties_for_rent' | 'other';
 type KnowledgeSortOrder = 'title_asc' | 'title_desc' | 'recent';
+type KnowledgeAddMode = 'property' | 'document';
+type PropertyTextField = Exclude<keyof PropertyKnowledgeInput, 'category' | 'features'>;
+
+function createEmptyPropertyKnowledge(): PropertyKnowledgeInput {
+  return {
+    title: '',
+    category: 'properties_for_sale',
+    sourceUrl: '',
+    address: '',
+    lineStation: '',
+    priceOrRent: '',
+    managementFee: '',
+    layout: '',
+    floorArea: '',
+    buildingType: '',
+    builtYear: '',
+    floor: '',
+    availability: '',
+    features: [],
+    notes: '',
+  };
+}
+
+function propertyCategoryLabel(category: PropertyKnowledgeInput['category']) {
+  return category === 'properties_for_sale' ? '売買物件' : '賃貸物件';
+}
+
+function parsePropertyFeatures(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^[・•*-]\s*/, '').trim())
+    .filter(Boolean);
+}
+
+function propertyKnowledgePreview(input: PropertyKnowledgeInput) {
+  const fieldLines = [
+    ['所在地', input.address],
+    ['沿線・駅', input.lineStation],
+    ['価格・賃料', input.priceOrRent],
+    ['管理費', input.managementFee],
+    ['間取り', input.layout],
+    ['専有面積', input.floorArea],
+    ['建物種別', input.buildingType],
+    ['築年', input.builtYear],
+    ['階数', input.floor],
+    ['入居・引渡し時期', input.availability],
+  ].flatMap(([label, value]) => value?.trim() ? [`- ${label}: ${value.trim()}`] : []);
+
+  const features = input.features.filter(Boolean);
+  return [
+    `# ${input.title.trim() || '物件名（入力中）'}`,
+    '',
+    `- 種別: ${propertyCategoryLabel(input.category)}`,
+    `- 公式詳細ページ: ${input.sourceUrl.trim() || '未入力'}`,
+    ...fieldLines,
+    ...(features.length ? ['', '## 特徴', ...features.map((feature) => `- ${feature}`)] : []),
+    ...(input.notes?.trim() ? ['', '## 備考', input.notes.trim()] : []),
+  ].join('\n');
+}
 
 function knowledgeValue(item: KnowledgeItem, field: 'title' | 'category' | 'source_url') {
   const direct = item[field];
@@ -205,11 +265,14 @@ function KnowledgePage() {
   const [loading, setLoading] = useState(true);
   const [seeded, setSeeded] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<'properties_for_sale' | 'properties_for_rent' | 'general'>('properties_for_sale');
-  const [sourceUrl, setSourceUrl] = useState('');
+  const [addMode, setAddMode] = useState<KnowledgeAddMode>('property');
+  const [propertyForm, setPropertyForm] = useState<PropertyKnowledgeInput>(createEmptyPropertyKnowledge);
+  const [featureText, setFeatureText] = useState('');
+  const [documentTitle, setDocumentTitle] = useState('');
+  const [documentSourceUrl, setDocumentSourceUrl] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const generatedPropertyKnowledge = useMemo(() => propertyKnowledgePreview(propertyForm), [propertyForm]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -265,29 +328,76 @@ function KnowledgePage() {
   const updateSort = (next: KnowledgeSortOrder) => { setSort(next); setPage(1); };
   const updateSearch = (next: string) => { setSearch(next); setPage(1); setSelected(null); };
 
-  const upload = async (files: FileList | null) => {
+  const updatePropertyText = (field: PropertyTextField, value: string) => {
+    setPropertyForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const updatePropertyFeatures = (value: string) => {
+    setFeatureText(value);
+    setPropertyForm((current) => ({ ...current, features: parsePropertyFeatures(value) }));
+  };
+
+  const resetAddForm = () => {
+    setAddMode('property');
+    setPropertyForm(createEmptyPropertyKnowledge());
+    setFeatureText('');
+    setDocumentTitle('');
+    setDocumentSourceUrl('');
+    setDragging(false);
+  };
+
+  const openAddForm = () => {
+    resetAddForm();
+    setAddOpen(true);
+    setNotice(null);
+  };
+
+  const closeAddForm = () => {
+    setAddOpen(false);
+    setDragging(false);
+  };
+
+  const uploadDocument = async (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
-    const property = category !== 'general';
-    if (property && !title.trim()) {
-      setNotice('物件を登録する場合は、ナレッジのタイトルに物件名を入力してください。');
-      return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const title = documentTitle.trim() || file.name;
+      await api.uploadKnowledge(file, { title, category: 'general', sourceUrl: documentSourceUrl.trim() });
+      closeAddForm();
+      setDocumentTitle('');
+      setDocumentSourceUrl('');
+      setNotice(`「${title}」を登録しました。インデックス作成後に回答へ反映されます。`);
+      await load();
+    } catch (error) {
+      setNotice(error instanceof Error ? `登録できませんでした: ${error.message}` : '登録できませんでした。');
+    } finally {
+      setBusy(false);
     }
-    if (property && !sourceUrl.trim()) {
-      setNotice('物件を登録する場合は、公式の詳細ページURLを入力してください。');
+  };
+
+  const createProperty = async () => {
+    const input: PropertyKnowledgeInput = {
+      ...propertyForm,
+      title: propertyForm.title.trim(),
+      sourceUrl: propertyForm.sourceUrl.trim(),
+      features: propertyForm.features.filter(Boolean),
+    };
+    if (!input.title || !input.sourceUrl) {
+      setNotice('物件名と公式詳細ページURLを入力してください。');
       return;
     }
     setBusy(true);
     setNotice(null);
     try {
-      await api.uploadKnowledge(file, { title: title.trim() || file.name, category, sourceUrl });
-      setTitle('');
-      setSourceUrl('');
-      setAddOpen(false);
-      setNotice(`「${title.trim() || file.name}」を登録しました。インデックス作成後に回答へ反映されます。`);
+      await api.createPropertyKnowledge(input);
+      closeAddForm();
+      resetAddForm();
+      setNotice(`「${input.title}」を物件ナレッジとして登録しました。インデックス作成後に回答へ反映されます。`);
       await load();
     } catch (error) {
-      setNotice(error instanceof Error ? `登録できませんでした: ${error.message}` : '登録できませんでした。');
+      setNotice(error instanceof Error ? `物件を登録できませんでした: ${error.message}` : '物件を登録できませんでした。');
     } finally {
       setBusy(false);
     }
@@ -350,7 +460,7 @@ function KnowledgePage() {
         description="物件は1件ごとに管理します。成約済みになった物件だけを削除し、必要な物件だけを追加できます。"
         action={<div className="page-actions">
           <button className="secondary-button" onClick={() => void seed()} disabled={busy}><Database />{seeded ? '初期ナレッジ同期済み' : '初期ナレッジを同期'}</button>
-          <button className="primary-button" onClick={() => { setAddOpen(true); setNotice(null); }} disabled={busy}><Plus />物件・資料を追加</button>
+          <button className="primary-button" onClick={openAddForm} disabled={busy}><Plus />物件・資料を追加</button>
         </div>}
       />
       <input
@@ -359,29 +469,55 @@ function KnowledgePage() {
         hidden
         accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.webp"
         onChange={(event) => {
-          void upload(event.target.files);
+          void uploadDocument(event.target.files);
           event.target.value = '';
         }}
       />
 
       {addOpen ? <section className="knowledge-add surface" aria-label="物件・資料を1件追加">
-        <div className="section-heading"><div><h2>物件・資料を1件追加</h2><p>物件名・分類・公式詳細ページを紐づけて登録します。</p></div><button className="square-button" type="button" onClick={() => setAddOpen(false)} aria-label="追加フォームを閉じる"><X /></button></div>
-        <div className="knowledge-add-body">
-          <label className="knowledge-field"><span>ナレッジのタイトル（物件名）</span><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例：オリエント梅田レジデンス 502号室" autoComplete="off" /></label>
-          <label className="knowledge-field"><span>分類</span><select value={category} onChange={(event) => setCategory(event.target.value as typeof category)}><option value="properties_for_sale">売買物件</option><option value="properties_for_rent">賃貸物件</option><option value="general">一般資料</option></select></label>
-          <label className="knowledge-field knowledge-field-wide"><span>公式詳細ページURL</span><input value={sourceUrl} onChange={(event) => setSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /><small>物件の場合は必須です。チャットの「詳細を見る」リンクに使用します。</small></label>
+        <div className="section-heading"><div><h2>物件・資料を1件追加</h2><p>物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。</p></div><button className="square-button" type="button" onClick={closeAddForm} aria-label="追加フォームを閉じる"><X /></button></div>
+        <div className="knowledge-add-mode" role="tablist" aria-label="登録方法">
+          <button type="button" role="tab" aria-selected={addMode === 'property'} className={addMode === 'property' ? 'active' : ''} onClick={() => setAddMode('property')}><Home />物件を定型登録</button>
+          <button type="button" role="tab" aria-selected={addMode === 'document'} className={addMode === 'document' ? 'active' : ''} onClick={() => setAddMode('document')}><UploadCloud />一般資料をアップロード</button>
+        </div>
+        {addMode === 'property' ? <form className="knowledge-add-body property-knowledge-form" onSubmit={(event) => { event.preventDefault(); void createProperty(); }}>
+          <div className="property-form-fields">
+            <label className="knowledge-field"><span>取引種別 <em>必須</em></span><select value={propertyForm.category} onChange={(event) => setPropertyForm((current) => ({ ...current, category: event.target.value as PropertyKnowledgeInput['category'] }))} required><option value="properties_for_sale">売買</option><option value="properties_for_rent">賃貸</option></select></label>
+            <label className="knowledge-field"><span>物件名 <em>必須</em></span><input value={propertyForm.title} onChange={(event) => updatePropertyText('title', event.target.value)} placeholder="例：オリエント梅田レジデンス 502号室" autoComplete="off" required /></label>
+            <label className="knowledge-field knowledge-field-wide"><span>公式詳細ページURL <em>必須</em></span><input value={propertyForm.sourceUrl} onChange={(event) => updatePropertyText('sourceUrl', event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" required /><small>チャットに表示する「詳細を見る」リンクに使います。</small></label>
+            <label className="knowledge-field"><span>所在地</span><input value={propertyForm.address} onChange={(event) => updatePropertyText('address', event.target.value)} placeholder="例：大阪府大阪市北区…" autoComplete="street-address" /></label>
+            <label className="knowledge-field"><span>沿線・駅</span><input value={propertyForm.lineStation} onChange={(event) => updatePropertyText('lineStation', event.target.value)} placeholder="例：JR大阪環状線 大阪駅 徒歩8分" /></label>
+            <label className="knowledge-field"><span>価格・賃料</span><input value={propertyForm.priceOrRent} onChange={(event) => updatePropertyText('priceOrRent', event.target.value)} placeholder="例：3,980万円 / 8.5万円" inputMode="decimal" /></label>
+            <label className="knowledge-field"><span>管理費</span><input value={propertyForm.managementFee} onChange={(event) => updatePropertyText('managementFee', event.target.value)} placeholder="例：8,000円" inputMode="decimal" /></label>
+            <label className="knowledge-field"><span>間取り</span><input value={propertyForm.layout} onChange={(event) => updatePropertyText('layout', event.target.value)} placeholder="例：2LDK" /></label>
+            <label className="knowledge-field"><span>専有面積</span><input value={propertyForm.floorArea} onChange={(event) => updatePropertyText('floorArea', event.target.value)} placeholder="例：58.42㎡" inputMode="decimal" /></label>
+            <label className="knowledge-field"><span>建物種別</span><input value={propertyForm.buildingType} onChange={(event) => updatePropertyText('buildingType', event.target.value)} placeholder="例：中古マンション" /></label>
+            <label className="knowledge-field"><span>築年</span><input value={propertyForm.builtYear} onChange={(event) => updatePropertyText('builtYear', event.target.value)} placeholder="例：2018年3月" /></label>
+            <label className="knowledge-field"><span>階数</span><input value={propertyForm.floor} onChange={(event) => updatePropertyText('floor', event.target.value)} placeholder="例：5階 / 15階建" /></label>
+            <label className="knowledge-field knowledge-field-wide"><span>入居・引渡し時期</span><input value={propertyForm.availability} onChange={(event) => updatePropertyText('availability', event.target.value)} placeholder="例：即入居可 / 2026年10月上旬引渡し予定" /></label>
+            <label className="knowledge-field knowledge-field-wide"><span>特徴</span><textarea value={featureText} onChange={(event) => updatePropertyFeatures(event.target.value)} rows={4} placeholder={'1行につき1項目で入力\n例：\n・南向き\n・ペット相談可\n・オートロック'} /><small>箇条書きで入力すると、回答で探しやすい特徴として登録されます。</small></label>
+            <label className="knowledge-field knowledge-field-wide"><span>備考</span><textarea value={propertyForm.notes} onChange={(event) => updatePropertyText('notes', event.target.value)} rows={3} placeholder="例：内覧は事前予約制です。" /></label>
+          </div>
+          <section className="property-knowledge-preview" aria-labelledby="property-knowledge-preview-title">
+            <div className="property-preview-heading"><div><h3 id="property-knowledge-preview-title">生成されるナレッジのプレビュー</h3><p>この形式で1物件ずつAI検索に登録されます。</p></div><Eye /></div>
+            <pre aria-live="polite">{generatedPropertyKnowledge}</pre>
+          </section>
+          <div className="property-form-actions"><p><em>必須</em> の項目を入力すると登録できます。</p><button type="submit" className="primary-button" disabled={busy}>{busy ? '登録しています…' : '物件ナレッジを登録'}</button></div>
+        </form> : <div className="knowledge-add-body document-knowledge-form">
+          <label className="knowledge-field"><span>資料名（任意）</span><input value={documentTitle} onChange={(event) => setDocumentTitle(event.target.value)} placeholder="未入力の場合はファイル名を使います" autoComplete="off" /></label>
+          <label className="knowledge-field"><span>関連ページURL（任意）</span><input value={documentSourceUrl} onChange={(event) => setDocumentSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /></label>
           <button
             type="button"
             className={`dropzone knowledge-dropzone ${dragging ? 'dragging' : ''}`}
             onClick={() => fileInput.current?.click()}
             onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
-            onDrop={(event) => { event.preventDefault(); setDragging(false); void upload(event.dataTransfer.files); }}
+            onDrop={(event) => { event.preventDefault(); setDragging(false); void uploadDocument(event.dataTransfer.files); }}
             disabled={busy}
           >
             <UploadCloud /><span><strong>{busy ? '処理しています…' : 'ファイルを選択して登録'}</strong><small>PDF、DOCX、XLSX、CSV、画像（最大4MB / 1ファイル）</small></span>
           </button>
-        </div>
+        </div>}
       </section> : null}
 
       {notice ? <p className="knowledge-notice" role="status">{notice}</p> : null}

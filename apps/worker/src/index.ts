@@ -51,6 +51,64 @@ const knowledgeReseedSchema = z.object({
   prune: z.boolean().default(false),
 });
 
+const propertyCategorySchema = z.enum(['properties_for_sale', 'properties_for_rent']);
+const propertyTypeSchema = z.enum(['sale', 'rent']);
+
+function normalizePropertyText(value: string) {
+  return value.replace(/\s+/gu, ' ').trim();
+}
+
+const propertyOptionalText = (maximum: number) => z.string()
+  .trim()
+  .max(maximum)
+  .transform((value) => normalizePropertyText(value) || undefined)
+  .optional();
+
+const propertyKnowledgeSchema = z.object({
+  title: z.string().trim().min(1).max(160).transform(normalizePropertyText),
+  category: propertyCategorySchema.optional(),
+  // `type` is retained as a compact API alias for integrations that do not use the admin UI.
+  type: propertyTypeSchema.optional(),
+  sourceUrl: z.string()
+    .trim()
+    .min(1)
+    .max(1000)
+    .refine((value) => Boolean(safeSourceUrl(value)), { message: 'The source URL must be an official HTTPS URL' }),
+  address: propertyOptionalText(240),
+  lineStation: propertyOptionalText(240),
+  priceOrRent: propertyOptionalText(100),
+  managementFee: propertyOptionalText(100),
+  layout: propertyOptionalText(100),
+  floorArea: propertyOptionalText(100),
+  buildingType: propertyOptionalText(100),
+  builtYear: propertyOptionalText(80),
+  floor: propertyOptionalText(80),
+  availability: propertyOptionalText(120),
+  features: z.array(z.string().trim().min(1).max(120).transform(normalizePropertyText))
+    .max(30)
+    .default([])
+    .transform((features) => [...new Set(features)]),
+  notes: z.string()
+    .trim()
+    .max(2000)
+    .refine((value) => value.split(/\r?\n/gu).length <= 24, { message: 'Notes may contain at most 24 lines' })
+    .transform((value) => value.replace(/\r\n?/gu, '\n').split('\n').map((line) => line.trim()).filter(Boolean).join('\n') || undefined)
+    .optional(),
+}).strict().superRefine((value, issue) => {
+  if (!value.category && !value.type) {
+    issue.addIssue({ code: 'custom', path: ['category'], message: 'A property category or type is required' });
+    return;
+  }
+  if (value.category && value.type) {
+    const typeCategory = value.type === 'sale' ? 'properties_for_sale' : 'properties_for_rent';
+    if (value.category !== typeCategory) {
+      issue.addIssue({ code: 'custom', path: ['type'], message: 'Property category and type must match' });
+    }
+  }
+});
+
+type PropertyKnowledgeInput = z.infer<typeof propertyKnowledgeSchema>;
+
 function allowedOrigins(env: Env) {
   return new Set(env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean));
 }
@@ -231,6 +289,69 @@ function isPropertyKnowledgeCategory(category: string | undefined) {
 function isManagedInitialKnowledgeItem(item: AiSearchItemInfo) {
   return Boolean(metadataString(item.metadata, 'manifest_sha256'));
 }
+
+function knowledgeItemSourceUrl(item: AiSearchItemInfo) {
+  return safeSourceUrl(metadataString(item.metadata, 'source_url'));
+}
+
+function propertyKnowledgeCategory(type: PropertyKnowledgeInput) {
+  return type.category || (type.type === 'rent' ? 'properties_for_rent' : 'properties_for_sale');
+}
+
+async function propertyKnowledgeItemKey(sourceUrl: string) {
+  return `property-${await sha256(sourceUrl)}.md`;
+}
+
+function propertyKnowledgeMarkdown(input: PropertyKnowledgeInput, category: string, sourceUrl: string) {
+  const typeLabel = category === 'properties_for_rent' ? '賃貸' : '売買';
+  const fields: Array<[string, string | undefined]> = [
+    ['種別', typeLabel],
+    ['物件名', input.title],
+    ['住所', input.address],
+    ['沿線・最寄駅', input.lineStation],
+    ['価格・賃料', input.priceOrRent],
+    ['管理費・共益費', input.managementFee],
+    ['間取り', input.layout],
+    ['専有・建物面積', input.floorArea],
+    ['建物種別', input.buildingType],
+    ['築年', input.builtYear],
+    ['所在階・階数', input.floor],
+    ['掲載状況', input.availability],
+  ];
+  const lines = fields.filter(([, value]) => Boolean(value)).map(([label, value]) => `- ${label}: ${value}`);
+  const featureLines = input.features.map((feature) => `- ${feature}`);
+  return [
+    `# ${input.title}`,
+    '',
+    '## 物件情報',
+    ...lines,
+    ...(featureLines.length > 0 ? ['', '## 特徴・設備', ...featureLines] : []),
+    '',
+    '## 公式情報',
+    `- 公式物件詳細ページ: ${sourceUrl}`,
+    ...(input.notes ? ['', '## 備考', input.notes] : []),
+  ].join('\n');
+}
+
+function excludeInitialPropertiesCoveredByManualItems(entries: InitialKnowledgeEntry[], existingItems: AiSearchItemInfo[]) {
+  const manuallyManagedSources = new Set(existingItems
+    .filter((item) => isPropertyKnowledgeCategory(normalizeKnowledgeCategory(metadataString(item.metadata, 'category'))))
+    .filter((item) => !isManagedInitialKnowledgeItem(item))
+    .map(knowledgeItemSourceUrl)
+    .filter((sourceUrl): sourceUrl is string => Boolean(sourceUrl)));
+  return entries.filter((entry) => {
+    return !isPropertyKnowledgeCategory(initialKnowledgeCategory(entry))
+      || !manuallyManagedSources.has(initialKnowledgeSourceUrl(entry));
+  });
+}
+
+export {
+  excludeInitialPropertiesCoveredByManualItems,
+  propertyKnowledgeCategory,
+  propertyKnowledgeItemKey,
+  propertyKnowledgeMarkdown,
+  propertyKnowledgeSchema,
+};
 
 async function readInitialKnowledgeManifest(env: Env, baseUrl: URL) {
   const manifestResponse = await env.STATIC_ASSETS.fetch(new Request(new URL('/knowledge/manifest.json', baseUrl)));
@@ -652,9 +773,11 @@ app.post('/api/admin/knowledge/seed', async (context) => {
     readInitialKnowledgeManifest(context.env, baseUrl),
     readKnowledgeSourceExclusions(context.env),
   ]);
-  const files = excludeRemovedInitialKnowledge(manifestEntries, exclusions);
   const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
-  const existingKeys = new Set((await listAllKnowledgeItems(items)).map((item) => item.key));
+  const existingItems = await listAllKnowledgeItems(items);
+  const exclusionFiltered = excludeRemovedInitialKnowledge(manifestEntries, exclusions);
+  const files = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems);
+  const existingKeys = new Set(existingItems.map((item) => item.key));
   const accepted: Array<{ file: string; key: string; id: string; status: string }> = [];
   const skipped: string[] = [];
 
@@ -681,9 +804,20 @@ app.post('/api/admin/knowledge/seed', async (context) => {
     actorId: context.get('admin').email,
     subjectType: 'ai_search_instance',
     subjectId: context.env.AI_SEARCH_INSTANCE,
-    metadata: { accepted: accepted.length, skipped: skipped.length, excluded: manifestEntries.length - files.length },
+    metadata: {
+      accepted: accepted.length,
+      skipped: skipped.length,
+      excluded: manifestEntries.length - exclusionFiltered.length,
+      coveredByManualItem: exclusionFiltered.length - files.length,
+    },
   });
-  return context.json({ ok: true, accepted, skipped, excluded: manifestEntries.length - files.length }, 202);
+  return context.json({
+    ok: true,
+    accepted,
+    skipped,
+    excluded: manifestEntries.length - exclusionFiltered.length,
+    coveredByManualItem: exclusionFiltered.length - files.length,
+  }, 202);
 });
 
 app.post('/api/internal/knowledge/reseed', async (context) => {
@@ -698,10 +832,11 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
     readInitialKnowledgeManifest(context.env, baseUrl),
     readKnowledgeSourceExclusions(context.env),
   ]);
-  const files = excludeRemovedInitialKnowledge(manifestEntries, exclusions)
-    .filter((entry): entry is InitialKnowledgeEntry & { sha256: string } => Boolean(entry.sha256));
   const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
   const existingItems = await listAllKnowledgeItems(items);
+  const exclusionFiltered = excludeRemovedInitialKnowledge(manifestEntries, exclusions);
+  const files = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems)
+    .filter((entry): entry is InitialKnowledgeEntry & { sha256: string } => Boolean(entry.sha256));
   const existingByKey = new Map(existingItems.map((item) => [item.key, item]));
   const desiredKeys = new Set(files.map((entry) => initialKnowledgeItemKey(entry)));
   const accepted: Array<{ file: string; key: string; id: string; status: string }> = [];
@@ -749,7 +884,8 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
       skipped: skipped.length,
       incomplete: incomplete.length,
       deleted: deleted.length,
-      excluded: manifestEntries.length - files.length,
+      excluded: manifestEntries.length - exclusionFiltered.length,
+      coveredByManualItem: exclusionFiltered.length - files.length,
     },
   });
   return context.json({
@@ -758,7 +894,8 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
     skipped,
     incomplete,
     deleted,
-    excluded: manifestEntries.length - files.length,
+    excluded: manifestEntries.length - exclusionFiltered.length,
+    coveredByManualItem: exclusionFiltered.length - files.length,
   }, incomplete.length ? 202 : 200);
 });
 
@@ -880,6 +1017,68 @@ app.post('/api/admin/knowledge', async (context) => {
     metadata: { filename: itemName, size: file.size, type: file.type, title, category, sourceUrl: sourceUrl || null },
   });
   return context.json({ ...result, title, category, source_url: sourceUrl || '' }, 202);
+});
+
+app.post('/api/admin/knowledge/property', async (context) => {
+  const contentType = context.req.header('Content-Type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return context.json({ error: 'Content-Type must be application/json' }, 415);
+  }
+
+  const input = propertyKnowledgeSchema.parse(await context.req.json());
+  const sourceUrl = safeSourceUrl(input.sourceUrl);
+  if (!sourceUrl) return context.json({ error: 'The source URL must be an official HTTPS URL' }, 400);
+
+  const category = propertyKnowledgeCategory(input);
+  const itemKey = await propertyKnowledgeItemKey(sourceUrl);
+  const markdown = propertyKnowledgeMarkdown(input, category, sourceUrl);
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const existingItems = await listAllKnowledgeItems(items);
+  const sourceMatches = existingItems.filter((item) => knowledgeItemSourceUrl(item) === sourceUrl);
+  const result = await items.upload(itemKey, markdown, {
+    metadata: {
+      category,
+      language: 'ja',
+      source_url: sourceUrl,
+      title: input.title,
+    },
+  });
+
+  // AI Search upload upserts by key. Remove a legacy/static item with the same official URL
+  // only after the new item exists, so a manual update cannot create a duplicate search result.
+  const replacedItemIds = [...new Set(sourceMatches
+    .filter((item) => item.id !== result.id)
+    .map((item) => item.id))];
+  await Promise.all(replacedItemIds.map((id) => items.delete(id)));
+  await context.env.DB.prepare(
+    'DELETE FROM knowledge_source_exclusions WHERE source_url = ?',
+  ).bind(sourceUrl).run();
+
+  const admin = context.get('admin');
+  await appendAudit(context.env, {
+    eventType: 'knowledge.property_upserted',
+    actorType: 'admin',
+    actorId: admin.email,
+    subjectType: 'knowledge_item',
+    subjectId: result.id,
+    metadata: {
+      itemKey,
+      title: input.title,
+      category,
+      sourceUrl,
+      updated: sourceMatches.length > 0,
+      replacedItemCount: replacedItemIds.length,
+      featureCount: input.features.length,
+    },
+  });
+  return context.json({
+    ...result,
+    key: itemKey,
+    title: input.title,
+    category,
+    source_url: sourceUrl,
+    replacedItemCount: replacedItemIds.length,
+  }, 202);
 });
 
 app.delete('/api/admin/knowledge/:id', async (context) => {

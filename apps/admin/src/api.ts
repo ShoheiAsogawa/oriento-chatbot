@@ -32,6 +32,25 @@ export interface KnowledgeUploadOptions {
   sourceUrl?: string;
 }
 
+/** A structured property entry that becomes one searchable knowledge item. */
+export interface PropertyKnowledgeInput {
+  title: string;
+  category: Exclude<KnowledgeCategory, 'general'>;
+  sourceUrl: string;
+  address?: string;
+  lineStation?: string;
+  priceOrRent?: string;
+  managementFee?: string;
+  layout?: string;
+  floorArea?: string;
+  buildingType?: string;
+  builtYear?: string;
+  floor?: string;
+  availability?: string;
+  features: string[];
+  notes?: string;
+}
+
 export interface ConversationSummary {
   id: string;
   updated_at: string;
@@ -184,6 +203,15 @@ export const api = {
     if (options.sourceUrl?.trim()) form.set('sourceUrl', options.sourceUrl.trim());
     return request('/api/admin/knowledge', { method: 'POST', body: form });
   },
+  createPropertyKnowledge: (input: PropertyKnowledgeInput) => request(
+    '/api/admin/knowledge/property',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+    { ok: true },
+  ),
   deleteKnowledge: (id: string) => request(`/api/admin/knowledge/${id}`, { method: 'DELETE' }, { ok: true }),
   reindexKnowledge: (id: string) => request(`/api/admin/knowledge/${id}/reindex`, { method: 'POST' }, { ok: true }),
   conversations: () => request('/api/admin/conversations', undefined, { result: mockConversations, page: 1, perPage: 30 }),

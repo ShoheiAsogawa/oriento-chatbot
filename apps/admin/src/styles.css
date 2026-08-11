@@ -120,12 +120,32 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .knowledge-add .section-heading { padding: 16px 18px; }
 .knowledge-add .section-heading h2 { font-size: 14px; }
 .knowledge-add-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(210px, .8fr); gap: 14px; padding: 18px; }
+.knowledge-add-mode { display: flex; gap: 5px; padding: 12px 18px 0; border-top: 1px solid var(--border); background: #fafafa; }
+.knowledge-add-mode button { min-height: 35px; display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; color: var(--muted); border: 1px solid transparent; border-radius: 7px 7px 0 0; background: transparent; font-size: 11px; font-weight: 800; }
+.knowledge-add-mode button:hover { color: var(--ink); background: #fff; }
+.knowledge-add-mode button.active { position: relative; color: var(--orange); border-color: var(--border); border-bottom-color: #fff; background: #fff; }
+.knowledge-add-mode button.active::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 1px; background: #fff; }
+.knowledge-add-mode button svg { width: 15px; }
 .knowledge-field { display: grid; gap: 7px; min-width: 0; color: var(--ink); font-size: 11px; font-weight: 800; }
-.knowledge-field input, .knowledge-field select { width: 100%; min-height: 40px; padding: 0 11px; border: 1px solid #d7d9e0; border-radius: 7px; background: #fff; outline: 0; font-size: 12px; font-weight: 500; }
-.knowledge-field input:focus, .knowledge-field select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,104,11,.1); }
+.knowledge-field > span { display: flex; align-items: center; gap: 5px; }
+.knowledge-field em, .property-form-actions em { padding: 1px 4px; color: #bd4b00; border-radius: 3px; background: #fff0e4; font-size: 8px; font-style: normal; }
+.knowledge-field input, .knowledge-field select, .knowledge-field textarea { width: 100%; min-height: 40px; padding: 0 11px; border: 1px solid #d7d9e0; border-radius: 7px; background: #fff; outline: 0; font-size: 12px; font-weight: 500; }
+.knowledge-field textarea { min-height: 76px; padding-top: 9px; padding-bottom: 9px; resize: vertical; line-height: 1.55; }
+.knowledge-field input:focus, .knowledge-field select:focus, .knowledge-field textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,104,11,.1); }
 .knowledge-field small { color: var(--muted); font-size: 9px; font-weight: 500; }
 .knowledge-field-wide { grid-column: 1 / -1; }
 .knowledge-dropzone { grid-column: 1 / -1; min-height: 90px; }
+.property-knowledge-form { grid-template-columns: 1fr; }
+.property-form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.property-knowledge-preview { overflow: hidden; border: 1px solid #dfe2e8; border-radius: 8px; background: #fbfbfc; }
+.property-preview-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 13px 14px; border-bottom: 1px solid var(--border); background: #f6f7f9; }
+.property-preview-heading h3 { margin: 0 0 3px; font-size: 11px; }
+.property-preview-heading p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.property-preview-heading svg { width: 17px; color: var(--orange); }
+.property-knowledge-preview pre { max-height: 300px; margin: 0; padding: 14px; overflow: auto; color: #454754; background: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.property-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 2px; }
+.property-form-actions p { margin: 0; color: var(--muted); font-size: 10px; }
+.property-form-actions .primary-button { min-width: 190px; }
 .knowledge-notice { margin: 0 0 16px; padding: 10px 12px; color: #8a4a00; border: 1px solid #f3d098; border-radius: 8px; background: #fff8ea; font-size: 11px; line-height: 1.55; }
 
 .table-tools { display: flex; align-items: center; gap: 10px; margin: 22px 0 14px; }
@@ -337,6 +357,14 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
   .split-page { margin-left: -28px; margin-right: -28px; }
   .metric { padding-left: 14px; padding-right: 14px; }
   .report-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .knowledge-add-mode { overflow-x: auto; }
+  .knowledge-add-mode button { flex: 0 0 auto; }
+  .property-form-fields { grid-template-columns: 1fr; }
+  .property-form-actions { align-items: flex-start; flex-direction: column; }
+  .property-form-actions .primary-button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
