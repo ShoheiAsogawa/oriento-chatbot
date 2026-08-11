@@ -42,6 +42,7 @@ describe('generateGroundedAnswer', () => {
     expect(body).toMatchObject({ model: 'gpt-5.4-nano', store: false, reasoning_effort: 'none', max_completion_tokens: 280 });
     expect(body.messages[1]).toEqual({ role: 'user', content: '大阪市の物件を探しています' });
     expect(body.messages[2]).toEqual({ role: 'assistant', content: 'ご希望の地域を教えてくださいにゃん。' });
+    expect(body.messages[3].content).toContain('直前の会話履歴は同じ訪問者との時系列の会話です。');
     expect(body.messages[3].content).toContain('営業時間は午前9時から午後6時までです。');
   });
 

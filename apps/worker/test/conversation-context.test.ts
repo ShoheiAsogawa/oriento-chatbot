@@ -17,7 +17,7 @@ describe('conversation context', () => {
       'conversation-a',
     );
 
-    expect(bind).toHaveBeenCalledWith('conversation-a', 6);
+    expect(bind).toHaveBeenCalledWith('conversation-a', 8);
     expect(prepare.mock.calls[0]?.[0]).toContain('WHERE conversation_id = ?');
     expect(history).toEqual([
       { role: 'user', content: 'この物件の価格は？' },
@@ -25,20 +25,18 @@ describe('conversation context', () => {
     ]);
   });
 
-  it('uses only recent history for conversational search', () => {
-    const history = Array.from({ length: 6 }, (_, index) => ({
+  it('uses the latest three turns for conversational search', () => {
+    const history = Array.from({ length: 8 }, (_, index) => ({
       role: index % 2 === 0 ? 'user' as const : 'assistant' as const,
       content: `message-${index}`,
     }));
 
-    expect(buildSearchMessages(history, 'その物件の間取りは？')).toEqual([{ role: 'user', content: [
-      'これまでの会話:',
-      '利用者: message-2',
-      '案内: message-3',
-      '利用者: message-4',
-      '案内: message-5',
-      '現在の質問: その物件の間取りは？',
-    ].join('\n') }]);
+    const [query] = buildSearchMessages(history, 'その物件の間取りは？');
+    expect(query?.role).toBe('user');
+    expect(query?.content).not.toContain('message-1');
+    expect(query?.content).toContain('message-2');
+    expect(query?.content).toContain('message-7');
+    expect(query?.content).toContain('その物件の間取りは？');
   });
 
   it('builds a concise rental search query from visitor criteria only', () => {

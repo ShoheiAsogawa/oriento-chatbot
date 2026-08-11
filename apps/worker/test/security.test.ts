@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { redactPII, verifyTurnstile } from '../src/security';
+import { createSessionToken, redactPII, verifySessionToken, verifyTurnstile } from '../src/security';
 
 const productionEnv = {
   ENVIRONMENT: 'production',
@@ -77,5 +77,20 @@ describe('redactPII', () => {
     expect(redactPII('連絡先は test@example.com と 090-1234-5678 です')).toBe(
       '連絡先は [メールアドレス] と [電話番号] です',
     );
+  });
+});
+
+describe('chat session tokens', () => {
+  const sessionEnv = {
+    ...productionEnv,
+    SESSION_SIGNING_KEY: 'test-session-signing-key',
+  } as Env;
+
+  it('binds a token to one conversation and rejects a different conversation ID', async () => {
+    const conversationId = '18a959d1-6d70-4c90-a43e-2dc216e64c62';
+    const token = await createSessionToken(conversationId, sessionEnv);
+
+    expect(token.split('.')[0]).toBe(conversationId);
+    await expect(verifySessionToken(token, '3762fe9a-6cc0-46c1-865c-d2ee7b62a4fa', sessionEnv)).resolves.toBe(false);
   });
 });

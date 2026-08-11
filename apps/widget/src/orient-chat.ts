@@ -18,6 +18,12 @@ interface ChatMessage {
   pending?: boolean;
 }
 
+interface StoredChatSession {
+  conversationId: string;
+  sessionToken: string;
+  expiresAt: number;
+}
+
 interface TurnstileApi {
   render(container: HTMLElement, options: Record<string, unknown>): string;
   execute(widgetId: string): void;
@@ -173,6 +179,8 @@ const styles = `
   .user .message-content { justify-self: end; }
   .inline-source { display: inline-flex; align-items: center; margin: 3px 0 3px 5px; padding: 3px 8px; color: var(--orient-primary-strong); border: 1px solid #ffb98d; border-radius: 999px; background: #fffaf7; font-size: 10px; font-weight: 800; line-height: 1.5; text-decoration: none; vertical-align: middle; white-space: nowrap; }
   .inline-source:hover, .inline-source:focus-visible { border-color: var(--orient-primary); background: #fff1e8; outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
+  .answer-url { color: var(--orient-primary-strong); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; overflow-wrap: anywhere; word-break: break-all; }
+  .answer-url:hover, .answer-url:focus-visible { color: var(--orient-primary); outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
   .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
   .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
   .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
@@ -286,6 +294,67 @@ class OrientChat extends HTMLElement {
   private get apiUrl() { return (this.getAttribute('api-url') || '').replace(/\/$/, ''); }
   private get demoMode() { return this.getAttribute('demo-mode') === 'true' || !this.apiUrl; }
 
+  private get sessionStorageKey() {
+    try {
+      return `orient-chat.session.v1:${new URL(this.apiUrl).origin}`;
+    } catch {
+      return '';
+    }
+  }
+
+  private restoreStoredSession() {
+    const key = this.sessionStorageKey;
+    if (!key || this.demoMode) return false;
+    try {
+      const value = window.sessionStorage.getItem(key);
+      if (!value) return false;
+      const stored = JSON.parse(value) as Partial<StoredChatSession>;
+      const { conversationId, sessionToken, expiresAt } = stored;
+      const isValid = typeof conversationId === 'string'
+        && typeof sessionToken === 'string'
+        && typeof expiresAt === 'number'
+        && expiresAt > Date.now();
+      if (!isValid) {
+        window.sessionStorage.removeItem(key);
+        return false;
+      }
+      this.conversationId = conversationId;
+      this.sessionToken = sessionToken;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private storeSession(expiresIn: number) {
+    const key = this.sessionStorageKey;
+    if (!key || this.demoMode || !this.conversationId || !this.sessionToken) return;
+    try {
+      // Keep this tab-only session slightly shorter than the server-side token.
+      const lifetime = Math.max(1, Math.min(expiresIn - 60, 86_340));
+      const stored: StoredChatSession = {
+        conversationId: this.conversationId,
+        sessionToken: this.sessionToken,
+        expiresAt: Date.now() + lifetime * 1_000,
+      };
+      window.sessionStorage.setItem(key, JSON.stringify(stored));
+    } catch {
+      // Browsers may disable sessionStorage; the in-memory session still works.
+    }
+  }
+
+  private clearStoredSession() {
+    const key = this.sessionStorageKey;
+    this.conversationId = '';
+    this.sessionToken = '';
+    if (!key) return;
+    try {
+      window.sessionStorage.removeItem(key);
+    } catch {
+      // Nothing to clear when browser storage is unavailable.
+    }
+  }
+
   private applyConfiguration() {
     const appearance = {
       '--orient-primary': this.getAttribute('primary-color'),
@@ -361,6 +430,7 @@ class OrientChat extends HTMLElement {
 
   private async ensureSession() {
     if (this.demoMode || this.conversationId) return;
+    if (this.restoreStoredSession()) return;
     const turnstileToken = await this.getTurnstileToken();
     const response = await fetch(`${this.apiUrl}/api/chat/session`, {
       method: 'POST',
@@ -372,9 +442,10 @@ class OrientChat extends HTMLElement {
       if (this.turnstileWidgetId && window.turnstile) window.turnstile.reset(this.turnstileWidgetId);
       throw new Error('セッションを開始できませんでした。もう一度お試しください。');
     }
-    const data = await response.json() as { conversationId: string; sessionToken: string };
+    const data = await response.json() as { conversationId: string; sessionToken: string; expiresIn?: number };
     this.conversationId = data.conversationId;
     this.sessionToken = data.sessionToken;
+    this.storeSession(data.expiresIn || 86_400);
   }
 
   private async getTurnstileToken() {
@@ -469,6 +540,7 @@ class OrientChat extends HTMLElement {
           }),
         });
         const result = await response.json() as { error?: string };
+        if (response.status === 401) this.clearStoredSession();
         if (!response.ok) throw new Error(result.error || '連絡先を登録できませんでした。');
       } else {
         await new Promise((resolve) => window.setTimeout(resolve, 450));
@@ -529,6 +601,7 @@ class OrientChat extends HTMLElement {
       body: JSON.stringify({ conversationId: this.conversationId, sessionToken: this.sessionToken, message: content }),
     });
     const data = await response.json() as { answer?: string; sources?: Source[]; error?: string };
+    if (response.status === 401) this.clearStoredSession();
     if (!response.ok) throw new Error(data.error || '回答を取得できませんでした');
     return { answer: data.answer || '', sources: data.sources || [] };
   }
@@ -603,17 +676,16 @@ class OrientChat extends HTMLElement {
   }
 
   private shouldShowPropertyDetailLink(answer: string, source: Source) {
-    if (!source.url) return false;
+    const sourceUrl = source.url ? this.normalizeOfficialUrl(source.url) : null;
+    if (!sourceUrl) return false;
     try {
-      const url = new URL(source.url);
+      const url = new URL(sourceUrl);
       const pathParts = url.pathname.split('/').filter(Boolean);
       const normalizedTitle = source.title.replace(/[\s　・|｜「」『』（）()【】\[\]]+/gu, '').toLowerCase();
       const normalizedAnswer = answer.replace(/[\s　・|｜「」『』（）()【】\[\]]+/gu, '').toLowerCase();
       const titleVariants = [normalizedTitle, normalizedTitle.replace(/^(?:賃貸|新築|中古)/u, '')]
         .filter((title, index, values) => title.length >= 3 && values.indexOf(title) === index);
-      return url.protocol === 'https:'
-        && officialPropertyHosts.has(url.hostname.toLowerCase())
-        && pathParts.length >= 2
+      return pathParts.length >= 2
         && propertySections.has(pathParts[0]!.toLowerCase())
         && titleVariants.some((title) => normalizedAnswer.includes(title));
     } catch {
@@ -621,31 +693,110 @@ class OrientChat extends HTMLElement {
     }
   }
 
+  private normalizeOfficialUrl(value: string) {
+    try {
+      const url = new URL(value);
+      if (
+        url.protocol !== 'https:'
+        || !officialPropertyHosts.has(url.hostname.toLowerCase())
+        || url.username
+        || url.password
+        || url.port
+      ) return null;
+      url.hash = '';
+      return url.href;
+    } catch {
+      return null;
+    }
+  }
+
+  private createPropertyDetailLink(source: Source, url: string) {
+    const link = document.createElement('a');
+    link.className = 'inline-source';
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.title = source.title;
+    link.textContent = '詳細を見る ↗';
+    return link;
+  }
+
+  private createOfficialUrlLink(url: string, label: string) {
+    const link = document.createElement('a');
+    link.className = 'answer-url';
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.title = '公式ページを開く';
+    link.textContent = label;
+    return link;
+  }
+
+  private propertyDetailSourcesByUrl(answer: string, sources: Source[]) {
+    const result = new Map<string, Source>();
+    for (const source of sources) {
+      if (!this.shouldShowPropertyDetailLink(answer, source) || !source.url) continue;
+      const url = this.normalizeOfficialUrl(source.url);
+      if (url) result.set(url, source);
+    }
+    return result;
+  }
+
+  private appendAnswerText(
+    fragment: DocumentFragment,
+    text: string,
+    propertySourcesByUrl: Map<string, Source>,
+    usedUrls: Set<string>,
+  ) {
+    const urlPattern = /https:\/\/[^\s<>"'`、。．，！？「」『』【】（）()]+/giu;
+    const trailingPunctuation = /[.,!?;:。．，、！？」』】〉》）)\]}]+$/u;
+    let cursor = 0;
+    for (const match of text.matchAll(urlPattern)) {
+      const index = match.index ?? cursor;
+      const rawUrl = match[0];
+      const punctuation = rawUrl.match(trailingPunctuation)?.[0] || '';
+      const candidate = rawUrl.slice(0, rawUrl.length - punctuation.length);
+      fragment.append(document.createTextNode(text.slice(cursor, index)));
+
+      const url = this.normalizeOfficialUrl(candidate);
+      const propertySource = url ? propertySourcesByUrl.get(url) : undefined;
+      if (url && propertySource) {
+        if (!usedUrls.has(url)) {
+          usedUrls.add(url);
+          fragment.append(this.createPropertyDetailLink(propertySource, url));
+        }
+      } else if (url) {
+        usedUrls.add(url);
+        fragment.append(this.createOfficialUrlLink(url, candidate));
+      } else {
+        fragment.append(document.createTextNode(candidate));
+      }
+      if (punctuation) fragment.append(document.createTextNode(punctuation));
+      cursor = index + rawUrl.length;
+    }
+    fragment.append(document.createTextNode(text.slice(cursor)));
+  }
+
   private renderAnswerWithSources(bubble: HTMLElement, answer: string, sources: Source[]) {
     const sourceByIndex = new Map(sources.map((source) => [source.index, source]));
+    const propertySourcesByUrl = this.propertyDetailSourcesByUrl(answer, sources);
     const usedUrls = new Set<string>();
     const fragment = document.createDocumentFragment();
     const citationPattern = /\s*(?:\[(\d+)\]|【(\d+)】)/gu;
     let cursor = 0;
     for (const match of answer.matchAll(citationPattern)) {
       const index = match.index ?? cursor;
-      fragment.append(document.createTextNode(answer.slice(cursor, index)));
+      this.appendAnswerText(fragment, answer.slice(cursor, index), propertySourcesByUrl, usedUrls);
       const citationIndex = Number(match[1] || match[2]);
       const source = sourceByIndex.get(citationIndex);
-      if (source?.url && this.shouldShowPropertyDetailLink(answer, source) && !usedUrls.has(source.url)) {
-        usedUrls.add(source.url);
-        const link = document.createElement('a');
-        link.className = 'inline-source';
-        link.href = source.url;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.title = source.title;
-        link.textContent = '詳細を見る ↗';
-        fragment.append(link);
+      const sourceUrl = source?.url ? this.normalizeOfficialUrl(source.url) : null;
+      if (source && sourceUrl && propertySourcesByUrl.has(sourceUrl) && !usedUrls.has(sourceUrl)) {
+        usedUrls.add(sourceUrl);
+        fragment.append(this.createPropertyDetailLink(source, sourceUrl));
       }
       cursor = index + match[0].length;
     }
-    fragment.append(document.createTextNode(answer.slice(cursor)));
+    this.appendAnswerText(fragment, answer.slice(cursor), propertySourcesByUrl, usedUrls);
     bubble.replaceChildren(fragment);
   }
 
@@ -681,8 +832,8 @@ class OrientChat extends HTMLElement {
       thinkingLabel.setAttribute('aria-atomic', 'true');
       thinkingLabel.textContent = 'おりにゃんが考えています';
       bubble.append(thinkingLabel);
-    } else if (message.role === 'assistant' && message.rawContent && message.sources?.length) {
-      this.renderAnswerWithSources(bubble, message.rawContent, message.sources);
+    } else if (message.role === 'assistant' && message.rawContent) {
+      this.renderAnswerWithSources(bubble, message.rawContent, message.sources || []);
     } else {
       bubble.append(document.createTextNode(message.content));
     }
