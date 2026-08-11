@@ -185,8 +185,8 @@ const styles = `
   .escalation > div { display: grid; grid-template-columns: 1fr; gap: 8px; }
   .escalation a { min-height: 38px; display: grid; place-items: center; border: 1px solid; border-radius: 9px; background: #fff; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
   .line-link { color: var(--orient-line); }
-  .contact-link { color: #fff; border-color: var(--orient-ink); background: var(--orient-ink); }
-  .contact-link:hover, .contact-link:focus-visible { background: #444458; outline: 2px solid rgba(41,41,58,.2); outline-offset: 1px; }
+  .escalation .contact-link { color: #fff; border-color: var(--orient-primary); background: var(--orient-primary); }
+  .escalation .contact-link:hover, .escalation .contact-link:focus-visible { border-color: var(--orient-primary-strong); background: var(--orient-primary-strong); outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
   .turnstile-slot { position: absolute; left: 12px; bottom: 12px; z-index: 8; }
   .cat { background-image: var(--orient-asset); background-repeat: no-repeat; background-size: 200% 200%; background-position: 0 0; }
   .cat[data-cat-state="listening"] { background-position: 100% 0; }
