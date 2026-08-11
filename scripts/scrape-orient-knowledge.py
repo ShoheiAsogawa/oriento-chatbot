@@ -253,7 +253,9 @@ def classify(url: str, title: str, text: str) -> str:
         return "origumi_construction"
     if host == "oriho.com":
         return "oriho_homebuilding"
-    if path.startswith("/buy/"):
+    # `pri2/post-*` is an investment-property detail route even though it does
+    # not live below the normal `/buy/` URL hierarchy.
+    if path.startswith("/buy/") or re.fullmatch(r"/pri2/post-\d+\.html", path):
         return "properties_for_sale"
     if path.startswith("/rent/"):
         return "properties_for_rent"
@@ -272,6 +274,18 @@ def classify(url: str, title: str, text: str) -> str:
     if re.search(r"(?:list-|land-|recent|openhouse|inaka|wakihama|property|物件|戸建|マンション|土地)", route):
         return "property_search_guides"
     return "news_and_general"
+
+
+def is_orijyu_property_detail(url: str) -> bool:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.hostname != "orijyu.com":
+        return False
+    path = parsed.path.lower()
+    return bool(
+        (path.startswith("/buy/") and re.search(r"/post-\d+(?:-\d+)?\.html$", path))
+        or (path.startswith("/rent/") and re.search(r"/post-\d+(?:-\d+)?\.html$", path))
+        or re.fullmatch(r"/pri2/post-\d+(?:-\d+)?\.html", path)
+    )
 
 
 def crawl_without_sitemap(root_url: str, max_pages: int = 250) -> dict[str, str | None]:
@@ -410,10 +424,16 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default="knowledge/initial", help="Output directory")
     parser.add_argument("--workers", type=int, default=6, help="Concurrent requests")
+    parser.add_argument(
+        "--property-only",
+        action="store_true",
+        help="Fetch only current Japanese property detail pages from orijyu.com",
+    )
     args = parser.parse_args()
     started_at = datetime.now(timezone.utc).isoformat()
     discovered: dict[str, str | None] = {}
-    for root in OFFICIAL_ROOTS:
+    roots = ("https://orijyu.com/",) if args.property_only else OFFICIAL_ROOTS
+    for root in roots:
         from_sitemap = discover_from_robots(root)
         if from_sitemap:
             discovered.update(from_sitemap)
@@ -422,6 +442,12 @@ def main() -> int:
         normalized_root = normalize_url(root)
         if normalized_root:
             discovered.setdefault(normalized_root, None)
+    if args.property_only:
+        discovered = {
+            url: modified
+            for url, modified in discovered.items()
+            if is_orijyu_property_detail(url)
+        }
     print(f"Discovered {len(discovered)} official pages", flush=True)
     pages: list[Page] = []
     failures: list[dict[str, str]] = []

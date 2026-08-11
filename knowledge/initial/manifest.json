@@ -2,13 +2,14 @@
   "version": 1,
   "started_at": "2026-08-09T19:59:07.473156+00:00",
   "finished_at": "2026-08-09T20:03:32.392547+00:00",
+  "property_refreshed_at": "2026-08-11T11:41:24.838411+00:00",
   "source_roots": [
     "https://orijyu.com/",
     "https://orichin.com/",
     "https://origumi.jp/",
     "https://oriho.com/"
   ],
-  "page_count": 2276,
+  "page_count": 2291,
   "category_counts": {
     "corporate_and_policies": 2,
     "homebuilding_and_renovation": 9,
@@ -16,8 +17,8 @@
     "orichin_real_estate": 38,
     "origumi_construction": 24,
     "oriho_homebuilding": 1527,
-    "properties_for_rent": 26,
-    "properties_for_sale": 521,
+    "properties_for_rent": 25,
+    "properties_for_sale": 537,
     "property_search_guides": 100,
     "recruitment": 12,
     "services_and_guides": 6,
@@ -57,14 +58,14 @@
     {
       "file": "properties_for_sale.md",
       "category": "properties_for_sale",
-      "bytes": 1469852,
-      "sha256": "0f3f37309fc5ccf377594f6529b4631724d054fd8d2435bcfd8bb60d9c3c83fb"
+      "bytes": 1505969,
+      "sha256": "87a5af75b85267a680f2dd6b0a745ad28679cc00c45316f32b6ef7c28816ac64"
     },
     {
       "file": "properties_for_rent.md",
       "category": "properties_for_rent",
-      "bytes": 59857,
-      "sha256": "0341a10e07b6f4699d52bd16485d1e6369e74ac60e745f4c29399ffb72844615"
+      "bytes": 57650,
+      "sha256": "948785c0cd3dcc6bae6d4a64a5c61874202d8a4fc4d1f3d37ed7047e0dff43a7"
     },
     {
       "file": "recruitment.md",
