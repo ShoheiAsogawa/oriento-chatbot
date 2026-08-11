@@ -47,7 +47,7 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand strong { font-size: 17px; letter-spacing: .02em; }
 .brand-mark { width: 35px; height: 35px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: var(--orange); }
-.brand-cat { width: 100%; height: 100%; display: block; background: url('/assets/orinyan-states.png') 0 0 / 200% 200% no-repeat; }
+.brand-cat { width: 100%; height: 100%; display: block; background-position: 0 0; background-size: 200% 200%; background-repeat: no-repeat; }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 18px; }
 .environment { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; }
 .environment svg:last-child { width: 15px; }
@@ -87,7 +87,7 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .collapsed nav button, .collapsed .sidebar-toggle { justify-content: center; padding: 0; }
 .collapsed nav span, .collapsed .sidebar-toggle span { display: none; }
 
-.content { min-width: 0; padding: 34px 38px 50px; overflow: hidden; }
+.content { min-width: 0; padding: 34px 38px 50px; overflow: visible; }
 .split-page { min-height: calc(100vh - 148px); display: grid; grid-template-columns: minmax(660px, 1fr) 340px; margin: -34px -38px -50px; }
 .split-main { min-width: 0; padding: 34px 38px 50px; }
 
@@ -199,7 +199,7 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .pagination button.current { color: var(--orange); border: 1px solid var(--orange); background: #fff6ef; }
 .pagination button svg { width: 15px; }
 
-.detail-drawer { min-width: 0; padding: 29px 25px; border-left: 1px solid var(--border); background: #fff; overflow-y: auto; }
+.detail-drawer { position: sticky; top: 64px; align-self: start; min-width: 0; height: calc(100vh - 64px); max-height: calc(100vh - 64px); padding: 29px 25px; border-left: 1px solid var(--border); background: #fff; overflow-y: auto; }
 .drawer-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 22px; }
 .drawer-heading h2 { margin: 0; font-size: 18px; }
 .drawer-heading p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
@@ -234,7 +234,7 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .mini-widget header div { display: grid; }
 .mini-widget header strong { font-size: 10px; }
 .mini-widget header small { font-size: 8px; }
-.mini-cat { flex: 0 0 auto; width: 31px; height: 31px; display: inline-block; border: 2px solid #fff; border-radius: 50%; background: #fff url('/assets/orinyan-states.png') 0 0 / 200% 200% no-repeat; }
+.mini-cat { flex: 0 0 auto; width: 31px; height: 31px; display: inline-block; border: 2px solid #fff; border-radius: 50%; background-color: #fff; background-position: 0 0; background-size: 200% 200%; background-repeat: no-repeat; }
 .mini-message { display: flex; align-items: flex-start; gap: 7px; padding: 12px 9px 6px; }
 .mini-message .mini-cat { width: 28px; height: 28px; border-color: var(--border); }
 .mini-message p { margin: 0; padding: 7px 8px; color: var(--ink); border-radius: 3px 8px 8px 8px; background: var(--soft); font-size: 8px; }

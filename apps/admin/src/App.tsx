@@ -35,6 +35,8 @@ const navItems: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
   { key: 'audit', label: '監査', icon: ShieldCheck },
 ];
 
+const orinyanSpriteStyle = { backgroundImage: "url('/assets/orinyan-states.png')" };
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 }
@@ -559,7 +561,7 @@ function KnowledgePage() {
 }
 
 function WidgetPreview() {
-  return <section className="widget-preview"><div className="preview-title"><h3>ウィジェットプレビュー</h3><Eye /></div><div className="mini-widget"><header><span className="mini-cat"></span><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div></header><div className="mini-message"><span className="mini-cat"></span><p>こんにちは！<br />何かお困りのことはありますか？</p></div><div className="mini-input">メッセージを入力… <span>➤</span></div></div></section>;
+  return <section className="widget-preview"><div className="preview-title"><h3>ウィジェットプレビュー</h3><Eye /></div><div className="mini-widget"><header><span className="mini-cat" style={orinyanSpriteStyle}></span><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div></header><div className="mini-message"><span className="mini-cat" style={orinyanSpriteStyle}></span><p>こんにちは！<br />何かお困りのことはありますか？</p></div><div className="mini-input">メッセージを入力… <span>➤</span></div></div></section>;
 }
 
 function ConversationsPage() {
@@ -602,7 +604,7 @@ function PolicyPage() {
 
 function AppearancePage() {
   const [primary, setPrimary] = useState('#ff680b');
-  return <><PageHeader title="外観" description="公式サイトに合わせた色、表示位置、キャラクターの動きを確認します。" action={<button className="primary-button"><Check />変更を保存</button>} /><div className="appearance-layout"><section className="settings-section"><h2>ブランドカラー</h2><label className="color-field"><span>メインカラー</span><input type="color" value={primary} onChange={(event) => setPrimary(event.target.value)} /><code>{primary}</code></label><label className="color-field"><span>文字色</span><input type="color" defaultValue="#29293a" /><code>#29293a</code></label><label className="color-field"><span>補助テキスト</span><input type="color" defaultValue="#74757f" /><code>#74757f</code></label><h2>表示</h2><label className="field-label">位置<select defaultValue="right"><option value="right">右下</option><option value="left">左下</option></select></label><label className="check-row"><input type="checkbox" defaultChecked /><span><strong>キャラクターアニメーション</strong><small>待機・聞く・考える・話すを会話状態に合わせます。</small></span></label><label className="check-row"><input type="checkbox" defaultChecked /><span><strong>OSの動きを減らす設定に従う</strong><small>アクセシビリティ設定時は連続アニメーションを停止します。</small></span></label></section><section className="live-preview" style={{ '--preview-primary': primary } as React.CSSProperties}><div className="fake-site"><header>オリエントホールディングス</header><div className="fake-hero">住まい探しの情報</div><div className="preview-chat"><div className="preview-chat-head"><span className="mini-cat" /><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div><X /></div><div className="preview-chat-body"><span className="mini-cat" /><p>住まい探しのご質問をどうぞ。<br />サイトの情報をもとにご案内します。</p></div><div className="preview-suggestions"><button>物件を探す</button><button>家づくりについて</button></div><div className="preview-composer">メッセージを入力 <span>➤</span></div></div></div></section></div></>;
+  return <><PageHeader title="外観" description="公式サイトに合わせた色、表示位置、キャラクターの動きを確認します。" action={<button className="primary-button"><Check />変更を保存</button>} /><div className="appearance-layout"><section className="settings-section"><h2>ブランドカラー</h2><label className="color-field"><span>メインカラー</span><input type="color" value={primary} onChange={(event) => setPrimary(event.target.value)} /><code>{primary}</code></label><label className="color-field"><span>文字色</span><input type="color" defaultValue="#29293a" /><code>#29293a</code></label><label className="color-field"><span>補助テキスト</span><input type="color" defaultValue="#74757f" /><code>#74757f</code></label><h2>表示</h2><label className="field-label">位置<select defaultValue="right"><option value="right">右下</option><option value="left">左下</option></select></label><label className="check-row"><input type="checkbox" defaultChecked /><span><strong>キャラクターアニメーション</strong><small>待機・聞く・考える・話すを会話状態に合わせます。</small></span></label><label className="check-row"><input type="checkbox" defaultChecked /><span><strong>OSの動きを減らす設定に従う</strong><small>アクセシビリティ設定時は連続アニメーションを停止します。</small></span></label></section><section className="live-preview" style={{ '--preview-primary': primary } as React.CSSProperties}><div className="fake-site"><header>オリエントホールディングス</header><div className="fake-hero">住まい探しの情報</div><div className="preview-chat"><div className="preview-chat-head"><span className="mini-cat" style={orinyanSpriteStyle} /><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div><X /></div><div className="preview-chat-body"><span className="mini-cat" style={orinyanSpriteStyle} /><p>住まい探しのご質問をどうぞ。<br />サイトの情報をもとにご案内します。</p></div><div className="preview-suggestions"><button>物件を探す</button><button>家づくりについて</button></div><div className="preview-composer">メッセージを入力 <span>➤</span></div></div></div></section></div></>;
 }
 
 function AuditPage() {
@@ -619,7 +621,7 @@ export function App() {
   const [collapsed, setCollapsed] = useState(false);
   const ActivePage = page === 'overview' ? OverviewPage : page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : page === 'customers' ? CustomersPage : page === 'policy' ? PolicyPage : page === 'appearance' ? AppearancePage : AuditPage;
   return <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
-    <header className="topbar"><button className="menu-button" onClick={() => setCollapsed((value) => !value)}><Menu /></button><div className="brand"><span className="brand-mark" aria-hidden="true"><span className="brand-cat" /></span><strong>オリにゃん管理</strong></div><div className="topbar-right"><span className="environment"><Activity />本番 <ChevronDown /></span><button className="profile" aria-label="アカウント"><UserRound /></button></div></header>
+    <header className="topbar"><button className="menu-button" onClick={() => setCollapsed((value) => !value)}><Menu /></button><div className="brand"><span className="brand-mark" aria-hidden="true"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><div className="topbar-right"><span className="environment"><Activity />本番 <ChevronDown /></span><button className="profile" aria-label="アカウント"><UserRound /></button></div></header>
     <Sidebar page={page} onPage={setPage} collapsed={collapsed} onToggle={() => setCollapsed((value) => !value)} />
     <section className="content"><ActivePage /></section>
   </div>;
