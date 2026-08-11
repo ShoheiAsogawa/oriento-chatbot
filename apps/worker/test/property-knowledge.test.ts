@@ -7,6 +7,7 @@ vi.mock('cloudflare:workers', () => ({
 import {
   excludeInitialPropertiesCoveredByManualItems,
   propertyKnowledgeCategory,
+  propertyKnowledgeFromMarkdown,
   propertyKnowledgeItemKey,
   propertyKnowledgeMarkdown,
   propertyKnowledgeSchema,
@@ -59,6 +60,53 @@ describe('property knowledge registration', () => {
       sourceUrl,
       features: Array.from({ length: 31 }, (_, index) => `設備${index}`),
     }).success).toBe(false);
+  });
+
+  it('converts legacy scraped property Markdown into the edit form shape', () => {
+    const parsed = propertyKnowledgeFromMarkdown(`# 【賃貸】HOUSE EGRET 405号室
+
+Source URL: ${sourceUrl}
+Knowledge category: properties_for_rent
+
+物件概要
+物件種別
+マンション
+賃料
+40,000円
+所在地
+大阪市港区波除5丁目
+交通
+JR大阪環状線「弁天町」徒歩6分
+地下鉄中央線「弁天町」徒歩9分
+共益費
+5,000円
+タイプ
+1K
+専有面積
+15.00m2
+賃貸状況
+即入居可
+備考1
+内見は事前予約制です。`, {
+      title: 'fallback',
+      category: 'properties_for_rent',
+      sourceUrl,
+    });
+
+    expect(parsed).toMatchObject({
+      title: '【賃貸】HOUSE EGRET 405号室',
+      category: 'properties_for_rent',
+      sourceUrl,
+      address: '大阪市港区波除5丁目',
+      lineStation: 'JR大阪環状線「弁天町」徒歩6分 / 地下鉄中央線「弁天町」徒歩9分',
+      priceOrRent: '40,000円',
+      managementFee: '5,000円',
+      layout: '1K',
+      floorArea: '15.00m2',
+      buildingType: 'マンション',
+      availability: '即入居可',
+    });
+    expect(parsed.notes).toContain('備考1: 内見は事前予約制です。');
   });
 
   it('keeps a manually registered property URL out of subsequent static reseeds', () => {

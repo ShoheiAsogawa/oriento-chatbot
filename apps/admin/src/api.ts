@@ -51,6 +51,16 @@ export interface PropertyKnowledgeInput {
   notes?: string;
 }
 
+export interface PropertyKnowledgeSaveResult {
+  id: string;
+  key: string;
+  title: string;
+  category: string;
+  source_url: string;
+  replacedItemCount: number;
+  reindexStarted: boolean;
+}
+
 export interface ConversationSummary {
   id: string;
   updated_at: string;
@@ -203,14 +213,24 @@ export const api = {
     if (options.sourceUrl?.trim()) form.set('sourceUrl', options.sourceUrl.trim());
     return request('/api/admin/knowledge', { method: 'POST', body: form });
   },
-  createPropertyKnowledge: (input: PropertyKnowledgeInput) => request(
+  createPropertyKnowledge: (input: PropertyKnowledgeInput) => request<PropertyKnowledgeSaveResult>(
     '/api/admin/knowledge/property',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(input),
     },
-    { ok: true },
+    { id: '', key: '', title: input.title, category: input.category, source_url: input.sourceUrl, replacedItemCount: 0, reindexStarted: true },
+  ),
+  propertyKnowledge: (id: string) => request<{ item: KnowledgeItem; property: PropertyKnowledgeInput | null }>(`/api/admin/knowledge/${id}`),
+  updatePropertyKnowledge: (id: string, input: PropertyKnowledgeInput) => request<PropertyKnowledgeSaveResult>(
+    `/api/admin/knowledge/${id}/property`,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+    { id, key: '', title: input.title, category: input.category, source_url: input.sourceUrl, replacedItemCount: 0, reindexStarted: true },
   ),
   deleteKnowledge: (id: string) => request(`/api/admin/knowledge/${id}`, { method: 'DELETE' }, { ok: true }),
   reindexKnowledge: (id: string) => request(`/api/admin/knowledge/${id}/reindex`, { method: 'POST' }, { ok: true }),

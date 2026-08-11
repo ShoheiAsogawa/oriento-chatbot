@@ -333,6 +333,122 @@ function propertyKnowledgeMarkdown(input: PropertyKnowledgeInput, category: stri
   ].join('\n');
 }
 
+function propertyKnowledgeFromMarkdown(markdown: string, fallback: { title: string; category: string; sourceUrl: string }): PropertyKnowledgeInput {
+  const lines = markdown.split(/\r?\n/u);
+  const values: Record<string, string> = {};
+  const features: string[] = [];
+  const notes: string[] = [];
+  const extraNotes: string[] = [];
+  let section = '';
+  const fieldLabels = new Set([
+    '種別', '物件名', '住所', '沿線・最寄駅', '価格・賃料', '管理費・共益費',
+    '間取り', '専有・建物面積', '建物種別', '築年', '所在階・階数', '掲載状況',
+  ]);
+  const legacyFieldMap: Record<string, string> = {
+    '物件種別': '建物種別',
+    '賃料': '価格・賃料',
+    '販売価格': '価格・賃料',
+    '価格': '価格・賃料',
+    '所在地': '住所',
+    '住所': '住所',
+    '交通': '沿線・最寄駅',
+    '沿線・最寄駅': '沿線・最寄駅',
+    '管理費': '管理費・共益費',
+    '共益費': '管理費・共益費',
+    '間取り': '間取り',
+    'タイプ': '間取り',
+    '専有面積': '専有・建物面積',
+    '建物面積': '専有・建物面積',
+    '土地面積': '専有・建物面積',
+    '築年': '築年',
+    '築年月': '築年',
+    '所在階': '所在階・階数',
+    '階数': '所在階・階数',
+    '賃貸状況': '掲載状況',
+    '販売状況': '掲載状況',
+    '掲載状況': '掲載状況',
+  };
+  const legacyLabels = new Set([
+    ...Object.keys(legacyFieldMap), '物件番号', '礼金', '敷金', '水道代', '取引態様', '備考1', '備考2',
+  ]);
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] || '';
+    const trimmedLine = line.trim();
+    const heading = line.match(/^##\s+(.+)$/u);
+    const headingValue = heading?.[1]?.trim();
+    if (headingValue) {
+      section = headingValue;
+      continue;
+    }
+    const title = line.match(/^#\s+(.+)$/u);
+    const titleValue = title?.[1]?.trim();
+    if (titleValue && !values.title) values.title = titleValue;
+    const sourceLine = trimmedLine.match(/^(?:Source URL|公式ページ|公式物件詳細ページ)\s*:\s*(https:\/\/\S+)/u);
+    if (sourceLine?.[1]) {
+      values.sourceUrl = sourceLine[1];
+      continue;
+    }
+    const categoryLine = trimmedLine.match(/^Knowledge category:\s*(properties_for_(?:sale|rent))$/u);
+    if (categoryLine?.[1]) {
+      values.category = categoryLine[1];
+      continue;
+    }
+    const bullet = line.match(/^[-*]\s+([^:：]+)\s*[:：]\s*(.*)$/u);
+    if (bullet) {
+      const label = bullet[1]?.trim() || '';
+      const value = bullet[2]?.trim() || '';
+      if (fieldLabels.has(label)) values[label] = value;
+      else if (label === '公式物件詳細ページ') values.sourceUrl = value;
+      else if (section === '特徴・設備' || section === '特徴') features.push(line.replace(/^[-*]\s+/u, '').trim());
+      continue;
+    }
+    const legacyTarget = legacyFieldMap[trimmedLine];
+    if (legacyTarget) {
+      const collected: string[] = [];
+      let nextIndex = index + 1;
+      while (nextIndex < lines.length) {
+        const nextLine = lines[nextIndex]?.trim() || '';
+        if (!nextLine || nextLine.startsWith('#') || legacyLabels.has(nextLine) || nextLine === 'お問い合わせ') break;
+        collected.push(nextLine);
+        nextIndex += 1;
+        if (legacyTarget !== '沿線・最寄駅') break;
+      }
+      if (collected.length) values[legacyTarget] = collected.join(legacyTarget === '沿線・最寄駅' ? ' / ' : '\n');
+      index = nextIndex - 1;
+      continue;
+    }
+    if (legacyLabels.has(trimmedLine)) {
+      const nextLine = lines[index + 1]?.trim() || '';
+      if (nextLine && !nextLine.startsWith('#')) extraNotes.push(`${trimmedLine}: ${nextLine}`);
+      index += 1;
+      continue;
+    }
+    if (section === '備考' && trimmedLine) notes.push(trimmedLine);
+  }
+
+  const category = values.category || (values['種別'] === '賃貸' ? 'properties_for_rent'
+    : values['種別'] === '売買' || fallback.category === 'properties_for_sale' ? 'properties_for_sale'
+      : fallback.category);
+  return {
+    title: values.title || fallback.title,
+    category: category === 'properties_for_rent' ? 'properties_for_rent' : 'properties_for_sale',
+    sourceUrl: safeSourceUrl(values.sourceUrl) || fallback.sourceUrl,
+    address: values['住所'],
+    lineStation: values['沿線・最寄駅'],
+    priceOrRent: values['価格・賃料'],
+    managementFee: values['管理費・共益費'],
+    layout: values['間取り'],
+    floorArea: values['専有・建物面積'],
+    buildingType: values['建物種別'],
+    builtYear: values['築年'],
+    floor: values['所在階・階数'],
+    availability: values['掲載状況'],
+    features: [...new Set(features)],
+    notes: [...extraNotes, ...notes].join('\n') || undefined,
+  };
+}
+
 function excludeInitialPropertiesCoveredByManualItems(entries: InitialKnowledgeEntry[], existingItems: AiSearchItemInfo[]) {
   const manuallyManagedSources = new Set(existingItems
     .filter((item) => isPropertyKnowledgeCategory(normalizeKnowledgeCategory(metadataString(item.metadata, 'category'))))
@@ -350,6 +466,7 @@ export {
   propertyKnowledgeCategory,
   propertyKnowledgeItemKey,
   propertyKnowledgeMarkdown,
+  propertyKnowledgeFromMarkdown,
   propertyKnowledgeSchema,
 };
 
@@ -1081,6 +1198,103 @@ app.post('/api/admin/knowledge/property', async (context) => {
     category,
     source_url: sourceUrl,
     replacedItemCount: replacedItemIds.length,
+  }, 202);
+});
+
+app.get('/api/admin/knowledge/:id', async (context) => {
+  const id = context.req.param('id');
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const existing = await items.get(id).info();
+  const projected = projectKnowledgeItem(existing);
+  if (!isPropertyKnowledgeCategory(projected.category)) {
+    return context.json({ item: projected, property: null });
+  }
+
+  const fallbackSourceUrl = projected.source_url || 'https://orijyu.com/';
+  const fallback = {
+    title: projected.title,
+    category: projected.category,
+    sourceUrl: fallbackSourceUrl,
+  };
+  let property = propertyKnowledgeFromMarkdown('', fallback);
+  try {
+    const downloaded = await items.get(id).download();
+    const markdown = await new Response(downloaded.body).text();
+    property = propertyKnowledgeFromMarkdown(markdown, fallback);
+  } catch {
+    // Metadata still provides a safe minimal edit form when an older item cannot be downloaded.
+  }
+  return context.json({ item: projected, property });
+});
+
+app.put('/api/admin/knowledge/:id/property', async (context) => {
+  const id = context.req.param('id');
+  const contentType = context.req.header('Content-Type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return context.json({ error: 'Content-Type must be application/json' }, 415);
+  }
+
+  const input = propertyKnowledgeSchema.parse(await context.req.json());
+  const sourceUrl = safeSourceUrl(input.sourceUrl);
+  if (!sourceUrl) return context.json({ error: 'The source URL must be an official HTTPS URL' }, 400);
+
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const existing = await items.get(id).info();
+  const oldCategory = normalizeKnowledgeCategory(metadataString(existing.metadata, 'category'));
+  if (!isPropertyKnowledgeCategory(oldCategory)) {
+    return context.json({ error: 'Only property knowledge can be edited with this endpoint' }, 400);
+  }
+  const oldSourceUrl = safeSourceUrl(metadataString(existing.metadata, 'source_url'));
+  const category = propertyKnowledgeCategory(input);
+  const itemKey = await propertyKnowledgeItemKey(sourceUrl);
+  const markdown = propertyKnowledgeMarkdown(input, category, sourceUrl);
+  const existingItems = await listAllKnowledgeItems(items);
+  const sourceMatches = existingItems.filter((item) => knowledgeItemSourceUrl(item) === sourceUrl && item.id !== id);
+  const result = await items.upload(itemKey, markdown, {
+    metadata: {
+      category,
+      language: 'ja',
+      source_url: sourceUrl,
+      title: input.title,
+    },
+  });
+
+  const obsoleteIds = [...new Set([
+    ...sourceMatches.map((item) => item.id),
+    ...(result.id !== id ? [id] : []),
+  ])];
+  await Promise.all(obsoleteIds.map((obsoleteId) => items.delete(obsoleteId)));
+  if (oldSourceUrl) {
+    await context.env.DB.prepare('DELETE FROM knowledge_source_exclusions WHERE source_url = ?').bind(oldSourceUrl).run();
+  }
+  if (sourceUrl !== oldSourceUrl) {
+    await context.env.DB.prepare('DELETE FROM knowledge_source_exclusions WHERE source_url = ?').bind(sourceUrl).run();
+  }
+
+  const admin = context.get('admin');
+  await appendAudit(context.env, {
+    eventType: 'knowledge.property_updated',
+    actorType: 'admin',
+    actorId: admin.email,
+    subjectType: 'knowledge_item',
+    subjectId: result.id,
+    metadata: {
+      itemKey,
+      oldSourceUrl: oldSourceUrl || null,
+      sourceUrl,
+      title: input.title,
+      category,
+      replacedItemCount: obsoleteIds.length,
+    },
+  });
+  return context.json({
+    ...result,
+    key: itemKey,
+    title: input.title,
+    category,
+    source_url: sourceUrl,
+    replacedItemCount: obsoleteIds.length,
+    reindexStarted: true,
   }, 202);
 });
 

@@ -4,7 +4,7 @@ import {
   CircleAlert, Database, EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
   FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Paintbrush, Plus,
   RefreshCw, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, UploadCloud,
-  UserRound, UsersRound, X,
+  UserRound, UsersRound, X, Pencil,
 } from 'lucide-react';
 import {
   api,
@@ -268,6 +268,7 @@ function KnowledgePage() {
   const [seeded, setSeeded] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<KnowledgeAddMode>('property');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [propertyForm, setPropertyForm] = useState<PropertyKnowledgeInput>(createEmptyPropertyKnowledge);
   const [featureText, setFeatureText] = useState('');
   const [documentTitle, setDocumentTitle] = useState('');
@@ -276,15 +277,16 @@ function KnowledgePage() {
   const fileInput = useRef<HTMLInputElement>(null);
   const generatedPropertyKnowledge = useMemo(() => propertyKnowledgePreview(propertyForm), [propertyForm]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (preferredId?: string) => {
     setLoading(true);
     try {
       const data = await api.knowledge({ perPage: 1000 });
       setItems(data.result);
       setTotal(Number(data.result_info.total_count || data.result.length));
       setSelected((current) => {
-        if (!current) return data.result[0] || null;
-        return data.result.find((item) => item.id === current.id) || data.result[0] || null;
+        const selectedId = preferredId || current?.id;
+        if (!selectedId) return data.result[0] || null;
+        return data.result.find((item) => item.id === selectedId) || data.result[0] || null;
       });
     } catch (error) {
       setNotice(error instanceof Error ? `ナレッジを読み込めませんでした: ${error.message}` : 'ナレッジを読み込めませんでした。');
@@ -341,6 +343,7 @@ function KnowledgePage() {
 
   const resetAddForm = () => {
     setAddMode('property');
+    setEditingId(null);
     setPropertyForm(createEmptyPropertyKnowledge());
     setFeatureText('');
     setDocumentTitle('');
@@ -357,6 +360,25 @@ function KnowledgePage() {
   const closeAddForm = () => {
     setAddOpen(false);
     setDragging(false);
+  };
+
+  const openEditForm = async () => {
+    if (!selected || !isPropertyKnowledge(selected)) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const data = await api.propertyKnowledge(selected.id);
+      if (!data.property) throw new Error('物件情報を取得できませんでした');
+      setPropertyForm(data.property);
+      setFeatureText(data.property.features.join('\n'));
+      setEditingId(selected.id);
+      setAddMode('property');
+      setAddOpen(true);
+    } catch (error) {
+      setNotice(error instanceof Error ? `編集内容を読み込めませんでした: ${error.message}` : '編集内容を読み込めませんでした');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const uploadDocument = async (files: FileList | null) => {
@@ -379,7 +401,7 @@ function KnowledgePage() {
     }
   };
 
-  const createProperty = async () => {
+  const saveProperty = async () => {
     const input: PropertyKnowledgeInput = {
       ...propertyForm,
       title: propertyForm.title.trim(),
@@ -393,13 +415,15 @@ function KnowledgePage() {
     setBusy(true);
     setNotice(null);
     try {
-      await api.createPropertyKnowledge(input);
+      const result = editingId
+        ? await api.updatePropertyKnowledge(editingId, input)
+        : await api.createPropertyKnowledge(input);
       closeAddForm();
       resetAddForm();
-      setNotice(`「${input.title}」を物件ナレッジとして登録しました。インデックス作成後に回答へ反映されます。`);
-      await load();
+      setNotice(`「${input.title}」を保存しました。再インデックスを自動開始し、完了後に回答へ反映します。`);
+      await load(result.id || undefined);
     } catch (error) {
-      setNotice(error instanceof Error ? `物件を登録できませんでした: ${error.message}` : '物件を登録できませんでした。');
+      setNotice(error instanceof Error ? `物件ナレッジを保存できませんでした: ${error.message}` : '物件ナレッジを保存できませんでした。');
     } finally {
       setBusy(false);
     }
@@ -476,13 +500,13 @@ function KnowledgePage() {
         }}
       />
 
-      {addOpen ? <section className="knowledge-add surface" aria-label="物件・資料を1件追加">
-        <div className="section-heading"><div><h2>物件・資料を1件追加</h2><p>物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。</p></div><button className="square-button" type="button" onClick={closeAddForm} aria-label="追加フォームを閉じる"><X /></button></div>
+      {addOpen ? <section className="knowledge-add surface" aria-label={editingId ? '物件ナレッジを編集' : '物件・資料を1件追加'}>
+        <div className="section-heading"><div><h2>{editingId ? '物件ナレッジを編集' : '物件・資料を1件追加'}</h2><p>{editingId ? '保存すると既存のナレッジを更新し、再インデックスを自動開始します。' : '物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。'}</p></div><button className="square-button" type="button" onClick={closeAddForm} aria-label="フォームを閉じる"><X /></button></div>
         <div className="knowledge-add-mode" role="tablist" aria-label="登録方法">
           <button type="button" role="tab" aria-selected={addMode === 'property'} className={addMode === 'property' ? 'active' : ''} onClick={() => setAddMode('property')}><Home />物件を定型登録</button>
-          <button type="button" role="tab" aria-selected={addMode === 'document'} className={addMode === 'document' ? 'active' : ''} onClick={() => setAddMode('document')}><UploadCloud />一般資料をアップロード</button>
+          <button type="button" role="tab" aria-selected={addMode === 'document'} className={addMode === 'document' ? 'active' : ''} onClick={() => setAddMode('document')} disabled={Boolean(editingId)}><UploadCloud />一般資料をアップロード</button>
         </div>
-        {addMode === 'property' ? <form className="knowledge-add-body property-knowledge-form" onSubmit={(event) => { event.preventDefault(); void createProperty(); }}>
+        {addMode === 'property' ? <form className="knowledge-add-body property-knowledge-form" onSubmit={(event) => { event.preventDefault(); void saveProperty(); }}>
           <div className="property-form-fields">
             <label className="knowledge-field"><span>取引種別 <em>必須</em></span><select value={propertyForm.category} onChange={(event) => setPropertyForm((current) => ({ ...current, category: event.target.value as PropertyKnowledgeInput['category'] }))} required><option value="properties_for_sale">売買</option><option value="properties_for_rent">賃貸</option></select></label>
             <label className="knowledge-field"><span>物件名 <em>必須</em></span><input value={propertyForm.title} onChange={(event) => updatePropertyText('title', event.target.value)} placeholder="例：オリエント梅田レジデンス 502号室" autoComplete="off" required /></label>
@@ -504,7 +528,7 @@ function KnowledgePage() {
             <div className="property-preview-heading"><div><h3 id="property-knowledge-preview-title">生成されるナレッジのプレビュー</h3><p>この形式で1物件ずつAI検索に登録されます。</p></div><Eye /></div>
             <pre aria-live="polite">{generatedPropertyKnowledge}</pre>
           </section>
-          <div className="property-form-actions"><p><em>必須</em> の項目を入力すると登録できます。</p><button type="submit" className="primary-button" disabled={busy}>{busy ? '登録しています…' : '物件ナレッジを登録'}</button></div>
+          <div className="property-form-actions"><p><em>必須</em> の項目を入力すると{editingId ? '保存できます。保存後は再インデックスされます。' : '登録できます。'}</p><button type="submit" className="primary-button" disabled={busy}>{busy ? '保存しています…' : editingId ? '変更を保存' : '物件ナレッジを登録'}</button></div>
         </form> : <div className="knowledge-add-body document-knowledge-form">
           <label className="knowledge-field"><span>資料名（任意）</span><input value={documentTitle} onChange={(event) => setDocumentTitle(event.target.value)} placeholder="未入力の場合はファイル名を使います" autoComplete="off" /></label>
           <label className="knowledge-field"><span>関連ページURL（任意）</span><input value={documentSourceUrl} onChange={(event) => setDocumentSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /></label>
@@ -553,7 +577,7 @@ function KnowledgePage() {
           <div><dt>登録日</dt><dd>{formatDate(selected.created_at)}</dd></div>
           <div><dt>インデックス状態</dt><dd><Status value={selected.status} /><small>{selected.chunks_count.toLocaleString()} チャンク</small></dd></div>
         </dl>
-        <div className="drawer-actions"><h3>アクション</h3><button onClick={() => void reindex()} disabled={busy}><RefreshCw />再インデックス</button><button className="danger" onClick={() => void remove()} disabled={busy}><Trash2 />この物件・資料を削除</button><p>成約済みの物件は削除してください。以後の回答候補から外れます。</p></div>
+        <div className="drawer-actions"><h3>アクション</h3>{isPropertyKnowledge(selected) ? <button onClick={() => void openEditForm()} disabled={busy}><Pencil />編集</button> : null}<button onClick={() => void reindex()} disabled={busy}><RefreshCw />再インデックス</button><button className="danger" onClick={() => void remove()} disabled={busy}><Trash2 />この物件・資料を削除</button><p>保存時は再インデックスを自動開始します。成約済みの物件は削除してください。</p></div>
         <WidgetPreview />
       </> : <div className="empty-detail"><FileCheck2 /><p>物件・資料を選択すると詳細が表示されます。</p></div>}
     </aside>
