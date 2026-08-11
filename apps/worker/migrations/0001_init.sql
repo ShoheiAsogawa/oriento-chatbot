@@ -112,4 +112,4 @@ INSERT OR IGNORE INTO settings(key, value_json) VALUES
   ('answer_policy', '{"domain":"不動産・住まい・物件・家づくり・店舗案内・問い合わせ方法","refuse_price_negotiation":true,"refuse_legal_judgment":true,"refuse_important_matters":true,"min_retrieval_score":0.48}'),
   ('retention', '{"conversation_days":365,"customer_days":1095}'),
   ('appearance', '{"primary":"#ff680b","ink":"#29293a","muted":"#74757f"}'),
-  ('escalation', '{"line_url":"","contact_url":"https://orijyu.com/contact/"}');
+  ('escalation', '{"line_url":"","contact_url":"https://orijyu.com/reception.html"}');

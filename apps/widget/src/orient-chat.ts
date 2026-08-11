@@ -66,7 +66,7 @@ template.innerHTML = `
       <div class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
       <div class="suggestions" aria-label="よくある質問">
         <button type="button" data-question="物件を探す"><span>⌕</span>物件を探す</button>
-        <button type="button" data-question="オリエントホームって何？"><span>⌂</span>オリエントホームって何？</button>
+        <button type="button" data-question="オリエントホームの良さ"><span>⌂</span>オリエントホームの良さ</button>
       </div>
       <form class="composer">
         <label class="sr-only" for="orient-chat-input">メッセージを入力</label>
@@ -79,29 +79,12 @@ template.innerHTML = `
         <a class="privacy-link" target="_blank" rel="noopener">プライバシーポリシー・免責事項</a>
       </p>
       <div class="escalation">
-        <p>解決しない場合は、こちらからもご連絡いただけます。</p>
+        <p>個別のご相談は、公式の問い合わせページをご利用ください。</p>
         <div>
           <a class="line-link" target="_blank" rel="noopener">公式LINE</a>
-          <button class="lead-trigger" type="button">担当者からの連絡を希望</button>
+          <a class="contact-link" target="_blank" rel="noopener noreferrer">問い合わせページへ</a>
         </div>
       </div>
-      <section class="lead-sheet" aria-labelledby="orient-lead-title" hidden>
-        <div class="lead-heading">
-          <div>
-            <h3 id="orient-lead-title">担当者からご連絡します</h3>
-            <p>メールまたは電話番号のどちらかをご入力ください。</p>
-          </div>
-          <button class="lead-close" type="button" aria-label="連絡先入力を閉じる">×</button>
-        </div>
-        <form class="lead-form">
-          <label>お名前（任意）<input name="name" autocomplete="name" maxlength="100"></label>
-          <label>メールアドレス<input name="email" type="email" autocomplete="email" maxlength="254"></label>
-          <label>電話番号<input name="phone" type="tel" autocomplete="tel" maxlength="30"></label>
-          <label class="consent"><input name="consent" type="checkbox" required><span>営業連絡のため、入力した連絡先を顧客情報として保存することに同意します。</span></label>
-          <p class="lead-status" role="status" aria-live="polite"></p>
-          <button class="lead-submit" type="submit">連絡を希望する</button>
-        </form>
-      </section>
       <div class="turnstile-slot" aria-hidden="true"></div>
     </section>
     <button class="launcher" type="button" aria-label="オリにゃんに相談" aria-expanded="false">
@@ -200,25 +183,10 @@ const styles = `
   .escalation { padding: 10px 14px 14px; border-top: 1px solid var(--orient-border); }
   .escalation p { margin: 0 0 8px; text-align: center; color: var(--orient-muted); font-size: 10px; }
   .escalation > div { display: grid; grid-template-columns: 1fr; gap: 8px; }
-  .escalation a, .lead-trigger { min-height: 38px; display: grid; place-items: center; border: 1px solid; border-radius: 9px; background: #fff; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
+  .escalation a { min-height: 38px; display: grid; place-items: center; border: 1px solid; border-radius: 9px; background: #fff; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
   .line-link { color: var(--orient-line); }
-  .lead-trigger { color: #fff; border-color: var(--orient-ink); background: var(--orient-ink); }
-  .lead-sheet { position: absolute; inset: 84px 0 0; z-index: 4; overflow: auto; padding: 20px; background: #fff; }
-  .lead-sheet[hidden] { display: none; }
-  .lead-heading { display: grid; grid-template-columns: 1fr 36px; gap: 12px; align-items: start; margin-bottom: 18px; }
-  .lead-heading h3 { margin: 0; font-size: 18px; }
-  .lead-heading p { margin: 4px 0 0; color: var(--orient-muted); font-size: 12px; }
-  .lead-close { width: 36px; height: 36px; border: 0; border-radius: 9px; color: var(--orient-muted); background: var(--orient-soft); font-size: 23px; cursor: pointer; }
-  .lead-form { display: grid; gap: 13px; }
-  .lead-form > label:not(.consent) { display: grid; gap: 5px; font-size: 12px; font-weight: 800; }
-  .lead-form input:not([type="checkbox"]) { width: 100%; min-height: 43px; padding: 9px 11px; border: 1px solid #cfd0d7; border-radius: 9px; color: var(--orient-ink); background: #fff; }
-  .lead-form input:focus-visible { outline: 3px solid rgba(255,104,11,.18); border-color: var(--orient-primary); }
-  .consent { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: start; color: var(--orient-muted); font-size: 11px; font-weight: 500; }
-  .consent input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--orient-primary); }
-  .lead-status { min-height: 20px; margin: 0; color: #b34116; font-size: 12px; }
-  .lead-status.success { color: #137c45; }
-  .lead-submit { min-height: 46px; border: 0; border-radius: 10px; color: #fff; background: var(--orient-primary); font-weight: 800; cursor: pointer; }
-  .lead-submit:disabled { opacity: .55; cursor: wait; }
+  .contact-link { color: #fff; border-color: var(--orient-ink); background: var(--orient-ink); }
+  .contact-link:hover, .contact-link:focus-visible { background: #444458; outline: 2px solid rgba(41,41,58,.2); outline-offset: 1px; }
   .turnstile-slot { position: absolute; left: 12px; bottom: 12px; z-index: 8; }
   .cat { background-image: var(--orient-asset); background-repeat: no-repeat; background-size: 200% 200%; background-position: 0 0; }
   .cat[data-cat-state="listening"] { background-position: 100% 0; }
@@ -363,8 +331,10 @@ class OrientChat extends HTMLElement {
     };
     for (const [key, value] of Object.entries(appearance)) if (value) this.style.setProperty(key, value);
     const line = this.root.querySelector<HTMLAnchorElement>('.line-link');
+    const contact = this.root.querySelector<HTMLAnchorElement>('.contact-link');
     const privacy = this.root.querySelector<HTMLAnchorElement>('.privacy-link');
     if (line) line.href = this.getAttribute('line-url') || 'https://line.me/';
+    if (contact) contact.href = this.getAttribute('contact-url') || 'https://orijyu.com/reception.html';
     if (privacy) {
       privacy.href = this.getAttribute('privacy-policy-url')
         || `${this.apiUrl}/documents/orient-ai-chat-privacy-policy.pdf`;
@@ -395,13 +365,6 @@ class OrientChat extends HTMLElement {
         event.preventDefault();
         form?.requestSubmit();
       }
-    });
-    this.root.querySelector('.lead-trigger')?.addEventListener('click', () => this.showLeadForm());
-    this.root.querySelector('.lead-close')?.addEventListener('click', () => this.hideLeadForm());
-    const leadForm = this.root.querySelector<HTMLFormElement>('.lead-form');
-    leadForm?.addEventListener('submit', (event) => {
-      event.preventDefault();
-      void this.submitLead(leadForm);
     });
   }
 
@@ -489,70 +452,6 @@ class OrientChat extends HTMLElement {
       waitForApi();
     });
     return this.turnstilePromise;
-  }
-
-  private showLeadForm() {
-    const sheet = this.root.querySelector<HTMLElement>('.lead-sheet');
-    const status = this.root.querySelector<HTMLElement>('.lead-status');
-    if (sheet) sheet.hidden = false;
-    if (status) { status.textContent = ''; status.classList.remove('success'); }
-    window.setTimeout(() => this.root.querySelector<HTMLInputElement>('.lead-form input[name="name"]')?.focus(), 0);
-  }
-
-  private hideLeadForm() {
-    const sheet = this.root.querySelector<HTMLElement>('.lead-sheet');
-    if (sheet) sheet.hidden = true;
-    this.root.querySelector<HTMLButtonElement>('.lead-trigger')?.focus();
-  }
-
-  private async submitLead(form: HTMLFormElement) {
-    const status = this.root.querySelector<HTMLElement>('.lead-status');
-    const button = this.root.querySelector<HTMLButtonElement>('.lead-submit');
-    const data = new FormData(form);
-    const name = String(data.get('name') || '').trim();
-    const email = String(data.get('email') || '').trim();
-    const phone = String(data.get('phone') || '').trim();
-    const consent = data.get('consent') === 'on';
-    if (!email && !phone) {
-      if (status) status.textContent = 'メールアドレスまたは電話番号を入力してください。';
-      return;
-    }
-    if (!consent) {
-      if (status) status.textContent = '連絡先の保存と営業連絡への同意が必要です。';
-      return;
-    }
-
-    if (button) button.disabled = true;
-    if (status) { status.textContent = '登録しています…'; status.classList.remove('success'); }
-    try {
-      await this.ensureSession();
-      if (!this.demoMode) {
-        const response = await fetch(`${this.apiUrl}/api/chat/lead`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            conversationId: this.conversationId,
-            sessionToken: this.sessionToken,
-            name: name || undefined,
-            email: email || undefined,
-            phone: phone || undefined,
-            marketingConsent: true,
-          }),
-        });
-        const result = await response.json() as { error?: string };
-        if (response.status === 401) this.clearStoredSession();
-        if (!response.ok) throw new Error(result.error || '連絡先を登録できませんでした。');
-      } else {
-        await new Promise((resolve) => window.setTimeout(resolve, 450));
-      }
-      form.reset();
-      if (status) { status.textContent = '承りました。担当者からご連絡します。'; status.classList.add('success'); }
-      if (button) button.textContent = '登録済み';
-    } catch (error) {
-      if (status) status.textContent = error instanceof Error ? error.message : '連絡先を登録できませんでした。';
-    } finally {
-      if (button && button.textContent !== '登録済み') button.disabled = false;
-    }
   }
 
   private async sendMessage(content: string) {
