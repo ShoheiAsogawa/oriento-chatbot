@@ -39,7 +39,7 @@ describe('generateGroundedAnswer', () => {
     expect(url).toBe('https://gateway.ai.cloudflare.com/v1/account-id/orient-chat/openai/chat/completions');
     expect(new Headers(init?.headers).get('cf-aig-authorization')).toBe('Bearer gateway-token');
     const body = JSON.parse(String(init?.body));
-    expect(body).toMatchObject({ model: 'gpt-5.4-nano', store: false, reasoning_effort: 'none', max_completion_tokens: 500 });
+    expect(body).toMatchObject({ model: 'gpt-5.4-nano', store: false, reasoning_effort: 'none', max_completion_tokens: 280 });
     expect(body.messages[1]).toEqual({ role: 'user', content: '大阪市の物件を探しています' });
     expect(body.messages[2]).toEqual({ role: 'assistant', content: 'ご希望の地域を教えてくださいにゃん。' });
     expect(body.messages[3].content).toContain('営業時間は午前9時から午後6時までです。');

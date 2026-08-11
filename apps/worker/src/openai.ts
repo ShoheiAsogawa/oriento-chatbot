@@ -1,8 +1,11 @@
 import type { SearchChunk } from './types';
 import type { ConversationContextMessage } from './conversation-context';
 
-const MAX_CONTEXT_CHARS = 12_000;
-const MAX_CHUNK_CHARS = 3_500;
+// Keep grounded answers quick and concise: property answers do not need the full
+// search payload, and the catalog flow handles multi-property recommendations separately.
+const MAX_CONTEXT_CHARS = 6_000;
+const MAX_CHUNK_CHARS = 2_000;
+const MAX_COMPLETION_TOKENS = 280;
 
 type OpenAIChatCompletion = {
   model?: string;
@@ -24,7 +27,7 @@ function buildGroundingContext(chunks: SearchChunk[]) {
   let remaining = MAX_CONTEXT_CHARS;
   const sections: string[] = [];
 
-  for (const [index, chunk] of chunks.slice(0, 5).entries()) {
+  for (const [index, chunk] of chunks.slice(0, 3).entries()) {
     if (remaining <= 0) break;
     const metadata = chunk.item.metadata || {};
     const title = String(metadata.title || metadata.filename || chunk.item.key.split('/').pop() || `資料 ${index + 1}`);
@@ -55,7 +58,7 @@ export async function generateGroundedAnswer(
       model: env.GENERATION_MODEL,
       store: false,
       reasoning_effort: 'none',
-      max_completion_tokens: 500,
+      max_completion_tokens: MAX_COMPLETION_TOKENS,
       messages: [
         { role: 'system', content: systemPrompt },
         ...history,

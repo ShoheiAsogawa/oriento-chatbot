@@ -17,7 +17,7 @@ describe('conversation context', () => {
       'conversation-a',
     );
 
-    expect(bind).toHaveBeenCalledWith('conversation-a', 10);
+    expect(bind).toHaveBeenCalledWith('conversation-a', 6);
     expect(prepare.mock.calls[0]?.[0]).toContain('WHERE conversation_id = ?');
     expect(history).toEqual([
       { role: 'user', content: 'この物件の価格は？' },
@@ -33,8 +33,6 @@ describe('conversation context', () => {
 
     expect(buildSearchMessages(history, 'その物件の間取りは？')).toEqual([{ role: 'user', content: [
       'これまでの会話:',
-      '利用者: message-0',
-      '案内: message-1',
       '利用者: message-2',
       '案内: message-3',
       '利用者: message-4',

@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { evaluateRentalConsultation } from '../src/rental-consultation';
 
 describe('rental consultation', () => {
+  it('starts a property search without returning property detail links before conditions are known', () => {
+    expect(evaluateRentalConsultation([], '物件を探す')).toEqual({
+      active: false,
+      response: '物件探しだね。賃貸と購入のどちらを探しているか、希望エリアを教えてにゃん。',
+    });
+  });
+
   it('asks for an area first when a visitor wants to live alone', () => {
     expect(evaluateRentalConsultation([], '一人暮らししたい')).toEqual({
       active: true,

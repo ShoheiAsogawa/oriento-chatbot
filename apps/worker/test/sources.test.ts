@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attachMissingSourceMarkers, filterAnswerableChunks, safeSourceUrl, selectAnswerSources, sourceFromChunk } from '../src/sources';
+import { attachMissingSourceMarkers, filterAnswerableChunks, propertyDetailSources, safeSourceUrl, selectAnswerSources, shouldShowPropertyDetailLinks, sourceFromChunk } from '../src/sources';
 import type { SearchChunk } from '../src/types';
 
 function chunk(text: string, score = 0.9): SearchChunk {
@@ -33,6 +33,22 @@ describe('answer sources', () => {
       expect.objectContaining({ title: '物件B', url: 'https://oriho.com/house/b/' }),
       expect.objectContaining({ title: '物件A', url: 'https://orijyu.com/buy/a/' }),
     ]);
+  });
+
+  it('does not attach a property detail button to a generic condition-gathering answer', () => {
+    const sources = propertyDetailSources(selectAnswerSources(
+      'まずは希望エリア、家賃上限、間取りを教えてくださいにゃん。[1]',
+      [chunk('## 物件A\n公式ページ: https://orijyu.com/buy/post-1.html\n\n販売価格 3,000万円')],
+    ));
+    expect(shouldShowPropertyDetailLinks('まずは希望エリア、家賃上限、間取りを教えてくださいにゃん。[1]', sources)).toBe(false);
+  });
+
+  it('keeps detail buttons when an answer actually introduces a property', () => {
+    const sources = propertyDetailSources(selectAnswerSources(
+      '物件Aは販売価格3,000万円、3LDKにゃん。[1]',
+      [chunk('## 物件A\n公式ページ: https://orijyu.com/buy/post-1.html\n\n販売価格 3,000万円')],
+    ));
+    expect(shouldShowPropertyDetailLinks('物件Aは販売価格3,000万円、3LDKにゃん。[1]', sources)).toBe(true);
   });
 
   it('filters unrelated property citations when the question names an exact address', () => {

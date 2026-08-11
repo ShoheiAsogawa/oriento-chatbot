@@ -64,7 +64,7 @@ const html = `<!doctype html>
     contact-url="https://orijyu.com/contact/"
   ></orient-chat>
   <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260809-2"></script>
+  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260811-1"></script>
 </body>
 </html>`;
 

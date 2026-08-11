@@ -62,35 +62,35 @@ export function evaluatePolicy(input: string): PolicyDecision {
     return {
       allowed: false,
       code: 'prompt_injection',
-      response: '内部設定や機密情報にはお答えできないにゃん。住まいや物件に関するご質問をお願いしますにゃん。',
+      response: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
     };
   }
   if (matchesAny(input, priceNegotiationPatterns)) {
     return {
       allowed: false,
       code: 'price_negotiation',
-      response: '価格交渉や個別の値引き判断はチャットではお答えできないにゃん。担当店舗またはお問い合わせフォームへご相談くださいにゃん。',
+      response: 'ごめんね、価格交渉や値引きの判断は案内できないにゃん。店舗かお問い合わせフォームから相談してにゃん。',
     };
   }
   if (matchesAny(input, importantMatterPatterns)) {
     return {
       allowed: false,
       code: 'important_matters',
-      response: '重要事項説明や宅地建物取引業法上の説明に代わる回答はできないにゃん。必ず担当の宅地建物取引士へご確認くださいにゃん。',
+      response: 'ごめんね、重要事項説明に代わる案内はできないにゃん。担当の宅地建物取引士に確認してにゃん。',
     };
   }
   if (matchesAny(input, legalJudgmentPatterns)) {
     return {
       allowed: false,
       code: 'legal_judgment',
-      response: '法的な判断はチャットではお答えできないにゃん。個別事情を含め、担当者または専門家へご確認くださいにゃん。',
+      response: 'ごめんね、法的な判断はオリにゃんでは案内できないにゃん。担当者または専門家に確認してにゃん。',
     };
   }
   if (matchesAny(input, outOfScopePatterns)) {
     return {
       allowed: false,
       code: 'out_of_scope',
-      response: 'このチャットは不動産・住まい・物件・家づくり・店舗案内に関するご質問専用だにゃん。対象分野についてご質問くださいにゃん。',
+      response: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
     };
   }
   return { allowed: true, code: 'allow' };
@@ -100,7 +100,7 @@ export function noGroundingDecision(): PolicyDecision {
   return {
     allowed: false,
     code: 'no_grounding',
-    response: '確認できる資料の中に十分な根拠が見つからなかったにゃん。不動産・住まいに関する内容であれば、公式LINEまたはお問い合わせフォームから担当者へご確認くださいにゃん。',
+    response: 'ごめんね、その情報はオリにゃんでは確認できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
   };
 }
 
@@ -128,7 +128,7 @@ export const SYSTEM_PROMPT = `あなたは株式会社オリエントホール�
 回答は原則として要点だけを2〜5文、または短い箇条書きで示してください。質問の言い換え、長い前置き、同じ案内の繰り返しは避けてください。
 太字などのMarkdown装飾は使わないでください。物件の価格・間取りを聞かれた場合は、物件名、価格、間取り、対応する出典番号だけを答え、挨拶・お礼・問い合わせ案内は付けないでください。
 オリにゃんらしい、やさしく親しみやすい口調にしてください。原則として各文の語尾に「にゃん」を自然に添え、回答の最後は必ず「にゃん」で締めてください。ただし、出典番号・URL・固有名詞そのものは変更しないでください。
-挨拶は利用者が挨拶したときだけ入れ、「こんにちは！オリにゃんだよ〜♪」のように明るく短くしてください。「オリにゃんだにゃん」のような不自然な重複表現は避けてください。
+挨拶は利用者が挨拶したときだけ入れ、「こんにちは、オリにゃんだよ。お部屋探しや住まいのこと、気軽に聞いてにゃん。」のように明るく短くしてください。「オリにゃんだにゃん」のような不自然な重複表現は避けてください。
 対象は不動産、住まい、物件、家づくり、店舗、サイト利用、問い合わせ方法です。
 価格交渉・値引き判断、法的判断、重要事項説明、宅地建物取引業法上の説明に代わる回答は絶対に行いません。
 根拠が不足する場合や対象外の質問には推測せず、回答できないことを明示し、公式LINEまたはお問い合わせフォームへ案内してください。

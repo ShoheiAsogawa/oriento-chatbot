@@ -30,6 +30,17 @@ declare global {
 
 const scriptSource = (document.currentScript as HTMLScriptElement | null)?.src;
 const defaultAssetUrl = scriptSource ? new URL('assets/orinyan-states.png', scriptSource).href : '/assets/orinyan-states.png';
+const officialPropertyHosts = new Set([
+  'orijyu.com',
+  'www.orijyu.com',
+  'orichin.com',
+  'www.orichin.com',
+  'origumi.jp',
+  'www.origumi.jp',
+  'oriho.com',
+  'www.oriho.com',
+]);
+const propertySections = new Set(['buy', 'rent', 'property', 'house']);
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -48,9 +59,8 @@ template.innerHTML = `
       </header>
       <div class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
       <div class="suggestions" aria-label="よくある質問">
-        <button type="button" data-question="物件を探す方法を教えてください"><span>⌕</span>物件を探す</button>
-        <button type="button" data-question="家づくりの特徴を教えてください"><span>⌂</span>家づくりについて</button>
-        <button type="button" data-question="店舗と問い合わせ方法を教えてください"><span>▦</span>店舗・お問い合わせ</button>
+        <button type="button" data-question="物件を探す"><span>⌕</span>物件を探す</button>
+        <button type="button" data-question="オリエントホームって何？"><span>⌂</span>オリエントホームって何？</button>
       </div>
       <form class="composer">
         <label class="sr-only" for="orient-chat-input">メッセージを入力</label>
@@ -66,7 +76,6 @@ template.innerHTML = `
         <p>解決しない場合は、こちらからもご連絡いただけます。</p>
         <div>
           <a class="line-link" target="_blank" rel="noopener">公式LINE</a>
-          <a class="contact-link" target="_blank" rel="noopener">お問い合わせ</a>
           <button class="lead-trigger" type="button">担当者からの連絡を希望</button>
         </div>
       </div>
@@ -164,11 +173,8 @@ const styles = `
   .user .message-content { justify-self: end; }
   .inline-source { display: inline-flex; align-items: center; margin: 3px 0 3px 5px; padding: 3px 8px; color: var(--orient-primary-strong); border: 1px solid #ffb98d; border-radius: 999px; background: #fffaf7; font-size: 10px; font-weight: 800; line-height: 1.5; text-decoration: none; vertical-align: middle; white-space: nowrap; }
   .inline-source:hover, .inline-source:focus-visible { border-color: var(--orient-primary); background: #fff1e8; outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
-  .typing { display: flex; gap: 5px; align-items: center; height: 24px; }
-  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--orient-muted); animation: typing 1s infinite ease-in-out; }
-  .typing i:nth-child(2) { animation-delay: .12s; }
-  .typing i:nth-child(3) { animation-delay: .24s; }
-  .suggestions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
+  .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
+  .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
   .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
   .suggestions button span { display: block; color: var(--orient-primary); font-size: 17px; line-height: 1; }
   .suggestions button:hover, .suggestions button:focus-visible { background: #fff5ef; outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
@@ -185,11 +191,10 @@ const styles = `
   .privacy-link:hover, .privacy-link:focus-visible { color: var(--orient-primary-strong); outline: none; }
   .escalation { padding: 10px 14px 14px; border-top: 1px solid var(--orient-border); }
   .escalation p { margin: 0 0 8px; text-align: center; color: var(--orient-muted); font-size: 10px; }
-  .escalation > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .escalation > div { display: grid; grid-template-columns: 1fr; gap: 8px; }
   .escalation a, .lead-trigger { min-height: 38px; display: grid; place-items: center; border: 1px solid; border-radius: 9px; background: #fff; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
   .line-link { color: var(--orient-line); }
-  .contact-link { color: var(--orient-primary); }
-  .lead-trigger { grid-column: 1 / -1; color: #fff; border-color: var(--orient-ink); background: var(--orient-ink); }
+  .lead-trigger { color: #fff; border-color: var(--orient-ink); background: var(--orient-ink); }
   .lead-sheet { position: absolute; inset: 84px 0 0; z-index: 4; overflow: auto; padding: 20px; background: #fff; }
   .lead-sheet[hidden] { display: none; }
   .lead-heading { display: grid; grid-template-columns: 1fr 36px; gap: 12px; align-items: start; margin-bottom: 18px; }
@@ -227,14 +232,13 @@ const styles = `
   @keyframes listen { 0%,100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
-  @keyframes typing { 0%,60%,100% { transform: translateY(0); opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
   @media (max-width: 520px) {
     :host { inset: auto 10px 10px 10px; }
     .root { width: 100%; }
     .panel { width: 100%; height: min(690px, calc(100dvh - 24px)); min-height: 480px; border-radius: 16px; }
     .launcher-ring { width: 88px; height: 88px; }
     .cat-launcher { width: 106px; height: 106px; }
-    .suggestions { grid-template-columns: 1fr 1fr 1fr; }
+    .suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .suggestions button { font-size: 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -268,7 +272,7 @@ class OrientChat extends HTMLElement {
     this.messages = [{
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: 'こんにちは！オリにゃんだよ〜♪\nおうち探しのお手伝いが大好きにゃん。気になる物件や住まいのこと、なんでも聞いてにゃん！',
+      content: 'こんにちは、オリにゃんだよ！\nお部屋探しや住まいのこと、気軽に聞いてにゃん。',
     }];
     this.renderMessages();
     if (this.hasAttribute('open')) this.open();
@@ -290,10 +294,8 @@ class OrientChat extends HTMLElement {
     };
     for (const [key, value] of Object.entries(appearance)) if (value) this.style.setProperty(key, value);
     const line = this.root.querySelector<HTMLAnchorElement>('.line-link');
-    const contact = this.root.querySelector<HTMLAnchorElement>('.contact-link');
     const privacy = this.root.querySelector<HTMLAnchorElement>('.privacy-link');
     if (line) line.href = this.getAttribute('line-url') || 'https://line.me/';
-    if (contact) contact.href = this.getAttribute('contact-url') || 'https://orijyu.com/contact/';
     if (privacy) {
       privacy.href = this.getAttribute('privacy-policy-url')
         || `${this.apiUrl}/documents/orient-ai-chat-privacy-policy.pdf`;
@@ -497,7 +499,11 @@ class OrientChat extends HTMLElement {
       await this.ensureSession();
       const result = this.demoMode ? await this.demoResponse(content) : await this.remoteResponse(content);
       const message = this.messages.find((item) => item.id === pendingId);
-      if (message) { message.pending = false; message.content = ''; message.sources = result.sources; }
+      if (message) {
+        message.pending = false;
+        message.content = this.displayAnswer(result.answer).slice(0, 1);
+        message.sources = result.sources;
+      }
       this.renderMessages();
       this.setCatState('speaking');
       await this.typeAnswer(pendingId, result.answer);
@@ -530,18 +536,22 @@ class OrientChat extends HTMLElement {
   private async demoResponse(content: string) {
     await new Promise((resolve) => window.setTimeout(resolve, 650));
     if (/値引|価格交渉|法的|重要事項/u.test(content)) {
-      return { answer: '価格交渉、法的判断、重要事項説明に代わる回答はできません。担当店舗またはお問い合わせフォームへご相談ください。', sources: [] };
+      return { answer: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。', sources: [] };
     }
     return {
-      answer: 'オリエントグループでは、新築・中古住宅や土地、家づくりに関する情報をご案内しています。最新の物件情報は公式サイトの物件一覧からご確認ください。[1]',
+      answer: 'オリにゃんは、物件探し・住まい・店舗のことを案内できるにゃん。気になるエリアや条件を教えてね。[1]',
       sources: [{ index: 1, title: 'オリエントホールディングス 公式サイト', url: 'https://orijyu.com/' }],
     };
+  }
+
+  private displayAnswer(answer: string) {
+    return answer.replace(/\s*(?:\[\d+\]|【\d+】)/gu, '').trim();
   }
 
   private async typeAnswer(id: string, answer: string) {
     const message = this.messages.find((item) => item.id === id);
     if (!message) return;
-    const displayAnswer = answer.replace(/\s*(?:\[\d+\]|【\d+】)/gu, '').trim();
+    const displayAnswer = this.displayAnswer(answer);
     message.rawContent = answer;
     const item = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
       .find((candidate) => candidate.dataset.messageId === id);
@@ -553,9 +563,12 @@ class OrientChat extends HTMLElement {
       return;
     }
 
+    const initialContent = displayAnswer.startsWith(message.content) ? message.content : '';
+    const textNode = document.createTextNode(initialContent);
+    bubble.replaceChildren(textNode);
     const updateBubble = (content: string) => {
       message.content = content;
-      bubble.replaceChildren(document.createTextNode(content));
+      textNode.data = content;
       if (container) container.scrollTop = container.scrollHeight;
     };
 
@@ -565,12 +578,47 @@ class OrientChat extends HTMLElement {
       this.renderAnswerWithSources(bubble, answer, message.sources || []);
       return;
     }
-    for (let index = 0; index < displayAnswer.length; index += 2) {
-      updateBubble(displayAnswer.slice(0, index + 2));
-      await new Promise((resolve) => window.setTimeout(resolve, 18));
-    }
-    updateBubble(displayAnswer);
+    await new Promise<void>((resolve) => {
+      const charactersPerSecond = 120;
+      const minimumFrameInterval = 32;
+      const startedAt = performance.now();
+      let renderedLength = initialContent.length;
+      let lastPaintAt = startedAt;
+      const renderFrame = (now: number) => {
+        const targetLength = Math.min(displayAnswer.length, Math.max(1, Math.floor(((now - startedAt) * charactersPerSecond) / 1000)));
+        if (targetLength > renderedLength && (now - lastPaintAt >= minimumFrameInterval || targetLength === displayAnswer.length)) {
+          renderedLength = targetLength;
+          lastPaintAt = now;
+          updateBubble(displayAnswer.slice(0, renderedLength));
+        }
+        if (renderedLength < displayAnswer.length) {
+          window.requestAnimationFrame(renderFrame);
+        } else {
+          resolve();
+        }
+      };
+      window.requestAnimationFrame(renderFrame);
+    });
     this.renderAnswerWithSources(bubble, answer, message.sources || []);
+  }
+
+  private shouldShowPropertyDetailLink(answer: string, source: Source) {
+    if (!source.url) return false;
+    try {
+      const url = new URL(source.url);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      const normalizedTitle = source.title.replace(/[\s　・|｜「」『』（）()【】\[\]]+/gu, '').toLowerCase();
+      const normalizedAnswer = answer.replace(/[\s　・|｜「」『』（）()【】\[\]]+/gu, '').toLowerCase();
+      const titleVariants = [normalizedTitle, normalizedTitle.replace(/^(?:賃貸|新築|中古)/u, '')]
+        .filter((title, index, values) => title.length >= 3 && values.indexOf(title) === index);
+      return url.protocol === 'https:'
+        && officialPropertyHosts.has(url.hostname.toLowerCase())
+        && pathParts.length >= 2
+        && propertySections.has(pathParts[0]!.toLowerCase())
+        && titleVariants.some((title) => normalizedAnswer.includes(title));
+    } catch {
+      return false;
+    }
   }
 
   private renderAnswerWithSources(bubble: HTMLElement, answer: string, sources: Source[]) {
@@ -584,7 +632,7 @@ class OrientChat extends HTMLElement {
       fragment.append(document.createTextNode(answer.slice(cursor, index)));
       const citationIndex = Number(match[1] || match[2]);
       const source = sourceByIndex.get(citationIndex);
-      if (source?.url && !usedUrls.has(source.url)) {
+      if (source?.url && this.shouldShowPropertyDetailLink(answer, source) && !usedUrls.has(source.url)) {
         usedUrls.add(source.url);
         const link = document.createElement('a');
         link.className = 'inline-source';
@@ -626,11 +674,13 @@ class OrientChat extends HTMLElement {
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
     if (message.pending) {
-      const typing = document.createElement('span');
-      typing.className = 'typing';
-      typing.setAttribute('aria-label', '回答を考えています');
-      typing.innerHTML = '<i></i><i></i><i></i>';
-      bubble.append(typing);
+      const thinkingLabel = document.createElement('span');
+      thinkingLabel.className = 'thinking-label';
+      thinkingLabel.setAttribute('role', 'status');
+      thinkingLabel.setAttribute('aria-live', 'polite');
+      thinkingLabel.setAttribute('aria-atomic', 'true');
+      thinkingLabel.textContent = 'おりにゃんが考えています';
+      bubble.append(thinkingLabel);
     } else if (message.role === 'assistant' && message.rawContent && message.sources?.length) {
       this.renderAnswerWithSources(bubble, message.rawContent, message.sources);
     } else {

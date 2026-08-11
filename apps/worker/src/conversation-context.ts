@@ -3,8 +3,9 @@ export type ConversationContextMessage = {
   content: string;
 };
 
-const HISTORY_MESSAGE_LIMIT = 10;
-const HISTORY_MESSAGE_CHAR_LIMIT = 500;
+// Three short turns are enough to resolve pronouns and keep the search/LLM payload small.
+const HISTORY_MESSAGE_LIMIT = 6;
+const HISTORY_MESSAGE_CHAR_LIMIT = 300;
 
 type StoredMessage = {
   role: 'user' | 'assistant';
@@ -64,7 +65,7 @@ export function buildContextualQuestion(
     ].slice(-4);
     return `賃貸物件 希望条件: ${userCriteria.join(' / ')}`;
   }
-  const transcript = history.slice(-6).map((message) => {
+  const transcript = history.slice(-4).map((message) => {
     const speaker = message.role === 'user' ? '利用者' : '案内';
     return `${speaker}: ${message.content}`;
   }).join('\n');

@@ -9,7 +9,7 @@ import { AiGatewayError, generateGroundedAnswer } from './openai';
 import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
-import { attachMissingSourceMarkers, filterAnswerableChunks, safeSourceUrl, selectAnswerSources, sourceFromChunk } from './sources';
+import { attachMissingSourceMarkers, filterAnswerableChunks, propertyDetailSources, safeSourceUrl, selectAnswerSources, shouldShowPropertyDetailLinks, sourceFromChunk } from './sources';
 import {
   createSessionToken,
   decryptPII,
@@ -579,14 +579,16 @@ app.post('/api/chat/message', async (context) => {
     ai_search_options: {
       retrieval: {
         retrieval_type: 'hybrid',
-        max_num_results: rentalConsultation.active ? 10 : 6,
+        max_num_results: rentalConsultation.active ? 6 : 4,
         match_threshold: rentalConsultation.active ? 0.2 : 0.4,
-        context_expansion: rentalConsultation.active ? 2 : 1,
+        context_expansion: 1,
         ...(rentalConsultation.active
           ? { keyword_match_mode: 'or' as const }
           : { boost_by: [{ field: 'timestamp', direction: 'desc' as const }] }),
       },
-      query_rewrite: { enabled: true },
+      // buildSearchMessages already resolves the visitor's recent context locally.
+      // Skipping a second rewrite keeps the retrieval round-trip short.
+      query_rewrite: { enabled: false },
       reranking: {
         enabled: true,
         model: '@cf/baai/bge-reranker-base',
@@ -631,7 +633,8 @@ app.post('/api/chat/message', async (context) => {
     throw error;
   }
   const voicedAnswer = ensureOrinyanEnding(completion.answer);
-  const sources = selectAnswerSources(voicedAnswer, chunks, 2, contextualQuestion);
+  const selectedSources = propertyDetailSources(selectAnswerSources(voicedAnswer, chunks, 2, contextualQuestion));
+  const sources = shouldShowPropertyDetailLinks(voicedAnswer, selectedSources) ? selectedSources : [];
   const answer = attachMissingSourceMarkers(voicedAnswer, sources);
   const messageId = await recordTurn(
     context.env,

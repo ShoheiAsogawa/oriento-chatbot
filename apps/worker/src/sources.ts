@@ -19,6 +19,32 @@ export interface AnswerSource {
   score: number;
 }
 
+function isPropertyDetailSource(source: AnswerSource) {
+  if (!source.url) return false;
+  const path = new URL(source.url).pathname;
+  return /\/(?:buy|rent)\//u.test(path);
+}
+
+const PROPERTY_DETAIL_IN_ANSWER = /(?:販売価格|物件価格|賃料|家賃|所在地)\s*(?:[：:]|は|\d)|\d+(?:\.\d+)?\s*万円/u;
+
+export function shouldShowPropertyDetailLinks(answer: string, sources: AnswerSource[]) {
+  const propertySources = sources.filter(isPropertyDetailSource);
+  if (propertySources.length === 0) return false;
+  if (PROPERTY_DETAIL_IN_ANSWER.test(answer)) return true;
+
+  const normalizedAnswer = answer.replace(/[\s　・|｜「」『』（）()【】\[\]]+/gu, '');
+  return propertySources.some((source) => {
+    const title = source.title
+      .split(/\s+-\s+|\s+\|/u)[0]
+      ?.replace(/[\s　・|｜「」『』（）()【】\[\]]+/gu, '') || '';
+    return title.length >= 4 && normalizedAnswer.includes(title);
+  });
+}
+
+export function propertyDetailSources(sources: AnswerSource[]) {
+  return sources.filter(isPropertyDetailSource);
+}
+
 export function safeSourceUrl(value: unknown) {
   if (typeof value !== 'string' || !value) return undefined;
   try {
