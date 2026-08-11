@@ -619,7 +619,7 @@ export function App() {
   const [collapsed, setCollapsed] = useState(false);
   const ActivePage = page === 'overview' ? OverviewPage : page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : page === 'customers' ? CustomersPage : page === 'policy' ? PolicyPage : page === 'appearance' ? AppearancePage : AuditPage;
   return <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
-    <header className="topbar"><button className="menu-button" onClick={() => setCollapsed((value) => !value)}><Menu /></button><div className="brand"><span className="brand-mark"><Bot /></span><strong>オリにゃん管理</strong></div><div className="topbar-right"><span className="environment"><Activity />本番 <ChevronDown /></span><button className="profile" aria-label="アカウント"><UserRound /></button></div></header>
+    <header className="topbar"><button className="menu-button" onClick={() => setCollapsed((value) => !value)}><Menu /></button><div className="brand"><span className="brand-mark" aria-hidden="true"><span className="brand-cat" /></span><strong>オリにゃん管理</strong></div><div className="topbar-right"><span className="environment"><Activity />本番 <ChevronDown /></span><button className="profile" aria-label="アカウント"><UserRound /></button></div></header>
     <Sidebar page={page} onPage={setPage} collapsed={collapsed} onToggle={() => setCollapsed((value) => !value)} />
     <section className="content"><ActivePage /></section>
   </div>;
