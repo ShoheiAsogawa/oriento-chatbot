@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cannedConversationAnswer, ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from '../src/policy';
+import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from '../src/policy';
 
 describe('evaluatePolicy', () => {
   it('allows ordinary property questions', () => {
@@ -53,15 +53,6 @@ describe('SYSTEM_PROMPT', () => {
   it('uses the natural greeting guidance', () => {
     expect(SYSTEM_PROMPT).toContain('こんにちは、オリにゃんだよ。お部屋探しや住まいのこと、気軽に聞いてにゃん。');
     expect(SYSTEM_PROMPT).not.toContain('こんにちは！オリにゃんだよ〜♪');
-  });
-});
-
-describe('cannedConversationAnswer', () => {
-  it('introduces Orinyan without spending an AI request', () => {
-    expect(cannedConversationAnswer('あなたはだれ？')).toBe(
-      'オリエントホームの住まい探しをお手伝いする、オリにゃんだよ。物件探しや住まいのことを気軽に聞いてにゃん。',
-    );
-    expect(cannedConversationAnswer('堺市の物件を見たい')).toBeUndefined();
   });
 });
 

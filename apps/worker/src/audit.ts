@@ -34,7 +34,6 @@ type OutboxRow = { id: string; event_json: string };
 
 export class AuditLedger extends DurableObject<Env> {
   private appendTail: Promise<void> = Promise.resolve();
-  private flushTail: Promise<void> = Promise.resolve();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -107,23 +106,21 @@ export class AuditLedger extends DurableObject<Env> {
       this.ctx.storage.sql.exec(`UPDATE ledger_meta SET value = ? WHERE key = 'last_sequence'`, String(ledgerSequence));
     });
 
-    try {
-      await this.flushOutbox();
-    } catch (error) {
-      await this.ctx.storage.setAlarm(Date.now() + 30_000);
-      console.error(JSON.stringify({
-        level: 'error',
-        event: 'audit.outbox_deferred',
-        ledgerId,
-        message: error instanceof Error ? error.message : 'Unknown queue error',
-      }));
-    }
+    // The ledger and outbox are already committed atomically. Queue delivery is
+    // retried by the alarm so a slow downstream archive never delays chat replies.
+    await this.ctx.storage.setAlarm(Date.now() + 1_000);
     return event;
   }
 
   async alarm(): Promise<void> {
     try {
-      await this.flushOutbox();
+      await this.flushOutboxBatch();
+    } catch (error) {
+      console.error(JSON.stringify({
+        level: 'error',
+        event: 'audit.outbox_deferred',
+        message: error instanceof Error ? error.message : 'Unknown queue error',
+      }));
     } finally {
       if (this.pendingOutboxCount() > 0) await this.ctx.storage.setAlarm(Date.now() + 60_000);
     }
@@ -135,12 +132,6 @@ export class AuditLedger extends DurableObject<Env> {
 
   private pendingOutboxCount() {
     return this.ctx.storage.sql.exec<{ count: number }>(`SELECT COUNT(*) AS count FROM audit_outbox`).one().count;
-  }
-
-  private flushOutbox(): Promise<void> {
-    const operation = this.flushTail.then(() => this.flushOutboxBatch());
-    this.flushTail = operation.then(() => undefined, () => undefined);
-    return operation;
   }
 
   private async flushOutboxBatch() {

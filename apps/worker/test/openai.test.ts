@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AiGatewayError, generateGroundedAnswer } from '../src/openai';
+import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from '../src/openai';
 import type { SearchChunk } from '../src/types';
 
 const env = {
@@ -70,5 +70,25 @@ describe('generateGroundedAnswer', () => {
 
     await expect(generateGroundedAnswer(env, '質問', chunks, 'system prompt'))
       .rejects.toEqual(expect.objectContaining<Partial<AiGatewayError>>({ status: 429, message: 'spend_limit_exceeded' }));
+  });
+});
+
+describe('generateConversationAnswer', () => {
+  it('lets the AI answer natural conversation without inventing reference material', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      model: 'gpt-5.4-nano',
+      choices: [{ message: { content: 'オリにゃんだよ。住まい探しをお手伝いするにゃん。' } }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+
+    const result = await generateConversationAnswer(env, 'あなたはだれ？', 'system prompt', [
+      { role: 'user', content: '一人暮らしを考えています' },
+      { role: 'assistant', content: '希望エリアを教えてにゃん。' },
+    ]);
+
+    expect(result.answer).toContain('オリにゃん');
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body).toMatchObject({ store: false, reasoning_effort: 'none', max_completion_tokens: 160 });
+    expect(body.messages[0].content).toContain('外部の事実確認が不要な会話は自然に回答');
+    expect(body.messages.at(-1)).toEqual({ role: 'user', content: 'あなたはだれ？' });
   });
 });

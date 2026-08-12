@@ -11,8 +11,8 @@ import {
 import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-controls';
 import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
-import { AiGatewayError, generateGroundedAnswer } from './openai';
-import { cannedConversationAnswer, ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
+import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
+import { ensureOrinyanEnding, evaluatePolicy, SYSTEM_PROMPT } from './policy';
 import { evaluatePurchaseConsultation } from './purchase-consultation';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
@@ -633,26 +633,6 @@ app.post('/api/chat/message', async (context) => {
   }
 
   const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);
-  const cannedAnswer = cannedConversationAnswer(redacted);
-  if (cannedAnswer) {
-    const messageId = await recordTurn(
-      context.env,
-      input.conversationId,
-      redacted,
-      cannedAnswer,
-      'allow',
-      'canned-conversation-v1',
-      Date.now() - startedAt,
-    );
-    await appendAudit(context.env, {
-      eventType: 'chat.answered',
-      actorType: 'visitor',
-      subjectType: 'message',
-      subjectId: messageId,
-      metadata: { model: 'canned-conversation-v1', sourceCount: 0 },
-    });
-    return context.json({ answer: cannedAnswer, sources: [], action: 'none', policy: 'allow', messageId });
-  }
   const rentalConsultation = evaluateRentalConsultation(conversationHistory, redacted);
   if (rentalConsultation.response) {
     const choices = rentalConsultation.active
@@ -815,24 +795,39 @@ app.post('/api/chat/message', async (context) => {
   });
   const bestScore = Math.max(0, ...chunks.map((chunk) => chunk.score));
   if (chunks.length === 0 || bestScore < 0.48) {
-    const refusal = noGroundingDecision();
+    let completion: { answer: string; model: string };
+    try {
+      completion = await generateConversationAnswer(
+        context.env,
+        redacted,
+        SYSTEM_PROMPT,
+        conversationHistory,
+      );
+    } catch (error) {
+      if (error instanceof AiGatewayError && error.status === 429) {
+        console.warn(JSON.stringify({ level: 'warn', event: 'cost_guard.gateway_spend_limit', requestId: context.get('requestId') }));
+        return context.json({ error: '今月のAI利用上限に達しました。お問い合わせフォームをご利用ください。' }, 429);
+      }
+      throw error;
+    }
+    const answer = ensureOrinyanEnding(completion.answer);
     const messageId = await recordTurn(
       context.env,
       input.conversationId,
       redacted,
-      refusal.response || '',
-      refusal.code,
-      null,
+      answer,
+      'allow',
+      completion.model,
       Date.now() - startedAt,
     );
     await appendAudit(context.env, {
-      eventType: 'chat.refused',
+      eventType: 'chat.answered',
       actorType: 'visitor',
       subjectType: 'message',
       subjectId: messageId,
-      metadata: { code: refusal.code, bestScore },
+      metadata: { model: completion.model, sourceCount: 0, bestScore, mode: 'conversation' },
     });
-    return context.json({ answer: refusal.response, sources: [], action: 'escalate', policy: refusal.code });
+    return context.json({ answer, sources: [], action: 'none', policy: 'allow', messageId });
   }
 
   let completion: { answer: string; model: string };

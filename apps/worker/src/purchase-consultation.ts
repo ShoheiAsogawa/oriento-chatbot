@@ -1,5 +1,5 @@
 import type { ConversationContextMessage } from './conversation-context';
-import { shouldContinueCompletedPropertySearch } from './property-search-continuation';
+import { scopePropertySearchMessages, shouldContinueCompletedPropertySearch } from './property-search-continuation';
 
 export type PurchaseConsultationDecision = {
   active: boolean;
@@ -25,12 +25,7 @@ const LAYOUT_PROMPT = /購入物件の希望間取り/u;
 const AREA_WITH_SUFFIX = /([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,18}(?:都|道|府|県|市|区|町|村)|[\p{Script=Han}々ヶケァ-ヶー]{1,18}駅)/gu;
 
 function messagesSinceLatestSearch(history: ConversationContextMessage[], currentMessage: string) {
-  const messages = [...history, { role: 'user' as const, content: currentMessage }];
-  let startIndex = -1;
-  messages.forEach((message, index) => {
-    if (message.role === 'user' && PROPERTY_SEARCH_STARTER.test(message.content.trim())) startIndex = index;
-  });
-  return startIndex >= 0 ? messages.slice(startIndex) : messages;
+  return scopePropertySearchMessages(history, currentMessage);
 }
 
 function shortArea(content: string) {

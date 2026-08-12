@@ -80,3 +80,42 @@ export async function generateGroundedAnswer(
   if (!answer) throw new AiGatewayError(502, 'OpenAI returned an empty response');
   return { answer, model: result.model || env.GENERATION_MODEL };
 }
+
+export async function generateConversationAnswer(
+  env: Env,
+  question: string,
+  systemPrompt: string,
+  history: ConversationContextMessage[] = [],
+) {
+  const endpoint = `https://gateway.ai.cloudflare.com/v1/${encodeURIComponent(env.CLOUDFLARE_ACCOUNT_ID)}/${encodeURIComponent(env.AI_GATEWAY_ID)}/openai/chat/completions`;
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'cf-aig-authorization': `Bearer ${env.AI_GATEWAY_TOKEN}`,
+    },
+    body: JSON.stringify({
+      model: env.GENERATION_MODEL,
+      store: false,
+      reasoning_effort: 'none',
+      max_completion_tokens: 160,
+      messages: [
+        {
+          role: 'system',
+          content: `${systemPrompt}\n\n今回は参考資料がありません。あなた自身の名前・役割・できること、挨拶、相づちなど、外部の事実確認が不要な会話は自然に回答してください。それ以外は事実を推測せず、確認できないことを簡潔に伝えてください。出典番号は付けないでください。`,
+        },
+        ...history.slice(-GENERATION_HISTORY_MESSAGE_LIMIT),
+        { role: 'user', content: question },
+      ],
+    }),
+  });
+
+  const result = await response.json<OpenAIChatCompletion>().catch(() => ({} as OpenAIChatCompletion));
+  if (!response.ok) {
+    throw new AiGatewayError(response.status, result.error?.type || result.error?.code || 'AI Gateway request failed');
+  }
+
+  const answer = result.choices?.[0]?.message?.content?.trim();
+  if (!answer) throw new AiGatewayError(502, 'OpenAI returned an empty response');
+  return { answer, model: result.model || env.GENERATION_MODEL };
+}

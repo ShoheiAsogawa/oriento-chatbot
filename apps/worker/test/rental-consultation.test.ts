@@ -231,4 +231,27 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '堺市で条件に合う居住用賃貸が見つかったにゃん。' },
     ], 'もっと駅に近い物件がいい')).toEqual({ active: true });
   });
+
+  it('starts a fresh rental consultation when a visitor switches from purchase to living alone', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '物件を探す' },
+      { role: 'assistant', content: '賃貸と購入のどちらを探しているか教えてにゃん。' },
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '希望エリアを選んでにゃん。' },
+      { role: 'user', content: '茨木市' },
+      { role: 'assistant', content: '購入予算の上限を選んでにゃん。' },
+    ], '一人暮らししたい')).toEqual({
+      active: true,
+      response: expect.stringContaining('住みたい地域や最寄り駅'),
+    });
+  });
+
+  it('stops the rental consultation when a visitor switches to purchase', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '賃貸' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: '堺市' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+    ], '購入したい')).toEqual({ active: false });
+  });
 });

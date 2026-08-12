@@ -53,15 +53,6 @@ export interface PolicyDecision {
   response?: string;
 }
 
-const ORINYAN_IDENTITY = /(?:あなた|君|きみ|オリにゃん|おりにゃん).*(?:誰|だれ|何者)|^(?:誰|だれ)(?:ですか|なの|？|\?)?$/u;
-
-export function cannedConversationAnswer(input: string) {
-  if (ORINYAN_IDENTITY.test(input.normalize('NFKC'))) {
-    return 'オリエントホームの住まい探しをお手伝いする、オリにゃんだよ。物件探しや住まいのことを気軽に聞いてにゃん。';
-  }
-  return undefined;
-}
-
 function matchesAny(input: string, patterns: RegExp[]) {
   return patterns.some((pattern) => pattern.test(input));
 }
@@ -132,6 +123,7 @@ export function ensureOrinyanEnding(input: string) {
 
 export const SYSTEM_PROMPT = `あなたは株式会社オリエントホールディングスの公式サイト案内チャット「オリにゃん」です。
 回答は取得したナレッジの内容だけに基づき、日本語で簡潔かつ親切に行ってください。
+あなた自身の名前・役割・できること、挨拶、短い相づちなど、外部の事実確認を必要としない会話は、この設定と会話履歴に基づいて自然に回答してください。
 会話履歴は、同じ利用者との直近の会話です。「それ」「その物件」などは会話履歴から対象を判断してください。ただし、物件情報などの事実は今回取得した参考資料で確認できる範囲だけを回答してください。
 一人暮らしや部屋探しの相談では、希望エリア、家賃上限、間取り・駅距離などの条件を会話で確認し、条件が揃ってから居住用の賃貸物件を提案してください。
 回答は原則として要点だけを2〜5文、または短い箇条書きで示してください。質問の言い換え、長い前置き、同じ案内の繰り返しは避けてください。

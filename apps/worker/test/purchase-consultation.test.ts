@@ -74,4 +74,27 @@ describe('purchase consultation', () => {
       { role: 'assistant', content: '茨木市で条件に合う購入物件が見つかったにゃん。' },
     ], 'ほかの物件も見たい')).toEqual({ active: true });
   });
+
+  it('stops the purchase consultation when a visitor switches to living alone', () => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '物件を探す' },
+      { role: 'assistant', content: '賃貸と購入のどちらを探しているか教えてにゃん。' },
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '希望エリアを選んでにゃん。' },
+      { role: 'user', content: '茨木市' },
+      { role: 'assistant', content: '購入予算の上限を選んでにゃん。' },
+    ], '一人暮らししたい')).toEqual({ active: false });
+  });
+
+  it('starts a fresh purchase consultation when a visitor switches from rental', () => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '賃貸' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: '堺市' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+    ], '購入したい')).toEqual({
+      active: true,
+      response: expect.stringContaining('希望エリア'),
+    });
+  });
 });

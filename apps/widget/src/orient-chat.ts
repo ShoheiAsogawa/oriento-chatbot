@@ -413,11 +413,11 @@ class OrientChat extends HTMLElement {
     if (this.demoMode || this.conversationId) return;
     if (this.restoreStoredSession()) return;
     const turnstileToken = await this.getTurnstileToken();
-    const response = await fetch(`${this.apiUrl}/api/chat/session`, {
+    const response = await this.fetchWithTimeout(`${this.apiUrl}/api/chat/session`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ sourcePage: location.href, turnstileToken }),
-    });
+    }, 15_000);
     if (!response.ok) {
       this.turnstilePromise = null;
       if (this.turnstileWidgetId && window.turnstile) window.turnstile.reset(this.turnstileWidgetId);
@@ -437,13 +437,30 @@ class OrientChat extends HTMLElement {
 
     this.turnstilePromise = new Promise<string>((resolve, reject) => {
       const startedAt = Date.now();
+      let settled = false;
+      const finish = (token: string) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(challengeTimeout);
+        resolve(token);
+      };
+      const failWith = (message: string) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(challengeTimeout);
+        this.turnstilePromise = null;
+        reject(new Error(message));
+      };
+      const challengeTimeout = window.setTimeout(() => {
+        if (this.turnstileWidgetId && window.turnstile) window.turnstile.reset(this.turnstileWidgetId);
+        failWith('セキュリティ確認に時間がかかっています。ページを再読み込みして、もう一度お試しください。');
+      }, 15_000);
       const waitForApi = () => {
         const api = window.turnstile;
         const container = this.root.querySelector<HTMLElement>('.turnstile-slot');
         if (!api || !container) {
           if (Date.now() - startedAt > 12_000) {
-            this.turnstilePromise = null;
-            reject(new Error('セキュリティ確認を開始できませんでした。ページを再読み込みしてください。'));
+            failWith('セキュリティ確認を開始できませんでした。ページを再読み込みしてください。');
             return;
           }
           window.setTimeout(waitForApi, 100);
@@ -451,16 +468,15 @@ class OrientChat extends HTMLElement {
         }
 
         const fail = () => {
-          this.turnstilePromise = null;
           if (this.turnstileWidgetId) api.reset(this.turnstileWidgetId);
-          reject(new Error('セキュリティ確認に失敗しました。もう一度お試しください。'));
+          failWith('セキュリティ確認に失敗しました。もう一度お試しください。');
         };
         this.turnstileWidgetId = api.render(container, {
           sitekey,
           action: 'chat_session',
           execution: 'execute',
           appearance: 'interaction-only',
-          callback: (token: string) => resolve(token),
+          callback: finish,
           'error-callback': fail,
           'expired-callback': fail,
           'timeout-callback': fail,
@@ -515,15 +531,30 @@ class OrientChat extends HTMLElement {
   }
 
   private async remoteResponse(content: string) {
-    const response = await fetch(`${this.apiUrl}/api/chat/message`, {
+    const response = await this.fetchWithTimeout(`${this.apiUrl}/api/chat/message`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ conversationId: this.conversationId, sessionToken: this.sessionToken, message: content }),
-    });
+    }, 30_000);
     const data = await response.json() as { answer?: string; sources?: Source[]; choices?: ChatChoice[]; error?: string };
     if (response.status === 401) this.clearStoredSession();
     if (!response.ok) throw new Error(data.error || '回答を取得できませんでした');
     return { answer: data.answer || '', sources: data.sources || [], choices: data.choices || [] };
+  }
+
+  private async fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw new Error('通信が混み合っています。少し時間をおいて、もう一度お試しください。');
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timeout);
+    }
   }
 
   private async demoResponse(content: string) {

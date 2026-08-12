@@ -1,5 +1,5 @@
 import type { ConversationContextMessage } from './conversation-context';
-import { shouldContinueCompletedPropertySearch } from './property-search-continuation';
+import { scopePropertySearchMessages, shouldContinueCompletedPropertySearch } from './property-search-continuation';
 
 export type RentalConsultationDecision = {
   active: boolean;
@@ -32,20 +32,7 @@ function messagesSinceLatestPropertySearch(
   history: ConversationContextMessage[],
   currentMessage: string,
 ) {
-  const messages: ConversationContextMessage[] = [
-    ...history,
-    { role: 'user', content: currentMessage },
-  ];
-  let lastSearchStart = -1;
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index];
-    if (message?.role === 'user' && PROPERTY_SEARCH_STARTER.test(message.content.trim())) {
-      lastSearchStart = index;
-      break;
-    }
-  }
-
-  return lastSearchStart >= 0 ? messages.slice(lastSearchStart) : [];
+  return scopePropertySearchMessages(history, currentMessage);
 }
 
 function hasPendingPropertyType(
@@ -56,8 +43,12 @@ function hasPendingPropertyType(
     message.role === 'user' && (RENTAL_INTENT.test(message.content) || SALE_INTENT.test(message.content))
   ));
 
+  const hasSearchStarter = propertySearchMessages.some((message) => (
+    message.role === 'user' && PROPERTY_SEARCH_STARTER.test(message.content.trim())
+  ));
+
   return !hasSelectedType && (
-    propertySearchMessages.length > 0 || PROPERTY_TYPE_QUESTION.test(lastAssistant)
+    hasSearchStarter || PROPERTY_TYPE_QUESTION.test(lastAssistant)
   );
 }
 
