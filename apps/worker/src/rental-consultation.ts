@@ -24,6 +24,7 @@ const COMPACT_LAYOUT_CONFIRMATION = /(?:かなり手狭|ワンルームのまま
 const KEEP_COMPACT_LAYOUT = /(?:そのまま|ワンルーム(?:のまま|でいい)|1R(?:のまま|でいい)|1K(?:のまま|でいい))/iu;
 const AREA_WITH_SUFFIX = /([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,18}(?:都|道|府|県|市|区|町|村)|[\p{Script=Han}々ヶケァ-ヶー]{1,18}駅)/gu;
 const PREFERENCE = /(?:ワンルーム|\d+[SLDKR]+|駅近|徒歩\s*\d+分|ペット|築浅|駐車|オートロック|バス・トイレ|こだわり.*(?:なし|ない))/iu;
+const NO_PREFERENCE = /^(?:特に)?(?:なし|ない|ありません|こだわりなし)[。！!？?]?$/u;
 const NON_AREA_ANSWER = /(?:賃貸|購入|物件|部屋|探す|したい|家族|人家族|一人暮らし|ひとり暮らし|単身|夫婦|カップル|子ども|子供|大人|家賃|予算|万円?|円|間取り|ワンルーム|[SLDKR]|ペット|徒歩|駅近|駐車|なし|ない)/iu;
 
 function messagesSinceLatestPropertySearch(
@@ -148,18 +149,19 @@ export function extractRentalConsultationState(
     if (message.role !== 'user') return;
     const previous = messages[index - 1];
     const previousAssistant = previous?.role === 'assistant' ? previous.content : '';
-    const householdSize = householdSizeFromMessage(message.content);
-    const area = areaFromMessage(message.content, AREA_PROMPT.test(previousAssistant));
-    const maxRentYen = budgetFromMessage(message.content, BUDGET_PROMPT.test(previousAssistant));
-    const layout = layoutFromMessage(message.content);
-    const maxWalkMinutes = walkMinutesFromMessage(message.content);
+    const normalizedContent = message.content.normalize('NFKC');
+    const householdSize = householdSizeFromMessage(normalizedContent);
+    const area = areaFromMessage(normalizedContent, AREA_PROMPT.test(previousAssistant));
+    const maxRentYen = budgetFromMessage(normalizedContent, BUDGET_PROMPT.test(previousAssistant));
+    const layout = layoutFromMessage(normalizedContent);
+    const maxWalkMinutes = walkMinutesFromMessage(normalizedContent);
 
     if (householdSize) state.householdSize = householdSize;
     if (area) state.area = area;
     if (maxRentYen) state.maxRentYen = maxRentYen;
     if (layout) state.layout = layout;
     if (maxWalkMinutes != null) state.maxWalkMinutes = maxWalkMinutes;
-    if (PREFERENCE.test(message.content)) state.hasPreference = true;
+    if (PREFERENCE.test(normalizedContent) || NO_PREFERENCE.test(normalizedContent)) state.hasPreference = true;
   });
 
   return state;

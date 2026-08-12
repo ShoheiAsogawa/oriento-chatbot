@@ -2,13 +2,16 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { z } from 'zod';
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
+import { choicesForChatAnswer } from './chat-choices';
 import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-controls';
 import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
 import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
+import { evaluatePurchaseConsultation } from './purchase-consultation';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
+import { extractSaleCriteria, formatSaleAnswer, loadSaleCatalog, recommendSaleProperties, salePropertyChunk } from './sale-catalog';
 import { attachMissingSourceMarkers, filterAnswerableChunks, propertyDetailSources, safeSourceUrl, selectAnswerSources, shouldShowPropertyDetailLinks, sourceFromChunk } from './sources';
 import {
   createSessionToken,
@@ -646,6 +649,7 @@ app.post('/api/chat/message', async (context) => {
     return context.json({
       answer: rentalConsultation.response,
       sources: [],
+      choices: choicesForChatAnswer(rentalConsultation.response),
       action: 'none',
       policy: 'allow',
       messageId,
@@ -675,7 +679,62 @@ app.post('/api/chat/message', async (context) => {
       subjectId: messageId,
       metadata: { model: 'rental-catalog-v1', sourceCount: sources.length, flow: 'rental_consultation' },
     });
-    return context.json({ answer, sources, action: 'none', policy: 'allow', messageId });
+    return context.json({ answer, sources, choices: choicesForChatAnswer(answer), action: 'none', policy: 'allow', messageId });
+  }
+
+  const purchaseConsultation = evaluatePurchaseConsultation(conversationHistory, redacted);
+  if (purchaseConsultation.response) {
+    const answer = purchaseConsultation.response;
+    const messageId = await recordTurn(
+      context.env,
+      input.conversationId,
+      redacted,
+      answer,
+      'allow',
+      null,
+      Date.now() - startedAt,
+    );
+    await appendAudit(context.env, {
+      eventType: 'chat.clarification_requested',
+      actorType: 'visitor',
+      subjectType: 'message',
+      subjectId: messageId,
+      metadata: { flow: 'purchase_consultation' },
+    });
+    return context.json({
+      answer,
+      sources: [],
+      choices: choicesForChatAnswer(answer),
+      action: 'none',
+      policy: 'allow',
+      messageId,
+    });
+  }
+
+  if (purchaseConsultation.active) {
+    const criteria = extractSaleCriteria(conversationHistory, redacted);
+    const recommendations = recommendSaleProperties(await loadSaleCatalog(context.env), criteria);
+    const answer = formatSaleAnswer(recommendations, criteria);
+    const chunks = recommendations.map(salePropertyChunk);
+    const sources = chunks.map(sourceFromChunk);
+    const messageId = await recordTurn(
+      context.env,
+      input.conversationId,
+      redacted,
+      answer,
+      'allow',
+      'sale-catalog-v1',
+      Date.now() - startedAt,
+      chunks,
+    );
+    await appendAudit(context.env, {
+      eventType: 'chat.answered',
+      actorType: 'visitor',
+      subjectType: 'message',
+      subjectId: messageId,
+      metadata: { model: 'sale-catalog-v1', sourceCount: sources.length, flow: 'purchase_consultation' },
+    });
+    return context.json({ answer, sources, choices: choicesForChatAnswer(answer), action: 'none', policy: 'allow', messageId });
   }
 
   const dailyAi = await consumeDailyAllowance(

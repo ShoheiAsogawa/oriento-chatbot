@@ -189,4 +189,24 @@ describe('rental consultation', () => {
     expect(decision.response).toContain('住みたい地域');
     expect(decision.response).not.toContain('家賃の上限');
   });
+
+  it('accepts a full-width layout written with lowercase letters', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '賃貸' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: '堺市' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+      { role: 'user', content: '10万' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+    ], '２ldk')).toEqual({ active: true });
+  });
+
+  it('accepts a standalone no-preference answer', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '堺市で賃貸を探したい' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+      { role: 'user', content: '10万' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+    ], 'なし')).toEqual({ active: true });
+  });
 });

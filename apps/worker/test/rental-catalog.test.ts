@@ -57,4 +57,17 @@ describe('rental catalog', () => {
       area: '岸和田', maxRentYen: 100_000, layout: '1R', maxWalkMinutes: undefined,
     });
   });
+
+  it('normalizes full-width layout input before searching the catalog', () => {
+    expect(extractRentalCriteria([
+      { role: 'user', content: '賃貸' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: '堺市' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+      { role: 'user', content: '10万' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+    ], '２ldk')).toEqual({
+      area: '堺市', maxRentYen: 100_000, layout: '2LDK', maxWalkMinutes: undefined,
+    });
+  });
 });
