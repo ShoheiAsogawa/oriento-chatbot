@@ -53,6 +53,15 @@ export interface PolicyDecision {
   response?: string;
 }
 
+const ORINYAN_IDENTITY = /(?:あなた|君|きみ|オリにゃん|おりにゃん).*(?:誰|だれ|何者)|^(?:誰|だれ)(?:ですか|なの|？|\?)?$/u;
+
+export function cannedConversationAnswer(input: string) {
+  if (ORINYAN_IDENTITY.test(input.normalize('NFKC'))) {
+    return 'オリエントホームの住まい探しをお手伝いする、オリにゃんだよ。物件探しや住まいのことを気軽に聞いてにゃん。';
+  }
+  return undefined;
+}
+
 function matchesAny(input: string, patterns: RegExp[]) {
   return patterns.some((pattern) => pattern.test(input));
 }

@@ -12,7 +12,7 @@ import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-c
 import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateGroundedAnswer } from './openai';
-import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
+import { cannedConversationAnswer, ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from './policy';
 import { evaluatePurchaseConsultation } from './purchase-consultation';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
@@ -633,6 +633,26 @@ app.post('/api/chat/message', async (context) => {
   }
 
   const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);
+  const cannedAnswer = cannedConversationAnswer(redacted);
+  if (cannedAnswer) {
+    const messageId = await recordTurn(
+      context.env,
+      input.conversationId,
+      redacted,
+      cannedAnswer,
+      'allow',
+      'canned-conversation-v1',
+      Date.now() - startedAt,
+    );
+    await appendAudit(context.env, {
+      eventType: 'chat.answered',
+      actorType: 'visitor',
+      subjectType: 'message',
+      subjectId: messageId,
+      metadata: { model: 'canned-conversation-v1', sourceCount: 0 },
+    });
+    return context.json({ answer: cannedAnswer, sources: [], action: 'none', policy: 'allow', messageId });
+  }
   const rentalConsultation = evaluateRentalConsultation(conversationHistory, redacted);
   if (rentalConsultation.response) {
     const choices = rentalConsultation.active

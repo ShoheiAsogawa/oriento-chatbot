@@ -1,4 +1,5 @@
 import type { ConversationContextMessage } from './conversation-context';
+import { shouldContinueCompletedPropertySearch } from './property-search-continuation';
 
 export type RentalConsultationDecision = {
   active: boolean;
@@ -211,6 +212,12 @@ export function evaluateRentalConsultation(
     : context;
   const active = RENTAL_INTENT.test(currentSearchContext) && !SALE_INTENT.test(currentSearchContext);
   if (!active) return { active: false };
+  const currentSearchMessages = propertySearchMessages.length > 0
+    ? propertySearchMessages
+    : history;
+  if (!shouldContinueCompletedPropertySearch(currentSearchMessages, currentMessage)) {
+    return { active: false };
+  }
 
   const state = extractRentalConsultationState(history, currentMessage);
   const subject = rentalSubject(state);

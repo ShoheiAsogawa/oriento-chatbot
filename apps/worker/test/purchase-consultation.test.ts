@@ -44,4 +44,34 @@ describe('purchase consultation', () => {
       { role: 'assistant', content: '購入する物件の種類を選んでにゃん。' },
     ], '土地')).toEqual({ active: true });
   });
+
+  it('leaves the completed purchase flow when the visitor changes the subject', () => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '希望エリアを選んでにゃん。' },
+      { role: 'user', content: '茨木市' },
+      { role: 'assistant', content: '購入予算の上限を選んでにゃん。' },
+      { role: 'user', content: '購入予算6000万円まで' },
+      { role: 'assistant', content: '購入する物件の種類を選んでにゃん。' },
+      { role: 'user', content: '物件種別はこだわりなし' },
+      { role: 'assistant', content: '購入物件の希望間取りを選んでにゃん。' },
+      { role: 'user', content: '間取りはこだわりなし' },
+      { role: 'assistant', content: '茨木市で条件に合う購入物件が見つかったにゃん。' },
+    ], 'あなたはだれ？')).toEqual({ active: false });
+  });
+
+  it('continues the completed purchase flow for a property follow-up', () => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '希望エリアを選んでにゃん。' },
+      { role: 'user', content: '茨木市' },
+      { role: 'assistant', content: '購入予算の上限を選んでにゃん。' },
+      { role: 'user', content: '購入予算6000万円まで' },
+      { role: 'assistant', content: '購入する物件の種類を選んでにゃん。' },
+      { role: 'user', content: '物件種別はこだわりなし' },
+      { role: 'assistant', content: '購入物件の希望間取りを選んでにゃん。' },
+      { role: 'user', content: '間取りはこだわりなし' },
+      { role: 'assistant', content: '茨木市で条件に合う購入物件が見つかったにゃん。' },
+    ], 'ほかの物件も見たい')).toEqual({ active: true });
+  });
 });

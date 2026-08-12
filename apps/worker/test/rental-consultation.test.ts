@@ -209,4 +209,26 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
     ], 'なし')).toEqual({ active: true });
   });
+
+  it('leaves the completed rental flow when the visitor changes the subject', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '堺市で賃貸を探したい' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+      { role: 'user', content: '10万' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+      { role: 'user', content: 'こだわりなし' },
+      { role: 'assistant', content: '堺市で条件に合う居住用賃貸が見つかったにゃん。' },
+    ], 'あなたはだれ？')).toEqual({ active: false });
+  });
+
+  it('continues the completed rental flow for a condition change', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '堺市で賃貸を探したい' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+      { role: 'user', content: '10万' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+      { role: 'user', content: 'こだわりなし' },
+      { role: 'assistant', content: '堺市で条件に合う居住用賃貸が見つかったにゃん。' },
+    ], 'もっと駅に近い物件がいい')).toEqual({ active: true });
+  });
 });
