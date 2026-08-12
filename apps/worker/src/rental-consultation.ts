@@ -1,5 +1,9 @@
 import type { ConversationContextMessage } from './conversation-context';
-import { scopePropertySearchMessages, shouldContinueCompletedPropertySearch } from './property-search-continuation';
+import {
+  isObviousConversationDetour,
+  scopePropertySearchMessages,
+  shouldContinueCompletedPropertySearch,
+} from './property-search-continuation';
 
 export type RentalConsultationDecision = {
   active: boolean;
@@ -21,6 +25,7 @@ const PROPERTY_SEARCH_STARTER = /^(?:物件を探す|物件探し)(?:[。！!？
 const PROPERTY_TYPE_QUESTION = /賃貸(?:と|か)購入.*(?:教えて|選んで)/u;
 const AREA_PROMPT = /(?:住みたい地域|希望(?:の)?エリア|地域や最寄り駅|最寄り駅)/u;
 const BUDGET_PROMPT = /(?:家賃|予算).*(?:上限|教えて)/u;
+const PREFERENCE_PROMPT = /(?:希望の間取りや条件|希望条件)/u;
 const COMPACT_LAYOUT_CONFIRMATION = /(?:かなり手狭|ワンルームのまま|1Rのまま|1Kのまま)/u;
 const KEEP_COMPACT_LAYOUT = /(?:そのまま|ワンルーム(?:のまま|でいい)|1R(?:のまま|でいい)|1K(?:のまま|でいい))/iu;
 const AREA_WITH_SUFFIX = /([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,18}(?:都|道|府|県|市|区|町|村)|[\p{Script=Han}々ヶケァ-ヶー]{1,18}駅)/gu;
@@ -81,6 +86,7 @@ function shortAreaCandidate(content: string) {
     .replace(/(?:がいい|を希望|希望|あたり|辺り|周辺|付近|近く)$/u, '')
     .trim();
   if (!/^[\p{Script=Han}々ヶケぁ-んァ-ヶー]{2,18}$/u.test(candidate)) return undefined;
+  if (/^[ぁ-んー]+$/u.test(candidate) && !/^(?:なんば|なかもず|あびこ|うめだ|さかい|きしわだ|てんのうじ)$/u.test(candidate)) return undefined;
   if (/^[でにのがをとへ]/u.test(candidate)) return undefined;
   if (NON_AREA_ANSWER.test(candidate)) return undefined;
   return candidate;
@@ -125,6 +131,29 @@ function layoutFromMessage(content: string) {
 function walkMinutesFromMessage(content: string) {
   const walk = content.match(/徒歩\s*(\d+)分\s*(?:以内|まで)?/u)?.[1];
   return walk ? Number(walk) : undefined;
+}
+
+function isRentalCriterionReply(content: string, lastAssistant: string) {
+  const normalized = content.normalize('NFKC');
+  const answeredAreaPrompt = AREA_PROMPT.test(lastAssistant);
+  const answeredBudgetPrompt = BUDGET_PROMPT.test(lastAssistant);
+  return Boolean(
+    householdSizeFromMessage(normalized)
+    || areaFromMessage(normalized, answeredAreaPrompt)
+    || budgetFromMessage(normalized, answeredBudgetPrompt)
+    || layoutFromMessage(normalized)
+    || walkMinutesFromMessage(normalized) != null
+    || PREFERENCE.test(normalized)
+    || NO_PREFERENCE.test(normalized)
+  );
+}
+
+function isRentalFlowPrompt(content: string) {
+  return PROPERTY_TYPE_QUESTION.test(content)
+    || AREA_PROMPT.test(content)
+    || BUDGET_PROMPT.test(content)
+    || PREFERENCE_PROMPT.test(content)
+    || COMPACT_LAYOUT_CONFIRMATION.test(content);
 }
 
 export function extractRentalConsultationState(
@@ -180,6 +209,8 @@ export function evaluateRentalConsultation(
     };
   }
 
+  if (isObviousConversationDetour(currentMessage)) return { active: false };
+
   const userMessages = [
     ...history.filter((message) => message.role === 'user').map((message) => message.content),
     currentMessage,
@@ -189,6 +220,11 @@ export function evaluateRentalConsultation(
   const propertySearchMessages = messagesSinceLatestPropertySearch(history, currentMessage);
 
   if (hasPendingPropertyType(propertySearchMessages, lastAssistant)) {
+    if (!isRentalCriterionReply(currentMessage, lastAssistant)
+      && !RENTAL_INTENT.test(currentMessage)
+      && !SALE_INTENT.test(currentMessage)) {
+      return { active: false };
+    }
     return {
       active: false,
       response: 'まず、賃貸か購入か教えてにゃん。',
@@ -206,6 +242,20 @@ export function evaluateRentalConsultation(
   const currentSearchMessages = propertySearchMessages.length > 0
     ? propertySearchMessages
     : history;
+  const startsRentalSearch = RENTAL_INTENT.test(currentMessage) && !SALE_INTENT.test(currentMessage);
+  const completedSearchFollowUp = !shouldContinueCompletedPropertySearch(currentSearchMessages, '__topic_change__')
+    && shouldContinueCompletedPropertySearch(currentSearchMessages, currentMessage);
+  if (!startsRentalSearch
+    && !completedSearchFollowUp
+    && !isRentalFlowPrompt(lastAssistant)
+    && !isRentalCriterionReply(currentMessage, lastAssistant)) {
+    return { active: false };
+  }
+  if (!startsRentalSearch
+    && isRentalFlowPrompt(lastAssistant)
+    && !isRentalCriterionReply(currentMessage, lastAssistant)) {
+    return { active: false };
+  }
   if (!shouldContinueCompletedPropertySearch(currentSearchMessages, currentMessage)) {
     return { active: false };
   }

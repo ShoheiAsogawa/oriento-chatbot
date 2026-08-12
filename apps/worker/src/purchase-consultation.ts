@@ -1,5 +1,9 @@
 import type { ConversationContextMessage } from './conversation-context';
-import { scopePropertySearchMessages, shouldContinueCompletedPropertySearch } from './property-search-continuation';
+import {
+  isObviousConversationDetour,
+  scopePropertySearchMessages,
+  shouldContinueCompletedPropertySearch,
+} from './property-search-continuation';
 
 export type PurchaseConsultationDecision = {
   active: boolean;
@@ -66,6 +70,25 @@ function layoutFromMessage(content: string) {
   return content.match(/\d+[SLDKR]+/iu)?.[0]?.toUpperCase();
 }
 
+function isPurchaseCriterionReply(content: string, lastAssistant: string) {
+  const normalized = content.normalize('NFKC');
+  return Boolean(
+    areaFromMessage(normalized, AREA_PROMPT.test(lastAssistant))
+    || budgetFromMessage(normalized, BUDGET_PROMPT.test(lastAssistant))
+    || propertyTypeFromMessage(normalized)
+    || layoutFromMessage(normalized)
+    || ((TYPE_PROMPT.test(lastAssistant) || LAYOUT_PROMPT.test(lastAssistant))
+      && /(?:こだわりなし|なし|指定なし)/u.test(normalized))
+  );
+}
+
+function isPurchaseFlowPrompt(content: string) {
+  return AREA_PROMPT.test(content)
+    || BUDGET_PROMPT.test(content)
+    || TYPE_PROMPT.test(content)
+    || LAYOUT_PROMPT.test(content);
+}
+
 export function extractPurchaseConsultationState(
   history: ConversationContextMessage[],
   currentMessage: string,
@@ -107,6 +130,7 @@ export function evaluatePurchaseConsultation(
   history: ConversationContextMessage[],
   currentMessage: string,
 ): PurchaseConsultationDecision {
+  if (isObviousConversationDetour(currentMessage)) return { active: false };
   const messages = messagesSinceLatestSearch(history, currentMessage);
   const userContext = messages
     .filter((message) => message.role === 'user')
@@ -114,6 +138,21 @@ export function evaluatePurchaseConsultation(
     .join('\n');
   const active = PURCHASE_INTENT.test(userContext) && !RENTAL_INTENT.test(userContext);
   if (!active) return { active: false };
+  const lastAssistant = [...history].reverse().find((message) => message.role === 'assistant')?.content || '';
+  const startsPurchaseSearch = PURCHASE_INTENT.test(currentMessage) && !RENTAL_INTENT.test(currentMessage);
+  const completedSearchFollowUp = !shouldContinueCompletedPropertySearch(messages, '__topic_change__')
+    && shouldContinueCompletedPropertySearch(messages, currentMessage);
+  if (!startsPurchaseSearch
+    && !completedSearchFollowUp
+    && !isPurchaseFlowPrompt(lastAssistant)
+    && !isPurchaseCriterionReply(currentMessage, lastAssistant)) {
+    return { active: false };
+  }
+  if (!startsPurchaseSearch
+    && isPurchaseFlowPrompt(lastAssistant)
+    && !isPurchaseCriterionReply(currentMessage, lastAssistant)) {
+    return { active: false };
+  }
   if (!shouldContinueCompletedPropertySearch(messages, currentMessage)) {
     return { active: false };
   }

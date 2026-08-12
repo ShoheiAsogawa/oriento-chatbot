@@ -97,4 +97,20 @@ describe('purchase consultation', () => {
       response: expect.stringContaining('希望エリア'),
     });
   });
+
+  it('leaves a pending purchase flow for ordinary conversation', () => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '購入物件を一緒に探すにゃん。まず、希望エリアを選んでにゃん。' },
+    ], 'おなかすいた')).toEqual({ active: false });
+  });
+
+  it('leaves a pending purchase budget step for an identity question', () => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '希望エリアを選んでにゃん。' },
+      { role: 'user', content: '茨木市' },
+      { role: 'assistant', content: '購入予算の上限を選んでにゃん。' },
+    ], 'あなたはだれ？')).toEqual({ active: false });
+  });
 });

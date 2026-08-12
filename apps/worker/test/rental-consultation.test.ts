@@ -254,4 +254,29 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
     ], '購入したい')).toEqual({ active: false });
   });
+
+  it('leaves a pending rental flow for ordinary conversation', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '一人暮らししたい' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+    ], 'おなかすいた')).toEqual({ active: false });
+  });
+
+  it('does not resume an older rental flow after an AI conversation reply', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '一人暮らししたい' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: 'おなかすいた' },
+      { role: 'assistant', content: 'おなかがすいたんだね。無理せず何か食べてにゃん。' },
+    ], 'あなたはだれ？')).toEqual({ active: false });
+  });
+
+  it('leaves a pending rental budget step for an identity question', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '一人暮らししたい' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: '堺市' },
+      { role: 'assistant', content: '次に、家賃の上限を教えてにゃん。' },
+    ], 'あなたはだれ？')).toEqual({ active: false });
+  });
 });
