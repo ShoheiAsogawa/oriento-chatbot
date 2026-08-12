@@ -3,9 +3,9 @@ export type ConversationContextMessage = {
   content: string;
 };
 
-// Four short turns keep one extra clarification available without making the
-// retrieval or generation payload unbounded.
-const HISTORY_MESSAGE_LIMIT = 8;
+// Eight short turns cover multi-step property consultations. Search and
+// generation apply their own smaller windows so payloads remain bounded.
+const HISTORY_MESSAGE_LIMIT = 16;
 const HISTORY_MESSAGE_CHAR_LIMIT = 300;
 const SEARCH_HISTORY_MESSAGE_LIMIT = 6;
 

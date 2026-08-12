@@ -42,4 +42,19 @@ describe('rental catalog', () => {
     expect(formatRentalAnswer([properties[0]!], { area: '大阪市' })).toContain('HOUSE EGRET 405号室');
     expect(formatRentalAnswer([properties[0]!], { area: '大阪市' })).toContain('[1]');
   });
+
+  it('extracts criteria from the reported multi-turn answer order', () => {
+    expect(extractRentalCriteria([
+      { role: 'user', content: '賃貸' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: '家族4人' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: '10万' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user', content: '岸和田' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+    ], 'ワンルーム')).toEqual({
+      area: '岸和田', maxRentYen: 100_000, layout: '1R', maxWalkMinutes: undefined,
+    });
+  });
 });

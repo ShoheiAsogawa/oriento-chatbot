@@ -137,4 +137,56 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '希望条件を教えてにゃん。' },
     ], '1Kで駅徒歩10分以内')).toEqual({ active: true });
   });
+
+  it('keeps household, budget, and area when answers arrive in a different order', () => {
+    const history = [
+      { role: 'user' as const, content: '賃貸' },
+      { role: 'assistant' as const, content: '賃貸を一緒に探すにゃん。まず、住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user' as const, content: '家族4人' },
+      { role: 'assistant' as const, content: '4人で暮らす賃貸を一緒に探すにゃん。まず、住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user' as const, content: '10万' },
+      { role: 'assistant' as const, content: '4人で暮らす賃貸を一緒に探すにゃん。まず、住みたい地域や最寄り駅を教えてにゃん。' },
+      { role: 'user' as const, content: '岸和田' },
+      { role: 'assistant' as const, content: '希望の間取りや条件を教えてにゃん。2LDK・3LDK、駅からの徒歩分数、ペット可などから選べるにゃん。' },
+    ];
+
+    const decision = evaluateRentalConsultation(history, 'ワンルーム');
+    expect(decision.active).toBe(true);
+    expect(decision.response).toContain('4人家族');
+    expect(decision.response).toContain('2LDK以上');
+    expect(decision.response).not.toContain('一人暮らし向け');
+  });
+
+  it('accepts a safer layout after warning about a compact family layout', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '家族4人で岸和田市の賃貸を家賃10万円までで探したい' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+      { role: 'user', content: 'ワンルーム' },
+      { role: 'assistant', content: '4人家族でワンルームはかなり手狭になりそうにゃん。ワンルームのまま探すか、2LDK以上に広げるか教えてにゃん。' },
+    ], '2LDK')).toEqual({ active: true });
+  });
+
+  it('accepts all required criteria in one message regardless of order', () => {
+    expect(evaluateRentalConsultation([], '家賃10万、岸和田市で家族4人、3LDKの賃貸')).toEqual({
+      active: true,
+    });
+  });
+
+  it('does not mistake a household answer for an area after the area prompt', () => {
+    const decision = evaluateRentalConsultation([
+      { role: 'user', content: '賃貸' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+    ], '夫婦と子ども2人');
+    expect(decision.response).toContain('4人で暮らす賃貸');
+    expect(decision.response).toContain('住みたい地域');
+  });
+
+  it('keeps an early budget while continuing to ask for a missing area', () => {
+    const decision = evaluateRentalConsultation([
+      { role: 'user', content: '賃貸' },
+      { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
+    ], '家賃は8.5万円まで');
+    expect(decision.response).toContain('住みたい地域');
+    expect(decision.response).not.toContain('家賃の上限');
+  });
 });

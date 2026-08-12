@@ -1,5 +1,6 @@
 import type { ConversationContextMessage } from './conversation-context';
 import type { SearchChunk } from './types';
+import { extractRentalConsultationState } from './rental-consultation';
 
 export type RentalProperty = {
   id: string;
@@ -24,27 +25,16 @@ export type RentalCriteria = {
 
 const RESIDENTIAL_TYPES = /(?:マンション|アパート|貸家|一戸建|テラスハウス)/u;
 
-function userContext(history: ConversationContextMessage[], currentMessage: string) {
-  return [
-    ...history.filter((message) => message.role === 'user').map((message) => message.content),
-    currentMessage,
-  ].join('\n');
-}
-
 export function extractRentalCriteria(
   history: ConversationContextMessage[],
   currentMessage: string,
 ): RentalCriteria {
-  const context = userContext(history, currentMessage);
-  const areas = Array.from(context.matchAll(/([\p{Script=Han}々ヶケ]{1,14}(?:都|道|府|県|市|区|町|村|駅))/gu));
-  const budget = context.match(/(\d+(?:\.\d+)?)\s*万(?:円)?\s*(?:以下|以内|まで|前後)?/u);
-  const layout = context.match(/(?:ワンルーム|\d+[SLDKR]+)/iu)?.[0];
-  const walk = context.match(/徒歩\s*(\d+)分\s*(?:以内|まで)?/u);
+  const state = extractRentalConsultationState(history, currentMessage);
   return {
-    area: areas.at(-1)?.[1],
-    maxRentYen: budget ? Math.round(Number(budget[1]) * 10_000) : undefined,
-    layout: layout?.toUpperCase().replace('ワンルーム', '1R'),
-    maxWalkMinutes: walk ? Number(walk[1]) : undefined,
+    area: state.area,
+    maxRentYen: state.maxRentYen,
+    layout: state.layout,
+    maxWalkMinutes: state.maxWalkMinutes,
   };
 }
 
