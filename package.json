@@ -7,7 +7,7 @@
     "build:preview": "pnpm --filter @orient/worker exec wrangler deploy --dry-run --config ../preview/wrangler.jsonc --outdir ../preview/dist",
     "prepare:assets": "node scripts/prepare-assets.mjs",
     "knowledge:scrape": "python scripts/scrape-orient-knowledge.py",
-    "knowledge:catalog": "python scripts/build-rental-catalog.py && python scripts/build-sale-catalog.py",
+    "knowledge:catalog": "python scripts/build-rental-catalog.py && python scripts/build-sale-catalog.py && python scripts/build-guided-search-options.py",
     "check": "pnpm -r check",
     "test": "pnpm --filter @orient/worker test",
     "deploy:production": "pnpm --filter @orient/worker exec wrangler deploy",

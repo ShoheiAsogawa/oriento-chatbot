@@ -3,6 +3,11 @@ import { cors } from 'hono/cors';
 import { z } from 'zod';
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
 import { choicesForChatAnswer } from './chat-choices';
+import {
+  loadGuidedSearchOptions,
+  purchaseChoicesForAvailability,
+  rentalChoicesForAvailability,
+} from './guided-search-options';
 import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-controls';
 import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
@@ -630,6 +635,13 @@ app.post('/api/chat/message', async (context) => {
   const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);
   const rentalConsultation = evaluateRentalConsultation(conversationHistory, redacted);
   if (rentalConsultation.response) {
+    const choices = rentalConsultation.active
+      ? rentalChoicesForAvailability(
+        rentalConsultation.response,
+        await loadGuidedSearchOptions(context.env),
+        extractRentalCriteria(conversationHistory, redacted),
+      )
+      : choicesForChatAnswer(rentalConsultation.response);
     const messageId = await recordTurn(
       context.env,
       input.conversationId,
@@ -649,7 +661,7 @@ app.post('/api/chat/message', async (context) => {
     return context.json({
       answer: rentalConsultation.response,
       sources: [],
-      choices: choicesForChatAnswer(rentalConsultation.response),
+      choices,
       action: 'none',
       policy: 'allow',
       messageId,
@@ -685,6 +697,11 @@ app.post('/api/chat/message', async (context) => {
   const purchaseConsultation = evaluatePurchaseConsultation(conversationHistory, redacted);
   if (purchaseConsultation.response) {
     const answer = purchaseConsultation.response;
+    const choices = purchaseChoicesForAvailability(
+      answer,
+      await loadGuidedSearchOptions(context.env),
+      extractSaleCriteria(conversationHistory, redacted),
+    );
     const messageId = await recordTurn(
       context.env,
       input.conversationId,
@@ -704,7 +721,7 @@ app.post('/api/chat/message', async (context) => {
     return context.json({
       answer,
       sources: [],
-      choices: choicesForChatAnswer(answer),
+      choices,
       action: 'none',
       policy: 'allow',
       messageId,

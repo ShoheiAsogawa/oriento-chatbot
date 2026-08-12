@@ -12,6 +12,11 @@ const properties: SaleProperty[] = [
     property_type: '新築一戸建て', price_yen: 45_000_000, address: '堺市堺区',
     transport: ['南海本線「堺」徒歩8分'], layout: '4LDK', walk_minutes: 8, status: '',
   },
+  {
+    id: '3', title: '既存マンション', url: 'https://orijyu.com/buy/post-3.html',
+    property_type: 'マンション', price_yen: 19_800_000, address: '堺市堺区',
+    transport: ['南海本線「堺」徒歩6分'], layout: '3LDK', walk_minutes: 6, status: '',
+  },
 ];
 
 describe('sale catalog', () => {
@@ -26,5 +31,11 @@ describe('sale catalog', () => {
     expect(answer).toContain('OrientCity 七道');
     expect(answer).toContain('販売価格2980万円');
     expect(answer).toContain('[1]');
+  });
+
+  it('treats existing mansion listings as used condominiums', () => {
+    expect(recommendSaleProperties(properties, {
+      area: '堺市', maxPriceYen: 20_000_000, propertyType: '中古マンション', layout: '3LDK',
+    })).toEqual([properties[2]]);
   });
 });

@@ -45,7 +45,7 @@ export async function loadSaleCatalog(env: Env): Promise<SaleProperty[]> {
 function matchesPropertyType(actual: string, requested: string) {
   if (requested === '新築戸建て') return /新築.*(?:一戸建て|戸建)/u.test(actual);
   if (requested === '中古戸建て') return /中古.*(?:一戸建て|戸建)/u.test(actual);
-  if (requested === '中古マンション') return /中古.*マンション/u.test(actual);
+  if (requested === '中古マンション') return /マンション/u.test(actual) && !/新築/u.test(actual);
   if (requested === '土地') return /土地/u.test(actual);
   return actual.includes(requested);
 }
