@@ -28,6 +28,23 @@ describe('evaluatePolicy', () => {
     );
   });
 
+  it.each([
+    'おなかすいた',
+    'ラーメン',
+    '堺市でこってり系のラーメンを探して',
+    '浜寺のグルメを教えて',
+  ])('does not expand food talk into restaurant search: %s', (question) => {
+    const decision = evaluatePolicy(question);
+    expect(decision.code).toBe('out_of_scope');
+    expect(decision.response).toBe(
+      'お腹がすいたんだね。ごめんね、飲食店やグルメの案内はできないにゃん。お部屋探しや住まいのことなら手伝えるにゃん。',
+    );
+  });
+
+  it('keeps restaurant-related real-estate searches in scope', () => {
+    expect(evaluatePolicy('飲食店向けの店舗物件を探したい').code).toBe('allow');
+  });
+
   it('uses a concise, in-character message when knowledge is unavailable', () => {
     expect(noGroundingDecision().response).toBe(
       'ごめんね、その情報はオリにゃんでは確認できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
@@ -71,5 +88,11 @@ describe('ensureOrinyanEnding', () => {
 
   it('normalizes punctuation placed before the character ending', () => {
     expect(ensureOrinyanEnding('間取りは4LDKです。にゃん[1]')).toBe('間取りは4LDKですにゃん。[1]');
+  });
+
+  it('removes leaked style instructions from an AI answer', () => {
+    expect(ensureOrinyanEnding(
+      '具体的な店舗情報は確認できないにゃん。最後は「にゃん」で締めるにゃん',
+    )).toBe('具体的な店舗情報は確認できないにゃん。');
   });
 });
