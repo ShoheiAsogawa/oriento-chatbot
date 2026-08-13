@@ -89,10 +89,47 @@ export interface MonthlyReport {
   funnel: { conversations?: number } | null;
 }
 
+export interface OverviewDailyPoint {
+  day: string;
+  conversations: number;
+  visitors: number;
+}
+
+export interface OverviewPageCount {
+  page: string;
+  count: number;
+}
+
+export interface OverviewPolicyCount {
+  action: string;
+  count: number;
+}
+
+export interface OverviewHourCount {
+  hour: number;
+  count: number;
+}
+
+export interface OverviewUsagePoint {
+  day: string;
+  sessions: number;
+  aiRequests: number;
+}
+
 export interface OverviewData {
   conversations30d: number;
+  conversationsToday: number;
+  conversationsYesterday: number;
+  visitors30d: number;
+  questions30d: number;
   refused30d: number;
+  consented30d: number;
   knowledgeItems: number;
+  daily: OverviewDailyPoint[];
+  topPages: OverviewPageCount[];
+  policy: OverviewPolicyCount[];
+  hours: OverviewHourCount[];
+  usage: OverviewUsagePoint[];
   costGuard: {
     day: string;
     sessions: number;
@@ -133,6 +170,68 @@ export const mockConversations: ConversationSummary[] = [
   { id: 'c-8c90', updated_at: '2026-08-08T23:18:00Z', source_page: '/property/hyogo/', message_count: 4, latest_message: '資料請求をしたいです', has_refusal: 0, marketing_consent: 1 },
 ];
 
+function addCalendarDays(isoDate: string, delta: number) {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const date = new Date(Date.UTC(year || 0, (month || 1) - 1, (day || 1) + delta));
+  return date.toISOString().slice(0, 10);
+}
+
+function mockOverviewData(today = '2026-08-13'): OverviewData {
+  const daily = Array.from({ length: 30 }, (_, index) => {
+    const day = addCalendarDays(today, index - 29);
+    const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
+    const weekend = weekday === 0 || weekday === 6;
+    const conversations = Math.max(6, Math.round((weekend ? 18 : 44) + Math.sin(index / 2.4) * 11 + index * 0.35));
+    return { day, conversations, visitors: Math.max(4, Math.round(conversations * 0.73)) };
+  });
+  const hours = Array.from({ length: 24 }, (_, hour) => {
+    const lunch = hour === 12 || hour === 13 ? 18 : 0;
+    const evening = hour === 19 || hour === 20 ? 22 : 0;
+    const daytime = hour >= 9 && hour <= 18 ? 10 : 2;
+    return { hour, count: hour < 7 ? 1 : daytime + lunch + evening };
+  });
+  const usage = daily.map((point) => ({
+    day: point.day,
+    sessions: point.conversations,
+    aiRequests: Math.round(point.conversations * 2.4),
+  }));
+  const last = daily.at(-1);
+  return {
+    conversations30d: daily.reduce((sum, point) => sum + point.conversations, 0),
+    conversationsToday: last?.conversations || 0,
+    conversationsYesterday: daily.at(-2)?.conversations || 0,
+    visitors30d: daily.reduce((sum, point) => sum + point.visitors, 0),
+    questions30d: 3482,
+    refused30d: 39,
+    consented30d: 86,
+    knowledgeItems: 28,
+    daily,
+    topPages: [
+      { page: 'https://orijyu.com/property/osaka/', count: 286 },
+      { page: 'https://orijyu.com/', count: 214 },
+      { page: 'https://orijyu.com/order-house/', count: 163 },
+      { page: 'https://orijyu.com/property/hyogo/', count: 121 },
+      { page: 'https://orijyu.com/reception.html', count: 74 },
+      { page: 'https://orijyu.com/company/', count: 41 },
+    ],
+    policy: [
+      { action: 'allow', count: 1180 },
+      { action: 'out_of_scope', count: 22 },
+      { action: 'price_negotiation', count: 11 },
+      { action: 'no_grounding', count: 6 },
+    ],
+    hours,
+    usage,
+    costGuard: {
+      day: today,
+      sessions: last?.conversations || 84,
+      sessionLimit: 500,
+      aiRequests: 312,
+      aiRequestLimit: 500,
+    },
+  };
+}
+
 const demoMode = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 function adminHeaders(initial?: HeadersInit) {
@@ -159,12 +258,7 @@ export const api = {
   authSession: () => request<AdminSessionResponse>('/api/auth/admin/session'),
   login: (loginId: string, password: string) => request<AdminLoginResponse>('/api/auth/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ loginId, password }) }),
   logout: () => request<{ ok: boolean }>('/api/auth/admin/logout', { method: 'POST' }),
-  overview: () => request<OverviewData>('/api/admin/overview', undefined, {
-    conversations30d: 1264,
-    refused30d: 39,
-    knowledgeItems: 28,
-    costGuard: { day: '2026-08-09', sessions: 84, sessionLimit: 500, aiRequests: 312, aiRequestLimit: 2000 },
-  }),
+  overview: () => request<OverviewData>('/api/admin/overview', undefined, mockOverviewData()),
   bootstrapKnowledge: () => request('/api/admin/knowledge/bootstrap', { method: 'POST' }),
   seedKnowledge: () => request<{ ok: boolean; accepted: Array<{ file: string; id: string }>; skipped: string[] }>('/api/admin/knowledge/seed', { method: 'POST' }, { ok: true, accepted: [], skipped: [] }),
   knowledge: (options: KnowledgeListOptions = {}) => {

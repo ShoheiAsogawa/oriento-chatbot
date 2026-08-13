@@ -14,7 +14,8 @@ import {
   purchaseChoicesForAvailability,
   rentalChoicesForAvailability,
 } from './guided-search-options';
-import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-controls';
+import { consumeDailyAllowance } from './cost-controls';
+import { loadOverview } from './overview';
 import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
@@ -1191,24 +1192,12 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
 });
 
 app.get('/api/admin/overview', async (context) => {
-  const [conversations, unanswered, knowledge, dailyUsage] = await Promise.all([
-    context.env.DB.prepare(`SELECT COUNT(*) AS count FROM conversations WHERE created_at >= datetime('now','-30 days')`).first<{ count: number }>(),
-    context.env.DB.prepare(`SELECT COUNT(*) AS count FROM messages WHERE role = 'assistant' AND policy_action != 'allow' AND created_at >= datetime('now','-30 days')`).first<{ count: number }>(),
-    context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.list({ page: 1, per_page: 1 }),
-    readDailyUsage(context.env.DB),
-  ]);
-  return context.json({
-    conversations30d: conversations?.count || 0,
-    refused30d: unanswered?.count || 0,
+  const knowledge = await context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.list({ page: 1, per_page: 1 });
+  return context.json(await loadOverview(context.env.DB, {
     knowledgeItems: knowledge.result_info?.total_count || 0,
-    costGuard: {
-      day: dailyUsage.day,
-      sessions: Number(dailyUsage.counts.chat_sessions || 0),
-      sessionLimit: parseDailyLimit(context.env.DAILY_SESSION_LIMIT, 500),
-      aiRequests: Number(dailyUsage.counts.ai_requests || 0),
-      aiRequestLimit: parseDailyLimit(context.env.DAILY_AI_REQUEST_LIMIT, 500),
-    },
-  });
+    sessionLimit: context.env.DAILY_SESSION_LIMIT,
+    aiRequestLimit: context.env.DAILY_AI_REQUEST_LIMIT,
+  }));
 });
 
 app.get('/api/admin/knowledge', async (context) => {

@@ -13,7 +13,7 @@ export function parseDailyLimit(value: string | undefined, fallback: number) {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function japanDay(now: Date) {
+export function japanDay(now: Date) {
   return new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 

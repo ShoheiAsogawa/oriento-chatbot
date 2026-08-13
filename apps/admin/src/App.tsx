@@ -1,10 +1,10 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity, Archive, BookOpen, Bot, Check, ChevronDown, ChevronLeft, ChevronRight,
-  CircleAlert, Database, EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
+  Activity, Archive, BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight,
+  Database, EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
   FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Paintbrush, Plus,
-  RefreshCw, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, UploadCloud,
-  UserRound, UsersRound, X, Pencil,
+  RefreshCw, Search, ShieldCheck, Trash2, UploadCloud,
+  Pencil, X,
 } from 'lucide-react';
 import {
   api,
@@ -12,10 +12,10 @@ import {
   type ConversationSummary,
   type KnowledgeItem,
   type MonthlyReport,
-  type OverviewData,
   type PropertyKnowledgeInput,
   mockConversations,
 } from './api';
+import { OverviewPage } from './OverviewPage';
 
 type PageKey = 'overview' | 'reports' | 'knowledge' | 'conversations' | 'appearance';
 
@@ -180,47 +180,6 @@ function Sidebar({ page, onPage, collapsed, onToggle }: { page: PageKey; onPage:
 
 function PageHeader({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
   return <header className="page-header"><div><h1>{title}</h1><p>{description}</p></div>{action}</header>;
-}
-
-function OverviewPage() {
-  const [data, setData] = useState<OverviewData>({
-    conversations30d: 0,
-    refused30d: 0,
-    knowledgeItems: 0,
-    costGuard: { day: '', sessions: 0, sessionLimit: 500, aiRequests: 0, aiRequestLimit: 2000 },
-  });
-  const [recent, setRecent] = useState<ConversationSummary[]>(mockConversations);
-  useEffect(() => {
-    void api.overview().then(setData);
-    void api.conversations().then((result) => setRecent(result.result.slice(0, 4)));
-  }, []);
-  const metrics = [
-    ['過去30日の会話', data.conversations30d.toLocaleString(), MessageSquareText, '直近30日を集計'],
-    ['回答を控えた質問', data.refused30d.toLocaleString(), CircleAlert, '担当確認の候補'],
-    ['ナレッジ資料', data.knowledgeItems.toLocaleString(), Database, 'AI Search登録数'],
-  ] as const;
-  return <>
-    <PageHeader title="概要" description="チャットボットの稼働状況と、対応が必要な項目を確認します。" />
-    <section className="metric-strip">
-      {metrics.map(([label, value, Icon, note]) => <div className="metric" key={label}><Icon /><p>{label}</p><strong>{value}</strong><small>{note}</small></div>)}
-    </section>
-    <div className="overview-grid">
-      <section className="surface activity-list">
-        <div className="section-heading"><div><h2>最近の会話</h2><p>直近の質問と回答状態</p></div><button className="text-button">すべて見る <ChevronRight /></button></div>
-        {recent.map((item) => <button className="activity-row" key={item.id}>
-          <span className={`activity-icon ${item.has_refusal ? 'warn' : ''}`}>{item.has_refusal ? <CircleAlert /> : <MessageSquareText />}</span>
-          <span><strong>{item.latest_message}</strong><small>{item.source_page}</small></span>
-          <time>{formatDate(item.updated_at)}</time><ChevronRight />
-        </button>)}
-      </section>
-      <section className="surface attention-list">
-        <div className="section-heading"><div><h2>確認が必要</h2><p>運用担当者向けの通知</p></div></div>
-        <div className="attention"><span className="warning-dot"></span><div><strong>回答を控えた質問</strong><p>過去30日で{data.refused30d.toLocaleString()}件あります。会話ログから確認できます。</p></div><ChevronRight /></div>
-        <div className="attention"><span className="info-dot"></span><div><strong>ナレッジの登録状況</strong><p>{data.knowledgeItems.toLocaleString()}件の資料が管理対象です。</p></div><ChevronRight /></div>
-        <div className="attention"><span className={data.costGuard.aiRequests / data.costGuard.aiRequestLimit >= .8 ? 'warning-dot' : 'success-dot'}></span><div><strong>日次コストガード</strong><p>AI回答 {data.costGuard.aiRequests.toLocaleString()} / {data.costGuard.aiRequestLimit.toLocaleString()}件、セッション {data.costGuard.sessions.toLocaleString()} / {data.costGuard.sessionLimit.toLocaleString()}件</p></div><Gauge /></div>
-      </section>
-    </div>
-  </>;
 }
 
 function ReportsPage() {
@@ -611,12 +570,12 @@ export function App() {
   const [checkingSession, setCheckingSession] = useState(true);
   useEffect(() => { void api.authSession().then((value) => setSession(value.authenticated ? value.user?.loginId || null : null)).catch(() => setSession(null)).finally(() => setCheckingSession(false)); }, []);
   const logout = async () => { try { await api.logout(); } finally { setSession(null); } };
-  const ActivePage = page === 'overview' ? OverviewPage : page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : AppearancePage;
+  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : page === 'appearance' ? AppearancePage : null;
   if (checkingSession) return <main className="auth-page"><p>ログイン状態を確認しています…</p></main>;
   if (!session) return <AuthScreen onAuthenticated={setSession} />;
   return <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
     <header className="topbar"><button className="menu-button" onClick={() => setCollapsed((value) => !value)}><Menu /></button><div className="brand"><span className="brand-mark" aria-hidden="true"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><div className="topbar-right"><span className="environment"><Activity />本番 <ChevronDown /></span><span className="account-email">{session}</span><button className="secondary-button logout-button" onClick={() => void logout()}>ログアウト</button></div></header>
     <Sidebar page={page} onPage={setPage} collapsed={collapsed} onToggle={() => setCollapsed((value) => !value)} />
-    <section className="content"><ActivePage /></section>
+    <section className="content">{page === 'overview' ? <OverviewPage onOpenConversations={() => setPage('conversations')} /> : ActivePage ? <ActivePage /> : null}</section>
   </div>;
 }
