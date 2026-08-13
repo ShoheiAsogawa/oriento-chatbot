@@ -11,6 +11,7 @@ export type PurchaseConsultationDecision = {
 };
 
 export type PurchaseConsultationState = {
+  prefecture?: string;
   area?: string;
   maxPriceYen?: number;
   propertyType?: string;
@@ -27,6 +28,7 @@ const BUDGET_PROMPT = /購入予算の上限/u;
 const TYPE_PROMPT = /購入する物件の種類/u;
 const LAYOUT_PROMPT = /購入物件の希望間取り/u;
 const AREA_WITH_SUFFIX = /([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,18}(?:都|道|府|県|市|区|町|村)|[\p{Script=Han}々ヶケァ-ヶー]{1,18}駅)/gu;
+const PREFECTURE = /([\p{Script=Han}々ヶケ]{2,8}(?:都|道|府|県))/u;
 
 function messagesSinceLatestSearch(history: ConversationContextMessage[], currentMessage: string) {
   return scopePropertySearchMessages(history, currentMessage);
@@ -44,6 +46,10 @@ function areaFromMessage(content: string, answeredPrompt: boolean) {
   const explicit = matches.at(-1)?.[1];
   if (explicit) return explicit;
   return answeredPrompt ? shortArea(content) : undefined;
+}
+
+function prefectureFromMessage(content: string) {
+  return content.match(PREFECTURE)?.[1];
 }
 
 function budgetFromMessage(content: string, answeredPrompt: boolean) {
@@ -73,7 +79,8 @@ function layoutFromMessage(content: string) {
 function isPurchaseCriterionReply(content: string, lastAssistant: string) {
   const normalized = content.normalize('NFKC');
   return Boolean(
-    areaFromMessage(normalized, AREA_PROMPT.test(lastAssistant))
+    prefectureFromMessage(normalized)
+    || areaFromMessage(normalized, AREA_PROMPT.test(lastAssistant))
     || budgetFromMessage(normalized, BUDGET_PROMPT.test(lastAssistant))
     || propertyTypeFromMessage(normalized)
     || layoutFromMessage(normalized)
@@ -101,12 +108,14 @@ export function extractPurchaseConsultationState(
     const content = message.content.normalize('NFKC');
     const previous = messages[index - 1];
     const previousAssistant = previous?.role === 'assistant' ? previous.content : '';
+    const prefecture = prefectureFromMessage(content);
     const area = areaFromMessage(content, AREA_PROMPT.test(previousAssistant));
     const maxPriceYen = budgetFromMessage(content, BUDGET_PROMPT.test(previousAssistant));
     const propertyType = propertyTypeFromMessage(content);
     const layout = layoutFromMessage(content);
 
-    if (area) state.area = area;
+    if (prefecture) state.prefecture = prefecture;
+    if (area && !PREFECTURE.test(area)) state.area = area;
     if (maxPriceYen) state.maxPriceYen = maxPriceYen;
     if (propertyType) {
       state.propertyType = propertyType;
@@ -158,8 +167,11 @@ export function evaluatePurchaseConsultation(
   }
 
   const state = extractPurchaseConsultationState(history, currentMessage);
+  if (!state.prefecture && !state.area) {
+    return { active: true, response: '購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。' };
+  }
   if (!state.area) {
-    return { active: true, response: '購入物件を一緒に探すにゃん。まず、希望エリアを選んでにゃん。' };
+    return { active: true, response: `${state.prefecture}で購入物件を探すにゃん。次に、市区町村を選んでにゃん。` };
   }
   if (!state.maxPriceYen) {
     return { active: true, response: '購入予算の上限を選んでにゃん。諸費用を除いた物件価格の目安で大丈夫にゃん。' };

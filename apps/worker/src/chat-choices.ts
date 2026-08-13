@@ -10,21 +10,20 @@ const choice = (label: string, value = label, tone: ChatChoice['tone'] = 'defaul
   tone,
 });
 
-const AREA_CHOICES = [
-  choice('大阪市'),
-  choice('堺市'),
-  choice('高槻市'),
-  choice('岸和田市'),
-  choice('茨木市'),
-  choice('泉佐野市'),
+const PREFECTURE_CHOICES = [
+  choice('大阪府'),
+  choice('兵庫県'),
+  choice('和歌山県'),
+  choice('京都府'),
+  choice('奈良県'),
 ];
 
 export function choicesForChatAnswer(answer: string): ChatChoice[] {
   if (/賃貸(?:と|か)購入.*(?:教えて|選んで)/u.test(answer)) {
     return [choice('賃貸', '賃貸', 'primary'), choice('購入', '購入', 'primary')];
   }
-  if (/(?:住みたい地域や最寄り駅|希望エリアを選んで)/u.test(answer)) {
-    return AREA_CHOICES;
+  if (/(?:住みたい|希望の)(?:都道府県|地域)|都道府県を選んで/u.test(answer)) {
+    return PREFECTURE_CHOICES;
   }
   if (/家賃の上限/u.test(answer)) {
     return [

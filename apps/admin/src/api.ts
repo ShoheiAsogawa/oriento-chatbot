@@ -82,52 +82,15 @@ export interface ConversationMessage {
   citations: string;
 }
 
-export interface Customer {
-  id: string;
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-  status: 'new' | 'contacted' | 'qualified' | 'closed';
-  tags: string;
-  notes?: string | null;
-  consent_at: string;
-  conversation_count: number;
-  updated_at: string;
-}
-
-export interface AuditEvent {
-  sequence: number;
-  ledger_id: string;
-  ledger_sequence: number;
-  event_type: string;
-  actor_type: string;
-  actor_id?: string | null;
-  subject_id?: string | null;
-  created_at: string;
-  event_hash: string;
-}
-
-export interface AuditVerification {
-  ledgerId: string;
-  verified: boolean;
-  verifiedEvents: number;
-  totalEvents: number;
-  truncated: boolean;
-  failedSequence: number | null;
-  lastVerifiedHash: string;
-}
-
 export interface MonthlyReport {
   month: string;
   generatedAt: string;
-  policySummary: Array<{ policy_action: string; count: number }>;
   questionTrends: Array<{ question: string; count: number }>;
-  funnel: { conversations?: number; consented_conversations?: number } | null;
+  funnel: { conversations?: number } | null;
 }
 
 export interface OverviewData {
   conversations30d: number;
-  customers: number;
   refused30d: number;
   knowledgeItems: number;
   costGuard: {
@@ -137,6 +100,21 @@ export interface OverviewData {
     aiRequests: number;
     aiRequestLimit: number;
   };
+}
+
+export interface AdminIdentity {
+  email: string;
+  subject: string;
+}
+
+export interface AdminSessionResponse {
+  authenticated: boolean;
+  user: AdminIdentity | null;
+}
+
+export interface AdminLoginResponse {
+  ok: boolean;
+  user: AdminIdentity;
 }
 
 const mockKnowledge: KnowledgeItem[] = [
@@ -155,19 +133,6 @@ export const mockConversations: ConversationSummary[] = [
   { id: 'c-8c90', updated_at: '2026-08-08T23:18:00Z', source_page: '/property/hyogo/', message_count: 4, latest_message: '資料請求をしたいです', has_refusal: 0, marketing_consent: 1 },
 ];
 
-export const mockCustomers: Customer[] = [
-  { id: 'u-1', name: '山田 太郎', email: 'taro@example.jp', phone: '090-****-2814', status: 'new', tags: '["大阪市","新築"]', notes: '大阪市内の新築物件を希望。', consent_at: '2026-08-09T09:23:58Z', conversation_count: 2, updated_at: '2026-08-09T09:24:00Z' },
-  { id: 'u-2', name: '佐藤 美咲', email: 'misaki@example.jp', phone: '080-****-1177', status: 'contacted', tags: '["資料請求"]', notes: '', consent_at: '2026-08-08T23:17:00Z', conversation_count: 1, updated_at: '2026-08-08T23:18:00Z' },
-  { id: 'u-3', name: '高橋 健', email: 'ken@example.jp', phone: '070-****-9042', status: 'qualified', tags: '["堺市","注文住宅"]', notes: '', consent_at: '2026-08-08T06:40:00Z', conversation_count: 4, updated_at: '2026-08-08T06:44:00Z' },
-];
-
-export const mockAudit: AuditEvent[] = [
-  { sequence: 1052, ledger_id: 'orient-audit-2026-08', ledger_sequence: 1052, event_type: 'chat.answered', actor_type: 'visitor', actor_id: '匿名', subject_id: 'm-c8f1', created_at: '2026-08-09T09:24:12Z', event_hash: 'pP9x2d…c81a' },
-  { sequence: 1051, ledger_id: 'orient-audit-2026-08', ledger_sequence: 1051, event_type: 'customer.consent_recorded', actor_type: 'visitor', actor_id: '匿名', subject_id: 'u-1', created_at: '2026-08-09T09:23:58Z', event_hash: 'tB41a7…991e' },
-  { sequence: 1050, ledger_id: 'orient-audit-2026-08', ledger_sequence: 1050, event_type: 'knowledge.uploaded', actor_type: 'admin', actor_id: 'admin@orient.test', subject_id: '2', created_at: '2026-08-09T08:12:00Z', event_hash: 'aQ018f…e290' },
-  { sequence: 1049, ledger_id: 'orient-audit-2026-08', ledger_sequence: 1049, event_type: 'chat.refused', actor_type: 'visitor', actor_id: '匿名', subject_id: 'm-91af', created_at: '2026-08-09T08:47:31Z', event_hash: 'dE7c10…0b88' },
-];
-
 const demoMode = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 function adminHeaders(initial?: HeadersInit) {
@@ -179,7 +144,10 @@ function adminHeaders(initial?: HeadersInit) {
 async function request<T>(path: string, init?: RequestInit, fallback?: T): Promise<T> {
   try {
     const response = await fetch(path, { ...init, headers: adminHeaders(init?.headers), credentials: 'same-origin' });
-    if (!response.ok) throw new Error(`API ${response.status}`);
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { error?: string } | null;
+      throw new Error(payload?.error || `API ${response.status}`);
+    }
     return await response.json() as T;
   } catch (error) {
     if (demoMode && fallback !== undefined) return fallback;
@@ -188,9 +156,13 @@ async function request<T>(path: string, init?: RequestInit, fallback?: T): Promi
 }
 
 export const api = {
+  authSession: () => request<AdminSessionResponse>('/api/auth/admin/session'),
+  login: (email: string, password: string) => request<AdminLoginResponse>('/api/auth/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) }),
+  logout: () => request<{ ok: boolean }>('/api/auth/admin/logout', { method: 'POST' }),
+  requestPasswordReset: (email: string) => request<{ ok: boolean }>('/api/auth/admin/password/request', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, password: string) => request<{ ok: boolean }>('/api/auth/admin/password/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token, password }) }),
   overview: () => request<OverviewData>('/api/admin/overview', undefined, {
     conversations30d: 1264,
-    customers: 86,
     refused30d: 39,
     knowledgeItems: 28,
     costGuard: { day: '2026-08-09', sessions: 84, sessionLimit: 500, aiRequests: 312, aiRequestLimit: 2000 },
@@ -242,30 +214,15 @@ export const api = {
       { id: `${id}-a`, role: 'assistant', content_redacted: mockConversations.find((row) => row.id === id)?.has_refusal ? '価格交渉や個別の値引き判断はチャットではお答えできません。' : '公式サイトの登録情報をもとにご案内します。', policy_action: mockConversations.find((row) => row.id === id)?.has_refusal ? 'price_negotiation' : 'allow', created_at: '2026-08-09T09:23:02Z', citations: '[]' },
     ],
   }),
-  customers: () => request('/api/admin/customers', undefined, { result: mockCustomers }),
-  updateCustomer: (id: string, value: { status?: Customer['status']; tags?: string[]; notes?: string }) => request(`/api/admin/customers/${id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(value) }, { ok: true }),
-  audit: () => request('/api/admin/audit', undefined, { result: mockAudit }),
   monthlyReport: () => request<{ availableMonths: string[]; report: MonthlyReport | null }>('/api/admin/reports/monthly', undefined, {
     availableMonths: ['2026-07'],
     report: {
       month: '2026-07',
       generatedAt: '2026-08-01T18:27:00Z',
-      policySummary: [{ policy_action: 'allow', count: 842 }, { policy_action: 'no_grounding', count: 32 }, { policy_action: 'price_negotiation', count: 14 }],
       questionTrends: [{ question: '物件を探す方法を教えてください', count: 28 }, { question: '店舗の営業時間を教えてください', count: 17 }, { question: '資料請求をしたいです', count: 15 }],
-      funnel: { conversations: 486, consented_conversations: 31 },
+      funnel: { conversations: 486 },
     },
   }),
-  verifyAudit: () => request<AuditVerification>('/api/admin/audit/verify', undefined, { ledgerId: 'orient-audit-2026-08', verified: true, verifiedEvents: 1052, totalEvents: 1052, truncated: false, failedSequence: null, lastVerifiedHash: 'pP9x2d…c81a' }),
-  downloadCustomers: async () => {
-    const response = await fetch('/api/admin/customers/export.csv', { headers: adminHeaders(), credentials: 'same-origin' });
-    if (!response.ok) throw new Error(`CSV export ${response.status}`);
-    const url = URL.createObjectURL(await response.blob());
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `orient-customers-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  },
   downloadConversations: async () => {
     const response = await fetch('/api/admin/conversations/export.csv', { headers: adminHeaders(), credentials: 'same-origin' });
     if (!response.ok) throw new Error(`CSV export ${response.status}`);

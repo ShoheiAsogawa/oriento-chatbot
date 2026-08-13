@@ -1,6 +1,14 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { z } from 'zod';
+import {
+  authenticateAdminRequest,
+  clearAdminSessionCookie,
+  loginAdmin,
+  logoutAdmin,
+  requestAdminPasswordLink,
+  resetAdminPassword,
+} from './admin-auth';
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
 import { choicesForChatAnswer } from './chat-choices';
 import {
@@ -13,6 +21,7 @@ import { buildContextualQuestion, buildSearchMessages, loadConversationContext }
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
 import { directConversationAnswer, ensureOrinyanEnding, evaluatePolicy, SYSTEM_PROMPT } from './policy';
+import { deleteManagedProperty, upsertManagedProperty } from './property-inventory';
 import { evaluatePurchaseConsultation } from './purchase-consultation';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
@@ -23,7 +32,6 @@ import {
   decryptPII,
   encryptPII,
   redactPII,
-  requireAdmin,
   sha256,
   verifySessionToken,
   verifyTurnstile,
@@ -54,6 +62,20 @@ const leadSchema = z.object({
   phone: z.string().trim().min(8).max(30).optional(),
   marketingConsent: z.literal(true),
 }).refine((data) => data.email || data.phone, { message: 'メールアドレスまたは電話番号が必要です' });
+
+const adminLoginSchema = z.object({
+  email: z.string().trim().email().max(254),
+  password: z.string().min(1).max(128),
+}).strict();
+
+const adminPasswordRequestSchema = z.object({
+  email: z.string().trim().email().max(254),
+}).strict();
+
+const adminPasswordResetSchema = z.object({
+  token: z.string().min(32).max(200),
+  password: z.string().min(1).max(128),
+}).strict();
 
 const knowledgeReseedSchema = z.object({
   prune: z.boolean().default(false),
@@ -140,7 +162,7 @@ app.use('/api/*', async (context, next) => {
   if (!isAllowedOrigin(context.req.raw, context.env)) return context.json({ error: 'Origin not allowed' }, 403);
   return cors({
     origin: (origin) => (origin === new URL(context.req.url).origin || allowedOrigins(context.env).has(origin) ? origin : ''),
-    allowHeaders: ['Content-Type', 'Cf-Access-Jwt-Assertion', 'X-Dev-Admin'],
+    allowHeaders: ['Content-Type'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     maxAge: 86400,
   })(context, next);
@@ -176,6 +198,81 @@ app.onError((error, context) => {
 });
 
 app.get('/health', (context) => context.json({ ok: true, environment: context.env.ENVIRONMENT }));
+
+async function adminRateLimitKey(request: Request, env: Env, scope: string, email = '') {
+  const ip = request.headers.get('CF-Connecting-IP') || 'local';
+  return `${scope}:${await sha256(`${env.HASH_SALT}:${ip}:${email.trim().toLowerCase()}`)}`;
+}
+
+app.get('/api/auth/admin/session', async (context) => {
+  try {
+    const identity = await authenticateAdminRequest(context.req.raw, context.env);
+    return context.json({ authenticated: true, user: identity });
+  } catch {
+    return context.json({ authenticated: false, user: null });
+  }
+});
+
+app.post('/api/auth/admin/login', async (context) => {
+  const input = adminLoginSchema.parse(await context.req.json());
+  const rate = await context.env.ADMIN_RATE_LIMITER.limit({
+    key: await adminRateLimitKey(context.req.raw, context.env, 'admin-login', input.email),
+  });
+  if (!rate.success) return context.json({ error: '試行回数が多すぎます。1分ほど待ってからお試しください' }, 429);
+  const result = await loginAdmin(input.email, input.password, context.env);
+  if (!result.ok) {
+    const error = result.reason === 'password_not_set'
+      ? '初回パスワードが未設定です。「パスワードを設定・再設定」から設定メールを送信してください'
+      : 'メールアドレスまたはパスワードが正しくありません';
+    return context.json({ error, code: result.reason }, 401);
+  }
+  context.header('Set-Cookie', result.cookie!);
+  await appendAudit(context.env, {
+    eventType: 'admin.logged_in',
+    actorType: 'admin',
+    actorId: result.identity!.email,
+    subjectType: 'admin_user',
+    subjectId: result.identity!.subject,
+  });
+  return context.json({ ok: true, user: result.identity });
+});
+
+app.post('/api/auth/admin/logout', async (context) => {
+  await logoutAdmin(context.req.raw, context.env);
+  context.header('Set-Cookie', clearAdminSessionCookie());
+  return context.json({ ok: true });
+});
+
+app.post('/api/auth/admin/password/request', async (context) => {
+  const input = adminPasswordRequestSchema.parse(await context.req.json());
+  const rate = await context.env.ADMIN_RATE_LIMITER.limit({
+    key: await adminRateLimitKey(context.req.raw, context.env, 'admin-password-email', input.email),
+  });
+  if (!rate.success) return context.json({ error: '送信回数が多すぎます。1分ほど待ってからお試しください' }, 429);
+  const result = await requestAdminPasswordLink(input.email, context.req.url, context.env);
+  if (!result.delivered) return context.json({ error: '設定メールを送信できませんでした。メール送信設定を確認してください' }, 503);
+  return context.json({
+    ok: true,
+    message: '登録されている場合、パスワード設定用メールを送信しました。メールをご確認ください',
+  });
+});
+
+app.post('/api/auth/admin/password/reset', async (context) => {
+  const input = adminPasswordResetSchema.parse(await context.req.json());
+  const rate = await context.env.ADMIN_RATE_LIMITER.limit({
+    key: await adminRateLimitKey(context.req.raw, context.env, 'admin-password-reset'),
+  });
+  if (!rate.success) return context.json({ error: '試行回数が多すぎます。1分ほど待ってからお試しください' }, 429);
+  const result = await resetAdminPassword(input.token, input.password, context.env);
+  if (!result.ok) return context.json({ error: result.error }, 400);
+  await appendAudit(context.env, {
+    eventType: result.purpose === 'setup' ? 'admin.password_set' : 'admin.password_reset',
+    actorType: 'admin',
+    actorId: result.email,
+    subjectType: 'admin_user',
+  });
+  return context.json({ ok: true, message: 'パスワードを設定しました。新しいパスワードでログインしてください' });
+});
 
 app.notFound(async (context) => {
   if (context.req.method !== 'GET' && context.req.method !== 'HEAD') return context.json({ error: 'Not found' }, 404);
@@ -966,7 +1063,7 @@ app.post('/api/chat/lead', async (context) => {
 });
 
 app.use('/api/admin/*', async (context, next) => {
-  const admin = await requireAdmin(context.req.raw, context.env);
+  const admin = await authenticateAdminRequest(context.req.raw, context.env);
   context.set('admin', admin);
   await next();
 });
@@ -1139,16 +1236,14 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
 });
 
 app.get('/api/admin/overview', async (context) => {
-  const [conversations, customers, unanswered, knowledge, dailyUsage] = await Promise.all([
+  const [conversations, unanswered, knowledge, dailyUsage] = await Promise.all([
     context.env.DB.prepare(`SELECT COUNT(*) AS count FROM conversations WHERE created_at >= datetime('now','-30 days')`).first<{ count: number }>(),
-    context.env.DB.prepare(`SELECT COUNT(*) AS count FROM customers`).first<{ count: number }>(),
     context.env.DB.prepare(`SELECT COUNT(*) AS count FROM messages WHERE role = 'assistant' AND policy_action != 'allow' AND created_at >= datetime('now','-30 days')`).first<{ count: number }>(),
     context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.list({ page: 1, per_page: 1 }),
     readDailyUsage(context.env.DB),
   ]);
   return context.json({
     conversations30d: conversations?.count || 0,
-    customers: customers?.count || 0,
     refused30d: unanswered?.count || 0,
     knowledgeItems: knowledge.result_info?.total_count || 0,
     costGuard: {
@@ -1292,6 +1387,7 @@ app.post('/api/admin/knowledge/property', async (context) => {
   await context.env.DB.prepare(
     'DELETE FROM knowledge_source_exclusions WHERE source_url = ?',
   ).bind(sourceUrl).run();
+  await upsertManagedProperty(context.env.DB, { ...input, category, sourceUrl });
 
   const admin = context.get('admin');
   await appendAudit(context.env, {
@@ -1389,6 +1485,8 @@ app.put('/api/admin/knowledge/:id/property', async (context) => {
   if (sourceUrl !== oldSourceUrl) {
     await context.env.DB.prepare('DELETE FROM knowledge_source_exclusions WHERE source_url = ?').bind(sourceUrl).run();
   }
+  if (oldSourceUrl && oldSourceUrl !== sourceUrl) await deleteManagedProperty(context.env.DB, oldSourceUrl);
+  await upsertManagedProperty(context.env.DB, { ...input, category, sourceUrl });
 
   const admin = context.get('admin');
   await appendAudit(context.env, {
@@ -1429,6 +1527,7 @@ app.delete('/api/admin/knowledge/:id', async (context) => {
     && new URL(sourceUrl!).pathname !== '/';
 
   await items.delete(id);
+  if (sourceUrl) await deleteManagedProperty(context.env.DB, sourceUrl);
   if (persistExclusion && sourceUrl) {
     await context.env.DB.prepare(
       'INSERT INTO knowledge_source_exclusions (source_url, category, title, deleted_by, deleted_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(source_url) DO UPDATE SET category = excluded.category, title = excluded.title, deleted_by = excluded.deleted_by, deleted_at = CURRENT_TIMESTAMP',

@@ -12,6 +12,7 @@ export type RentalConsultationDecision = {
 
 export type RentalConsultationState = {
   householdSize?: number;
+  prefecture?: string;
   area?: string;
   maxRentYen?: number;
   layout?: string;
@@ -29,6 +30,7 @@ const PREFERENCE_PROMPT = /(?:希望の間取りや条件|希望条件)/u;
 const COMPACT_LAYOUT_CONFIRMATION = /(?:かなり手狭|ワンルームのまま|1Rのまま|1Kのまま)/u;
 const KEEP_COMPACT_LAYOUT = /(?:そのまま|ワンルーム(?:のまま|でいい)|1R(?:のまま|でいい)|1K(?:のまま|でいい))/iu;
 const AREA_WITH_SUFFIX = /([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,18}(?:都|道|府|県|市|区|町|村)|[\p{Script=Han}々ヶケァ-ヶー]{1,18}駅)/gu;
+const PREFECTURE = /([\p{Script=Han}々ヶケ]{2,8}(?:都|道|府|県))/u;
 const PREFERENCE = /(?:ワンルーム|\d+[SLDKR]+|駅近|徒歩\s*\d+分|ペット|築浅|駐車|オートロック|バス・トイレ|こだわり.*(?:なし|ない))/iu;
 const NO_PREFERENCE = /^(?:特に)?(?:なし|ない|ありません|こだわりなし)[。！!？?]?$/u;
 const NON_AREA_ANSWER = /(?:賃貸|購入|物件|部屋|探す|したい|家族|人家族|一人暮らし|ひとり暮らし|単身|夫婦|カップル|子ども|子供|大人|家賃|予算|万円?|円|間取り|ワンルーム|[SLDKR]|ペット|徒歩|駅近|駐車|なし|ない)/iu;
@@ -106,6 +108,10 @@ function areaFromMessage(content: string, answeredAreaPrompt: boolean) {
   return undefined;
 }
 
+function prefectureFromMessage(content: string) {
+  return content.match(PREFECTURE)?.[1];
+}
+
 function budgetFromMessage(content: string, answeredBudgetPrompt: boolean) {
   const tenThousands = content.match(/(\d+(?:\.\d+)?)\s*万(?:円)?/u)?.[1];
   if (tenThousands) return Math.round(Number(tenThousands) * 10_000);
@@ -139,6 +145,7 @@ function isRentalCriterionReply(content: string, lastAssistant: string) {
   const answeredBudgetPrompt = BUDGET_PROMPT.test(lastAssistant);
   return Boolean(
     householdSizeFromMessage(normalized)
+    || prefectureFromMessage(normalized)
     || areaFromMessage(normalized, answeredAreaPrompt)
     || budgetFromMessage(normalized, answeredBudgetPrompt)
     || layoutFromMessage(normalized)
@@ -171,6 +178,7 @@ export function extractRentalConsultationState(
     const previous = messages[index - 1];
     const previousAssistant = previous?.role === 'assistant' ? previous.content : '';
     const normalizedContent = message.content.normalize('NFKC');
+    const prefecture = prefectureFromMessage(normalizedContent);
     const householdSize = householdSizeFromMessage(normalizedContent);
     const area = areaFromMessage(normalizedContent, AREA_PROMPT.test(previousAssistant));
     const maxRentYen = budgetFromMessage(normalizedContent, BUDGET_PROMPT.test(previousAssistant));
@@ -178,7 +186,8 @@ export function extractRentalConsultationState(
     const maxWalkMinutes = walkMinutesFromMessage(normalizedContent);
 
     if (householdSize) state.householdSize = householdSize;
-    if (area) state.area = area;
+    if (prefecture) state.prefecture = prefecture;
+    if (area && !PREFECTURE.test(area)) state.area = area;
     if (maxRentYen) state.maxRentYen = maxRentYen;
     if (layout) state.layout = layout;
     if (maxWalkMinutes != null) state.maxWalkMinutes = maxWalkMinutes;
@@ -262,10 +271,16 @@ export function evaluateRentalConsultation(
 
   const state = extractRentalConsultationState(history, currentMessage);
   const subject = rentalSubject(state);
+  if (!state.prefecture && !state.area) {
+    return {
+      active: true,
+      response: `${subject}を一緒に探すにゃん。まず、住みたい都道府県を選んでにゃん。`,
+    };
+  }
   if (!state.area) {
     return {
       active: true,
-      response: `${subject}を一緒に探すにゃん。まず、住みたい地域や最寄り駅を教えてにゃん。`,
+      response: `${state.prefecture}で${subject}を探すにゃん。次に、市区町村を選んでにゃん。`,
     };
   }
   if (!state.maxRentYen) {

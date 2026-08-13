@@ -26,7 +26,7 @@ describe('purchase consultation', () => {
   it('asks only for the next missing purchase criterion', () => {
     expect(evaluatePurchaseConsultation([], '購入')).toMatchObject({
       active: true,
-      response: expect.stringContaining('希望エリア'),
+      response: expect.stringContaining('希望の都道府県'),
     });
     expect(evaluatePurchaseConsultation([
       { role: 'user', content: '購入' },
@@ -94,7 +94,7 @@ describe('purchase consultation', () => {
       { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
     ], '購入したい')).toEqual({
       active: true,
-      response: expect.stringContaining('希望エリア'),
+      response: expect.stringContaining('希望の都道府県'),
     });
   });
 

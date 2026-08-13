@@ -50,9 +50,6 @@ importers:
       hono:
         specifier: ^4.9.2
         version: 4.13.1
-      jose:
-        specifier: ^6.0.12
-        version: 6.2.8
       zod:
         specifier: ^4.0.17
         version: 4.4.3
@@ -881,9 +878,6 @@ packages:
   hono@4.13.1:
     resolution: {integrity: sha512-kdJoFVv2xmayw6cY09H7AbMJMt8Jn5jdlEdXsP7AGBdF2DIptVlKlOLKXP41yPip4/a3yQPv9gVcJYI8YY04dw==}
     engines: {node: '>=16.9.0'}
-
-  jose@6.2.8:
-    resolution: {integrity: sha512-Bsdjwm3Qsd/P0jR+BHDe3LytDfY7WBq2HmCCLIwuVRHMuEC9ae7/R474GIUdF1NgCyZjzVo/A9DOiOBtXq8ZoQ==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -1819,8 +1813,6 @@ snapshots:
   gensync@1.0.0-beta.2: {}
 
   hono@4.13.1: {}
-
-  jose@6.2.8: {}
 
   js-tokens@4.0.0: {}
 

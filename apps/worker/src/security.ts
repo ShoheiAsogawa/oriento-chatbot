@@ -1,8 +1,4 @@
-import { createRemoteJWKSet, jwtVerify } from 'jose';
-import type { AdminIdentity } from './types';
-
 const encoder = new TextEncoder();
-const accessJwks = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
 function bytesToBase64Url(bytes: Uint8Array) {
   let binary = '';
@@ -116,31 +112,4 @@ export async function verifyTurnstile(token: string | undefined, request: Reques
   } catch {
     return false;
   }
-}
-
-export async function requireAdmin(request: Request, env: Env): Promise<AdminIdentity> {
-  if (env.ENVIRONMENT === 'development' && env.DEV_ADMIN_BYPASS === 'true') {
-    const email = request.headers.get('x-dev-admin') || 'local-admin@orient.test';
-    return { email, subject: email };
-  }
-
-  const token = request.headers.get('Cf-Access-Jwt-Assertion');
-  if (!token || !env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) throw new Error('Unauthorized');
-  const issuer = `https://${env.ACCESS_TEAM_DOMAIN}`;
-  let jwks = accessJwks.get(issuer);
-  if (!jwks) {
-    jwks = createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
-    accessJwks.set(issuer, jwks);
-  }
-  const audiences = env.ACCESS_AUD.split(',').map((entry) => entry.trim()).filter(Boolean);
-  let payload: Awaited<ReturnType<typeof jwtVerify>>['payload'];
-  try {
-    ({ payload } = await jwtVerify(token, jwks, { issuer, audience: audiences }));
-  } catch {
-    throw new Error('Unauthorized');
-  }
-  const email = typeof payload.email === 'string' ? payload.email.toLowerCase() : '';
-  const allowed = env.ADMIN_ALLOWED_EMAILS.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean);
-  if (!email || allowed.length === 0 || !allowed.includes(email)) throw new Error('Forbidden');
-  return { email, subject: payload.sub || email };
 }

@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "workers_dev": true,
   "preview_urls": false,
-  "compatibility_date": "2026-08-09",
+  "compatibility_date": "2026-08-13",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true,
@@ -26,7 +26,8 @@
     "GENERATION_MODEL": "gpt-5.4-nano",
     "DAILY_SESSION_LIMIT": "500",
     "DAILY_AI_REQUEST_LIMIT": "500",
-    "DEV_ADMIN_BYPASS": "false"
+    "DEV_ADMIN_BYPASS": "false",
+    "ADMIN_EMAIL_FROM": "noreply@orijyu.com"
   },
   "secrets": {
     "required": [
@@ -34,9 +35,6 @@
       "SESSION_SIGNING_KEY",
       "HASH_SALT",
       "PII_ENCRYPTION_KEY",
-      "ACCESS_TEAM_DOMAIN",
-      "ACCESS_AUD",
-      "ADMIN_ALLOWED_EMAILS",
       "AI_GATEWAY_TOKEN",
       "KNOWLEDGE_SYNC_SECRET"
     ]
@@ -53,6 +51,13 @@
     {
       "binding": "AUDIT_ARCHIVE",
       "bucket_name": "orient-chat-audit"
+    }
+  ],
+  "send_email": [
+    {
+      "name": "ADMIN_EMAIL",
+      "allowed_destination_addresses": ["s_asogawa@amalink.co.jp"],
+      "allowed_sender_addresses": ["noreply@orijyu.com"]
     }
   ],
   "queues": {
@@ -81,6 +86,11 @@
       "name": "RATE_LIMITER",
       "namespace_id": "1001",
       "simple": { "limit": 12, "period": 60 }
+    },
+    {
+      "name": "ADMIN_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 5, "period": 60 }
     }
   ]
 }

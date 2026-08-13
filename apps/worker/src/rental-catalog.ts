@@ -1,6 +1,7 @@
 import type { ConversationContextMessage } from './conversation-context';
 import type { SearchChunk } from './types';
 import { extractRentalConsultationState } from './rental-consultation';
+import { loadManagedProperties, transportFromText, walkMinutesFromText, yenFromText } from './property-inventory';
 
 export type RentalProperty = {
   id: string;
@@ -17,13 +18,14 @@ export type RentalProperty = {
 };
 
 export type RentalCriteria = {
+  prefecture?: string;
   area?: string;
   maxRentYen?: number;
   layout?: string;
   maxWalkMinutes?: number;
 };
 
-const RESIDENTIAL_TYPES = /(?:マンション|アパート|貸家|一戸建|テラスハウス)/u;
+const RESIDENTIAL_TYPES = /(?:賃貸住宅|マンション|アパート|貸家|一戸建|テラスハウス)/u;
 
 export function extractRentalCriteria(
   history: ConversationContextMessage[],
@@ -31,6 +33,7 @@ export function extractRentalCriteria(
 ): RentalCriteria {
   const state = extractRentalConsultationState(history, currentMessage);
   return {
+    prefecture: state.prefecture,
     area: state.area,
     maxRentYen: state.maxRentYen,
     layout: state.layout,
@@ -39,10 +42,36 @@ export function extractRentalCriteria(
 }
 
 export async function loadRentalCatalog(env: Env): Promise<RentalProperty[]> {
-  const response = await env.STATIC_ASSETS.fetch(new Request('https://assets.internal/knowledge/rental_catalog.json'));
+  const [response, inventory] = await Promise.all([
+    env.STATIC_ASSETS.fetch(new Request('https://assets.internal/knowledge/rental_catalog.json')),
+    loadManagedProperties(env.DB, 'properties_for_rent'),
+  ]);
   if (!response.ok) throw new Error('賃貸物件カタログを読み込めません');
   const catalog = await response.json<{ properties?: RentalProperty[] }>();
-  return catalog.properties || [];
+  const managed = inventory.managed.flatMap<RentalProperty>((row) => {
+    const rent = yenFromText(row.price_or_rent);
+    if (rent == null) return [];
+    return [{
+      id: `managed-${row.source_url}`,
+      title: row.title,
+      url: row.source_url,
+      property_type: row.building_type || '賃貸住宅',
+      rent_yen: rent,
+      common_fee: row.management_fee,
+      address: row.address,
+      transport: transportFromText(row.line_station),
+      layout: row.layout,
+      walk_minutes: walkMinutesFromText(row.line_station),
+      status: row.availability,
+    }];
+  });
+  const managedUrls = new Set(managed.map((property) => property.url));
+  return [
+    ...(catalog.properties || []).filter((property) => (
+      !inventory.excludedUrls.has(property.url) && !managedUrls.has(property.url)
+    )),
+    ...managed,
+  ];
 }
 
 export function recommendRentalProperties(properties: RentalProperty[], criteria: RentalCriteria) {

@@ -48,7 +48,7 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '物件探しだね。賃貸と購入のどちらを探しているか、希望エリアを教えてにゃん。' },
     ], '賃貸')).toEqual({
       active: true,
-      response: expect.stringContaining('住みたい地域や最寄り駅'),
+      response: expect.stringContaining('住みたい都道府県'),
     });
   });
 
@@ -95,7 +95,7 @@ describe('rental consultation', () => {
   it('asks for an area first when a visitor wants to live alone', () => {
     expect(evaluateRentalConsultation([], '一人暮らししたい')).toEqual({
       active: true,
-      response: expect.stringContaining('住みたい地域や最寄り駅'),
+      response: expect.stringContaining('住みたい都道府県'),
     });
   });
 
@@ -178,7 +178,7 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
     ], '夫婦と子ども2人');
     expect(decision.response).toContain('4人で暮らす賃貸');
-    expect(decision.response).toContain('住みたい地域');
+    expect(decision.response).toContain('住みたい都道府県');
   });
 
   it('keeps an early budget while continuing to ask for a missing area', () => {
@@ -186,7 +186,7 @@ describe('rental consultation', () => {
       { role: 'user', content: '賃貸' },
       { role: 'assistant', content: '住みたい地域や最寄り駅を教えてにゃん。' },
     ], '家賃は8.5万円まで');
-    expect(decision.response).toContain('住みたい地域');
+    expect(decision.response).toContain('住みたい都道府県');
     expect(decision.response).not.toContain('家賃の上限');
   });
 
@@ -242,7 +242,7 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '購入予算の上限を選んでにゃん。' },
     ], '一人暮らししたい')).toEqual({
       active: true,
-      response: expect.stringContaining('住みたい地域や最寄り駅'),
+      response: expect.stringContaining('住みたい都道府県'),
     });
   });
 

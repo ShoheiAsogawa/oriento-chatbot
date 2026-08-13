@@ -1,6 +1,7 @@
 import type { ConversationContextMessage } from './conversation-context';
 import { extractPurchaseConsultationState } from './purchase-consultation';
 import type { SearchChunk } from './types';
+import { loadManagedProperties, transportFromText, walkMinutesFromText, yenFromText } from './property-inventory';
 
 export type SaleProperty = {
   id: string;
@@ -16,6 +17,7 @@ export type SaleProperty = {
 };
 
 export type SaleCriteria = {
+  prefecture?: string;
   area?: string;
   maxPriceYen?: number;
   propertyType?: string;
@@ -28,6 +30,7 @@ export function extractSaleCriteria(
 ): SaleCriteria {
   const state = extractPurchaseConsultationState(history, currentMessage);
   return {
+    prefecture: state.prefecture,
     area: state.area,
     maxPriceYen: state.maxPriceYen,
     propertyType: state.propertyType,
@@ -36,10 +39,35 @@ export function extractSaleCriteria(
 }
 
 export async function loadSaleCatalog(env: Env): Promise<SaleProperty[]> {
-  const response = await env.STATIC_ASSETS.fetch(new Request('https://assets.internal/knowledge/sale_catalog.json'));
+  const [response, inventory] = await Promise.all([
+    env.STATIC_ASSETS.fetch(new Request('https://assets.internal/knowledge/sale_catalog.json')),
+    loadManagedProperties(env.DB, 'properties_for_sale'),
+  ]);
   if (!response.ok) throw new Error('購入物件カタログを読み込めません');
   const catalog = await response.json<{ properties?: SaleProperty[] }>();
-  return catalog.properties || [];
+  const managed = inventory.managed.flatMap<SaleProperty>((row) => {
+    const price = yenFromText(row.price_or_rent);
+    if (price == null) return [];
+    return [{
+      id: `managed-${row.source_url}`,
+      title: row.title,
+      url: row.source_url,
+      property_type: row.building_type || '売買物件',
+      price_yen: price,
+      address: row.address,
+      transport: transportFromText(row.line_station),
+      layout: row.layout,
+      walk_minutes: walkMinutesFromText(row.line_station),
+      status: row.availability,
+    }];
+  });
+  const managedUrls = new Set(managed.map((property) => property.url));
+  return [
+    ...(catalog.properties || []).filter((property) => (
+      !inventory.excludedUrls.has(property.url) && !managedUrls.has(property.url)
+    )),
+    ...managed,
+  ];
 }
 
 function matchesPropertyType(actual: string, requested: string) {
