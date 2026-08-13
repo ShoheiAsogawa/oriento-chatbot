@@ -12,7 +12,7 @@ import { consumeDailyAllowance, parseDailyLimit, readDailyUsage } from './cost-c
 import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
-import { ensureOrinyanEnding, evaluatePolicy, SYSTEM_PROMPT } from './policy';
+import { directConversationAnswer, ensureOrinyanEnding, evaluatePolicy, SYSTEM_PROMPT } from './policy';
 import { evaluatePurchaseConsultation } from './purchase-consultation';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
@@ -630,6 +630,34 @@ app.post('/api/chat/message', async (context) => {
       metadata: { code: policy.code },
     });
     return context.json({ answer: policy.response, sources: [], action: 'escalate', policy: policy.code });
+  }
+
+  const directAnswer = directConversationAnswer(redacted);
+  if (directAnswer) {
+    const messageId = await recordTurn(
+      context.env,
+      input.conversationId,
+      redacted,
+      directAnswer,
+      'allow',
+      'real-estate-agent-rules-v1',
+      Date.now() - startedAt,
+    );
+    await appendAudit(context.env, {
+      eventType: 'chat.answered',
+      actorType: 'visitor',
+      subjectType: 'message',
+      subjectId: messageId,
+      metadata: { model: 'real-estate-agent-rules-v1', sourceCount: 0, mode: 'direct_conversation' },
+    });
+    return context.json({
+      answer: directAnswer,
+      sources: [],
+      choices: choicesForChatAnswer(directAnswer),
+      action: 'none',
+      policy: 'allow',
+      messageId,
+    });
   }
 
   const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);

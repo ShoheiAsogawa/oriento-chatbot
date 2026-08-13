@@ -1,5 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { ensureOrinyanEnding, evaluatePolicy, noGroundingDecision, SYSTEM_PROMPT } from '../src/policy';
+import {
+  ensureOrinyanEnding,
+  directConversationAnswer,
+  evaluatePolicy,
+  noGroundingDecision,
+  REAL_ESTATE_AGENT_RULES,
+  SYSTEM_PROMPT,
+} from '../src/policy';
+
+describe('directConversationAnswer', () => {
+  it.each(['あなたはだれ？', 'オリにゃんって何者？', '誰なの'])('answers identity questions without resuming an old search: %s', (question) => {
+    expect(directConversationAnswer(question)).toBe(
+      'オリにゃんだよ。オリエントグループの住まい・物件探しをお手伝いする不動産案内AIにゃん。',
+    );
+  });
+
+  it('leaves ordinary consultation messages to the real-estate agent', () => {
+    expect(directConversationAnswer('家族4人で住む家を探したい')).toBeUndefined();
+  });
+});
 
 describe('evaluatePolicy', () => {
   it('allows ordinary property questions', () => {
@@ -70,6 +89,17 @@ describe('SYSTEM_PROMPT', () => {
   it('uses the natural greeting guidance', () => {
     expect(SYSTEM_PROMPT).toContain('こんにちは、オリにゃんだよ。お部屋探しや住まいのこと、気軽に聞いてにゃん。');
     expect(SYSTEM_PROMPT).not.toContain('こんにちは！オリにゃんだよ〜♪');
+  });
+
+  it('defines flexible real-estate agent behavior without weakening factual grounding', () => {
+    expect(REAL_ESTATE_AGENT_RULES).toHaveLength(8);
+    expect(SYSTEM_PROMPT).toContain('過去の相談フローより最新の明確な意図を優先');
+    expect(SYSTEM_PROMPT).toContain('同じ条件を聞き直さない');
+    expect(SYSTEM_PROMPT).toContain('質問を原則一度に一つ');
+    expect(SYSTEM_PROMPT).toContain('利用者が話した事情を根拠に判断軸を整理');
+    expect(SYSTEM_PROMPT).toContain('物件価格、間取り、所在地、設備、空室');
+    expect(SYSTEM_PROMPT).toContain('日本語の公式物件詳細ページ');
+    expect(SYSTEM_PROMPT).toContain('毎回答には付けません');
   });
 });
 
