@@ -26,8 +26,7 @@
     "GENERATION_MODEL": "gpt-5.4-nano",
     "DAILY_SESSION_LIMIT": "500",
     "DAILY_AI_REQUEST_LIMIT": "500",
-    "DEV_ADMIN_BYPASS": "false",
-    "ADMIN_EMAIL_FROM": "noreply@orijyu.com"
+    "DEV_ADMIN_BYPASS": "false"
   },
   "secrets": {
     "required": [
@@ -51,13 +50,6 @@
     {
       "binding": "AUDIT_ARCHIVE",
       "bucket_name": "orient-chat-audit"
-    }
-  ],
-  "send_email": [
-    {
-      "name": "ADMIN_EMAIL",
-      "allowed_destination_addresses": ["s_asogawa@amalink.co.jp"],
-      "allowed_sender_addresses": ["noreply@orijyu.com"]
     }
   ],
   "queues": {

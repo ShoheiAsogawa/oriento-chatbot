@@ -590,30 +590,18 @@ function AppearancePage() {
   return <><PageHeader title="外観" description="公式サイトに合わせた色、表示位置、キャラクターの動きを確認します。" action={<button className="primary-button"><Check />変更を保存</button>} /><div className="appearance-layout"><section className="settings-section"><h2>ブランドカラー</h2><label className="color-field"><span>メインカラー</span><input type="color" value={primary} onChange={(event) => setPrimary(event.target.value)} /><code>{primary}</code></label><label className="color-field"><span>文字色</span><input type="color" defaultValue="#29293a" /><code>#29293a</code></label><label className="color-field"><span>補助テキスト</span><input type="color" defaultValue="#74757f" /><code>#74757f</code></label><h2>表示</h2><label className="field-label">位置<select defaultValue="right"><option value="right">右下</option><option value="left">左下</option></select></label><label className="check-row"><input type="checkbox" defaultChecked /><span><strong>キャラクターアニメーション</strong><small>待機・聞く・考える・話すを会話状態に合わせます。</small></span></label><label className="check-row"><input type="checkbox" defaultChecked /><span><strong>OSの動きを減らす設定に従う</strong><small>アクセシビリティ設定時は連続アニメーションを停止します。</small></span></label></section><section className="live-preview" style={{ '--preview-primary': primary } as React.CSSProperties}><div className="fake-site"><header>オリエントホールディングス</header><div className="fake-hero">住まい探しの情報</div><div className="preview-chat"><div className="preview-chat-head"><span className="mini-cat" style={orinyanSpriteStyle} /><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div><X /></div><div className="preview-chat-body"><span className="mini-cat" style={orinyanSpriteStyle} /><p>住まい探しのご質問をどうぞ。<br />サイトの情報をもとにご案内します。</p></div><div className="preview-suggestions"><button>物件を探す</button><button>家づくりについて</button></div><div className="preview-composer">メッセージを入力 <span>➤</span></div></div></div></section></div></>;
 }
 
-function AuthScreen({ onAuthenticated }: { onAuthenticated: (email: string) => void }) {
-  const params = new URLSearchParams(window.location.search);
-  const resetToken = params.get('reset_token') || params.get('token') || '';
-  const [mode, setMode] = useState<'login' | 'reset' | 'set-password'>(() => resetToken ? 'set-password' : 'login');
-  const [email, setEmail] = useState('s_asogawa@amalink.co.jp');
+function AuthScreen({ onAuthenticated }: { onAuthenticated: (identity: string) => void }) {
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const token = resetToken;
-  const passwordValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/.test(password);
   const submit = async (event: React.FormEvent) => {
-    event.preventDefault(); setError(''); setNotice(''); setBusy(true);
+    event.preventDefault(); setError(''); setBusy(true);
     try {
-      if (mode === 'login') { const session = await api.login(email, password); onAuthenticated(session.user.email); return; }
-      if (mode === 'reset') { await api.requestPasswordReset(email); setNotice('パスワード再設定用のメールを送信しました。メール内のリンクから新しいパスワードを設定してください。'); return; }
-      if (!passwordValid) throw new Error('パスワードの条件を満たしていません。');
-      if (password !== confirm) throw new Error('確認用パスワードが一致しません。');
-      await api.resetPassword(token, password); window.history.replaceState({}, '', window.location.pathname); setNotice('パスワードを設定しました。ログインしてください。'); setMode('login'); setPassword(''); setConfirm('');
+      const session = await api.login(loginId, password); onAuthenticated(session.user.loginId || session.user.subject);
     } catch (reason) { setError(reason instanceof Error ? reason.message : '処理に失敗しました。'); } finally { setBusy(false); }
   };
-  const heading = mode === 'login' ? '管理画面にログイン' : mode === 'reset' ? 'パスワードを再設定' : '新しいパスワードを設定';
-  return <main className="auth-page"><section className="auth-card"><div className="auth-brand"><span className="brand-mark"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><h1>{heading}</h1><p>{mode === 'login' ? '登録されたメールアドレスとパスワードを入力してください。' : mode === 'reset' ? '登録メールアドレス宛に、パスワード再設定用のリンクを送ります。' : '10文字以上で、英大文字・英小文字・数字を含むパスワードを設定してください。'}</p><form onSubmit={(event) => void submit(event)}>{mode !== 'set-password' ? <label>メールアドレス<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="s_asogawa@amalink.co.jp" /></label> : null}{mode !== 'reset' ? <label>パスワード<input type="password" minLength={mode === 'set-password' ? 10 : undefined} maxLength={128} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(event) => setPassword(event.target.value)} required /></label> : null}{mode === 'set-password' ? <><ul className="password-rules"><li className={password.length >= 10 ? 'met' : ''}>10文字以上</li><li className={/[A-Z]/.test(password) ? 'met' : ''}>英大文字を1文字以上</li><li className={/[a-z]/.test(password) ? 'met' : ''}>英小文字を1文字以上</li><li className={/\d/.test(password) ? 'met' : ''}>数字を1文字以上</li></ul><label>パスワード（確認）<input type="password" minLength={10} maxLength={128} autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.target.value)} required /></label></> : null}{error ? <p className="auth-error">{error}</p> : null}{notice ? <p className="auth-notice">{notice}</p> : null}<button className="primary-button full" disabled={busy}>{busy ? '処理中…' : mode === 'login' ? 'ログイン' : mode === 'reset' ? '再設定メールを送信' : 'パスワードを設定'}</button></form>{mode === 'login' ? <button className="auth-link" onClick={() => { setMode('reset'); setError(''); }}>パスワードを忘れた場合</button> : <button className="auth-link" onClick={() => { window.history.replaceState({}, '', window.location.pathname); setMode('login'); setError(''); }}>ログインに戻る</button>}</section></main>;
+  return <main className="auth-page"><section className="auth-card"><div className="auth-brand"><span className="brand-mark"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><h1>管理画面にログイン</h1><p>事前に配布された管理者IDとパスワードを入力してください。</p><form onSubmit={(event) => void submit(event)}><label>管理者ID<input type="text" autoComplete="username" value={loginId} onChange={(event) => setLoginId(event.target.value)} required placeholder="管理者IDを入力" /></label><label>パスワード<input type="password" autoComplete="current-password" maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} required /></label>{error ? <p className="auth-error">{error}</p> : null}<button className="primary-button full" disabled={busy}>{busy ? '処理中…' : 'ログイン'}</button></form></section></main>;
 }
 
 export function App() {
@@ -621,7 +609,7 @@ export function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [session, setSession] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
-  useEffect(() => { void api.authSession().then((value) => setSession(value.authenticated ? value.user?.email || null : null)).catch(() => setSession(null)).finally(() => setCheckingSession(false)); }, []);
+  useEffect(() => { void api.authSession().then((value) => setSession(value.authenticated ? value.user?.loginId || null : null)).catch(() => setSession(null)).finally(() => setCheckingSession(false)); }, []);
   const logout = async () => { try { await api.logout(); } finally { setSession(null); } };
   const ActivePage = page === 'overview' ? OverviewPage : page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : AppearancePage;
   if (checkingSession) return <main className="auth-page"><p>ログイン状態を確認しています…</p></main>;

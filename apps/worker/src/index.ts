@@ -6,8 +6,6 @@ import {
   clearAdminSessionCookie,
   loginAdmin,
   logoutAdmin,
-  requestAdminPasswordLink,
-  resetAdminPassword,
 } from './admin-auth';
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
 import { choicesForChatAnswer } from './chat-choices';
@@ -64,16 +62,7 @@ const leadSchema = z.object({
 }).refine((data) => data.email || data.phone, { message: 'メールアドレスまたは電話番号が必要です' });
 
 const adminLoginSchema = z.object({
-  email: z.string().trim().email().max(254),
-  password: z.string().min(1).max(128),
-}).strict();
-
-const adminPasswordRequestSchema = z.object({
-  email: z.string().trim().email().max(254),
-}).strict();
-
-const adminPasswordResetSchema = z.object({
-  token: z.string().min(32).max(200),
+  loginId: z.string().trim().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/u),
   password: z.string().min(1).max(128),
 }).strict();
 
@@ -199,9 +188,9 @@ app.onError((error, context) => {
 
 app.get('/health', (context) => context.json({ ok: true, environment: context.env.ENVIRONMENT }));
 
-async function adminRateLimitKey(request: Request, env: Env, scope: string, email = '') {
+async function adminRateLimitKey(request: Request, env: Env, scope: string, loginId = '') {
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
-  return `${scope}:${await sha256(`${env.HASH_SALT}:${ip}:${email.trim().toLowerCase()}`)}`;
+  return `${scope}:${await sha256(`${env.HASH_SALT}:${ip}:${loginId.trim().toLowerCase()}`)}`;
 }
 
 app.get('/api/auth/admin/session', async (context) => {
@@ -216,21 +205,18 @@ app.get('/api/auth/admin/session', async (context) => {
 app.post('/api/auth/admin/login', async (context) => {
   const input = adminLoginSchema.parse(await context.req.json());
   const rate = await context.env.ADMIN_RATE_LIMITER.limit({
-    key: await adminRateLimitKey(context.req.raw, context.env, 'admin-login', input.email),
+    key: await adminRateLimitKey(context.req.raw, context.env, 'admin-login', input.loginId),
   });
   if (!rate.success) return context.json({ error: '試行回数が多すぎます。1分ほど待ってからお試しください' }, 429);
-  const result = await loginAdmin(input.email, input.password, context.env);
+  const result = await loginAdmin(input.loginId, input.password, context.env);
   if (!result.ok) {
-    const error = result.reason === 'password_not_set'
-      ? '初回パスワードが未設定です。「パスワードを設定・再設定」から設定メールを送信してください'
-      : 'メールアドレスまたはパスワードが正しくありません';
-    return context.json({ error, code: result.reason }, 401);
+    return context.json({ error: '管理者IDまたはパスワードが正しくありません' }, 401);
   }
   context.header('Set-Cookie', result.cookie!);
   await appendAudit(context.env, {
     eventType: 'admin.logged_in',
     actorType: 'admin',
-    actorId: result.identity!.email,
+    actorId: result.identity!.loginId,
     subjectType: 'admin_user',
     subjectId: result.identity!.subject,
   });
@@ -241,37 +227,6 @@ app.post('/api/auth/admin/logout', async (context) => {
   await logoutAdmin(context.req.raw, context.env);
   context.header('Set-Cookie', clearAdminSessionCookie());
   return context.json({ ok: true });
-});
-
-app.post('/api/auth/admin/password/request', async (context) => {
-  const input = adminPasswordRequestSchema.parse(await context.req.json());
-  const rate = await context.env.ADMIN_RATE_LIMITER.limit({
-    key: await adminRateLimitKey(context.req.raw, context.env, 'admin-password-email', input.email),
-  });
-  if (!rate.success) return context.json({ error: '送信回数が多すぎます。1分ほど待ってからお試しください' }, 429);
-  const result = await requestAdminPasswordLink(input.email, context.req.url, context.env);
-  if (!result.delivered) return context.json({ error: '設定メールを送信できませんでした。メール送信設定を確認してください' }, 503);
-  return context.json({
-    ok: true,
-    message: '登録されている場合、パスワード設定用メールを送信しました。メールをご確認ください',
-  });
-});
-
-app.post('/api/auth/admin/password/reset', async (context) => {
-  const input = adminPasswordResetSchema.parse(await context.req.json());
-  const rate = await context.env.ADMIN_RATE_LIMITER.limit({
-    key: await adminRateLimitKey(context.req.raw, context.env, 'admin-password-reset'),
-  });
-  if (!rate.success) return context.json({ error: '試行回数が多すぎます。1分ほど待ってからお試しください' }, 429);
-  const result = await resetAdminPassword(input.token, input.password, context.env);
-  if (!result.ok) return context.json({ error: result.error }, 400);
-  await appendAudit(context.env, {
-    eventType: result.purpose === 'setup' ? 'admin.password_set' : 'admin.password_reset',
-    actorType: 'admin',
-    actorId: result.email,
-    subjectType: 'admin_user',
-  });
-  return context.json({ ok: true, message: 'パスワードを設定しました。新しいパスワードでログインしてください' });
 });
 
 app.notFound(async (context) => {
@@ -1096,7 +1051,7 @@ app.post('/api/admin/knowledge/bootstrap', async (context) => {
   await appendAudit(context.env, {
     eventType: found ? 'knowledge.instance_verified' : 'knowledge.instance_created',
     actorType: 'admin',
-    actorId: context.get('admin').email,
+    actorId: context.get('admin').loginId,
     subjectType: 'ai_search_instance',
     subjectId: id,
   });
@@ -1137,7 +1092,7 @@ app.post('/api/admin/knowledge/seed', async (context) => {
   await appendAudit(context.env, {
     eventType: 'knowledge.initial_seeded',
     actorType: 'admin',
-    actorId: context.get('admin').email,
+    actorId: context.get('admin').loginId,
     subjectType: 'ai_search_instance',
     subjectId: context.env.AI_SEARCH_INSTANCE,
     metadata: {
@@ -1345,7 +1300,7 @@ app.post('/api/admin/knowledge', async (context) => {
   await appendAudit(context.env, {
     eventType: 'knowledge.uploaded',
     actorType: 'admin',
-    actorId: admin.email,
+    actorId: admin.loginId,
     subjectType: 'knowledge_item',
     subjectId: result.id,
     metadata: { filename: itemName, size: file.size, type: file.type, title, category, sourceUrl: sourceUrl || null },
@@ -1393,7 +1348,7 @@ app.post('/api/admin/knowledge/property', async (context) => {
   await appendAudit(context.env, {
     eventType: 'knowledge.property_upserted',
     actorType: 'admin',
-    actorId: admin.email,
+    actorId: admin.loginId,
     subjectType: 'knowledge_item',
     subjectId: result.id,
     metadata: {
@@ -1492,7 +1447,7 @@ app.put('/api/admin/knowledge/:id/property', async (context) => {
   await appendAudit(context.env, {
     eventType: 'knowledge.property_updated',
     actorType: 'admin',
-    actorId: admin.email,
+    actorId: admin.loginId,
     subjectType: 'knowledge_item',
     subjectId: result.id,
     metadata: {
@@ -1531,12 +1486,12 @@ app.delete('/api/admin/knowledge/:id', async (context) => {
   if (persistExclusion && sourceUrl) {
     await context.env.DB.prepare(
       'INSERT INTO knowledge_source_exclusions (source_url, category, title, deleted_by, deleted_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(source_url) DO UPDATE SET category = excluded.category, title = excluded.title, deleted_by = excluded.deleted_by, deleted_at = CURRENT_TIMESTAMP',
-    ).bind(sourceUrl, category, title, context.get('admin').email).run();
+    ).bind(sourceUrl, category, title, context.get('admin').loginId).run();
   }
   await appendAudit(context.env, {
     eventType: 'knowledge.deleted',
     actorType: 'admin',
-    actorId: context.get('admin').email,
+    actorId: context.get('admin').loginId,
     subjectType: 'knowledge_item',
     subjectId: id,
     metadata: { key: existing.key, title, category, sourceUrl: sourceUrl || null, persistedExclusion: persistExclusion },
@@ -1550,7 +1505,7 @@ app.post('/api/admin/knowledge/:id/reindex', async (context) => {
   await appendAudit(context.env, {
     eventType: 'knowledge.reindexed',
     actorType: 'admin',
-    actorId: context.get('admin').email,
+    actorId: context.get('admin').loginId,
     subjectType: 'knowledge_item',
     subjectId: id,
     metadata: { itemId: id },
@@ -1588,7 +1543,7 @@ app.get('/api/admin/conversations/export.csv', async (context) => {
   await appendAudit(context.env, {
     eventType: 'conversation.exported',
     actorType: 'admin',
-    actorId: context.get('admin').email,
+    actorId: context.get('admin').loginId,
     subjectType: 'conversation_export',
     metadata: { count: rows.length, truncated, redactedOnly: true },
   });
@@ -1665,7 +1620,7 @@ app.get('/api/admin/customers/export.csv', async (context) => {
   await appendAudit(context.env, {
     eventType: 'customer.exported',
     actorType: 'admin',
-    actorId: context.get('admin').email,
+    actorId: context.get('admin').loginId,
     subjectType: 'customer_export',
     metadata: { count: rows.length, truncated },
   });
@@ -1688,7 +1643,7 @@ app.patch('/api/admin/customers/:id', async (context) => {
   await appendAudit(context.env, {
     eventType: 'customer.updated',
     actorType: 'admin',
-    actorId: context.get('admin').email,
+    actorId: context.get('admin').loginId,
     subjectType: 'customer',
     subjectId: id,
     metadata: { fields: Object.keys(input) },
@@ -1709,8 +1664,8 @@ app.put('/api/admin/settings/:key', async (context) => {
   await context.env.DB.prepare(
     `INSERT INTO settings (key, value_json, updated_by, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
      ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_by = excluded.updated_by, updated_at = CURRENT_TIMESTAMP`,
-  ).bind(key, JSON.stringify(value), admin.email).run();
-  await appendAudit(context.env, { eventType: 'settings.updated', actorType: 'admin', actorId: admin.email, subjectType: 'setting', subjectId: key });
+  ).bind(key, JSON.stringify(value), admin.loginId).run();
+  await appendAudit(context.env, { eventType: 'settings.updated', actorType: 'admin', actorId: admin.loginId, subjectType: 'setting', subjectId: key });
   return context.json({ ok: true });
 });
 
@@ -1782,7 +1737,7 @@ app.post('/api/admin/maintenance/start', async (context) => {
   await appendAudit(context.env, {
     eventType: 'maintenance.scheduler_started',
     actorType: 'admin',
-    actorId: context.get('admin').email,
+    actorId: context.get('admin').loginId,
     subjectType: 'maintenance_scheduler',
     subjectId: 'orient-maintenance',
     metadata: { ok: result.ok, nextRunAt: result.nextRunAt },

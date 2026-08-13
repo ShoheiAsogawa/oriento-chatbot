@@ -103,7 +103,7 @@ export interface OverviewData {
 }
 
 export interface AdminIdentity {
-  email: string;
+  loginId: string;
   subject: string;
 }
 
@@ -157,10 +157,8 @@ async function request<T>(path: string, init?: RequestInit, fallback?: T): Promi
 
 export const api = {
   authSession: () => request<AdminSessionResponse>('/api/auth/admin/session'),
-  login: (email: string, password: string) => request<AdminLoginResponse>('/api/auth/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) }),
+  login: (loginId: string, password: string) => request<AdminLoginResponse>('/api/auth/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ loginId, password }) }),
   logout: () => request<{ ok: boolean }>('/api/auth/admin/logout', { method: 'POST' }),
-  requestPasswordReset: (email: string) => request<{ ok: boolean }>('/api/auth/admin/password/request', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email }) }),
-  resetPassword: (token: string, password: string) => request<{ ok: boolean }>('/api/auth/admin/password/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token, password }) }),
   overview: () => request<OverviewData>('/api/admin/overview', undefined, {
     conversations30d: 1264,
     refused30d: 39,

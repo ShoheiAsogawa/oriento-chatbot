@@ -20,6 +20,6 @@ export interface AuditArchiveEvent extends AuditInput {
 }
 
 export interface AdminIdentity {
-  email: string;
+  loginId: string;
   subject: string;
 }
