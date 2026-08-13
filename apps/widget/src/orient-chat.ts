@@ -22,7 +22,7 @@ interface ChatMessage {
   rawContent?: string;
   sources?: Source[];
   choices?: ChatChoice[];
-  lineCta?: boolean;
+  lineLink?: boolean;
   pending?: boolean;
 }
 
@@ -172,8 +172,8 @@ const styles = `
   .inline-source:hover, .inline-source:focus-visible { border-color: var(--orient-primary); background: #fff1e8; outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
   .answer-url { color: var(--orient-primary-strong); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; overflow-wrap: anywhere; word-break: break-all; }
   .answer-url:hover, .answer-url:focus-visible { color: var(--orient-primary); outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
-  .message-line-cta { width: fit-content; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; margin-top: 8px; padding: 7px 11px; color: #fff; border: 1px solid var(--orient-line); border-radius: 9px; background: var(--orient-line); font-size: 11px; font-weight: 800; line-height: 1.35; text-decoration: none; }
-  .message-line-cta:hover, .message-line-cta:focus-visible { color: #fff; background: #05ae4a; border-color: #05ae4a; outline: 2px solid rgba(6,199,85,.2); outline-offset: 2px; }
+  .message-line-link { display: inline-block; margin-top: 7px; color: #237a46; font-size: 11px; font-weight: 700; line-height: 1.5; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .message-line-link:hover, .message-line-link:focus-visible { color: #05ae4a; outline: 2px solid rgba(6,199,85,.16); outline-offset: 2px; }
   .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
@@ -517,7 +517,7 @@ class OrientChat extends HTMLElement {
         message.content = this.displayAnswer(result.answer).slice(0, 1);
         message.sources = result.sources;
         message.choices = result.choices;
-        message.lineCta = this.shouldShowLineCta(content, result.answer, result.choices, result.policy);
+        message.lineLink = this.shouldShowLineLink(content, result.answer, result.choices, result.policy);
       }
       this.renderMessages();
       this.setCatState('speaking');
@@ -577,7 +577,7 @@ class OrientChat extends HTMLElement {
     };
   }
 
-  private shouldShowLineCta(input: string, answer: string, choices: ChatChoice[], policy: string) {
+  private shouldShowLineLink(input: string, answer: string, choices: ChatChoice[], policy: string) {
     if (/(?:out_of_scope|prompt_injection)/u.test(policy)) return false;
     if (/(?:あなた|君|きみ|オリにゃん).*(?:誰|だれ|何者)|^(?:おはよう|こんにちは|こんばんは|ありがとう)[。！!？?]?$/u.test(input.normalize('NFKC').trim())) return false;
     const isGuidedQuestion = choices.length > 0
@@ -619,7 +619,7 @@ class OrientChat extends HTMLElement {
       updateBubble(displayAnswer);
       this.renderAnswerWithSources(bubble, answer, message.sources || []);
       if (item) {
-        this.renderLineCta(item, Boolean(message.lineCta));
+        this.renderLineLink(item, Boolean(message.lineLink));
         this.renderChoices(item, message.choices || []);
       }
       return;
@@ -647,22 +647,22 @@ class OrientChat extends HTMLElement {
     });
     this.renderAnswerWithSources(bubble, answer, message.sources || []);
     if (item) {
-      this.renderLineCta(item, Boolean(message.lineCta));
+      this.renderLineLink(item, Boolean(message.lineLink));
       this.renderChoices(item, message.choices || []);
     }
   }
 
-  private renderLineCta(item: HTMLElement, visible: boolean) {
-    item.querySelector('.message-line-cta')?.remove();
+  private renderLineLink(item: HTMLElement, visible: boolean) {
+    item.querySelector('.message-line-link')?.remove();
     if (!visible) return;
     const messageContent = item.querySelector<HTMLElement>('.message-content');
     if (!messageContent) return;
     const link = document.createElement('a');
-    link.className = 'message-line-cta';
+    link.className = 'message-line-link';
     link.href = this.lineUrl;
     link.target = '_blank';
     link.rel = 'noopener';
-    link.textContent = '公式LINEを見る ↗';
+    link.textContent = '詳しくは公式LINEで問い合わせてにゃん ↗';
     messageContent.append(link);
   }
 
@@ -862,7 +862,7 @@ class OrientChat extends HTMLElement {
     messageContent.append(bubble);
     item.append(messageContent);
     if (message.role === 'assistant' && !message.pending && message.rawContent) {
-      this.renderLineCta(item, Boolean(message.lineCta));
+      this.renderLineLink(item, Boolean(message.lineLink));
       if (message.choices?.length) this.renderChoices(item, message.choices);
     }
     return item;
