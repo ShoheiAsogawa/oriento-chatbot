@@ -209,7 +209,7 @@ app.post('/api/chat/session', async (context) => {
   );
   if (!dailySessions.allowed) {
     console.warn(JSON.stringify({ level: 'warn', event: 'cost_guard.sessions_exhausted', day: dailySessions.day, limit: dailySessions.limit }));
-    return context.json({ error: '本日のチャット受付上限に達しました。お問い合わせフォームをご利用ください。' }, 429);
+    return context.json({ error: '本日のチャット受付上限に達しました。公式LINEをご利用ください。' }, 429);
   }
   await context.env.DB.prepare(
     `INSERT INTO conversations (id, visitor_hash, source_page, operational_consent) VALUES (?, ?, ?, 1)`,
@@ -834,7 +834,7 @@ app.post('/api/chat/message', async (context) => {
     } catch (error) {
       if (error instanceof AiGatewayError && error.status === 429) {
         console.warn(JSON.stringify({ level: 'warn', event: 'cost_guard.gateway_spend_limit', requestId: context.get('requestId') }));
-        return context.json({ error: '今月のAI利用上限に達しました。お問い合わせフォームをご利用ください。' }, 429);
+        return context.json({ error: '今月のAI利用上限に達しました。公式LINEをご利用ください。' }, 429);
       }
       throw error;
     }
@@ -864,7 +864,7 @@ app.post('/api/chat/message', async (context) => {
   } catch (error) {
     if (error instanceof AiGatewayError && error.status === 429) {
       console.warn(JSON.stringify({ level: 'warn', event: 'cost_guard.gateway_spend_limit', requestId: context.get('requestId') }));
-      return context.json({ error: '今月のAI利用上限に達しました。お問い合わせフォームをご利用ください。' }, 429);
+      return context.json({ error: '今月のAI利用上限に達しました。公式LINEをご利用ください。' }, 429);
     }
     throw error;
   }

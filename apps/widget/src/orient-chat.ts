@@ -22,6 +22,7 @@ interface ChatMessage {
   rawContent?: string;
   sources?: Source[];
   choices?: ChatChoice[];
+  lineCta?: boolean;
   pending?: boolean;
 }
 
@@ -86,10 +87,10 @@ template.innerHTML = `
         <a class="privacy-link" target="_blank" rel="noopener">プライバシーポリシー・免責事項</a>
       </p>
       <div class="escalation">
-        <p>個別のご相談は、公式の問い合わせページをご利用ください。</p>
+        <p><strong>最新情報は公式LINEへ</strong><span>友だち追加して物件・住まい情報をチェック</span></p>
         <div>
-          <a class="line-link" target="_blank" rel="noopener">公式LINE</a>
-          <a class="contact-link" target="_blank" rel="noopener noreferrer">問い合わせページへ</a>
+          <a class="line-link" target="_blank" rel="noopener">公式LINEを開く ↗</a>
+          <a class="contact-link" target="_blank" rel="noopener noreferrer">問い合わせフォームはこちら</a>
         </div>
       </div>
       <div class="turnstile-slot" aria-hidden="true"></div>
@@ -171,6 +172,8 @@ const styles = `
   .inline-source:hover, .inline-source:focus-visible { border-color: var(--orient-primary); background: #fff1e8; outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
   .answer-url { color: var(--orient-primary-strong); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; overflow-wrap: anywhere; word-break: break-all; }
   .answer-url:hover, .answer-url:focus-visible { color: var(--orient-primary); outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
+  .message-line-cta { width: fit-content; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; margin-top: 8px; padding: 7px 11px; color: #fff; border: 1px solid var(--orient-line); border-radius: 9px; background: var(--orient-line); font-size: 11px; font-weight: 800; line-height: 1.35; text-decoration: none; }
+  .message-line-cta:hover, .message-line-cta:focus-visible { color: #fff; background: #05ae4a; border-color: #05ae4a; outline: 2px solid rgba(6,199,85,.2); outline-offset: 2px; }
   .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
@@ -197,12 +200,14 @@ const styles = `
   .privacy-link { color: var(--orient-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--orient-primary); text-underline-offset: 2px; }
   .privacy-link:hover, .privacy-link:focus-visible { color: var(--orient-primary-strong); outline: none; }
   .escalation { padding: 10px 14px 14px; border-top: 1px solid var(--orient-border); }
-  .escalation p { margin: 0 0 8px; text-align: center; color: var(--orient-muted); font-size: 10px; }
+  .escalation p { margin: 0 0 9px; text-align: center; color: var(--orient-muted); font-size: 10px; line-height: 1.45; }
+  .escalation p strong { display: block; margin-bottom: 2px; color: var(--orient-ink); font-size: 12px; }
+  .escalation p span { display: block; }
   .escalation > div { display: grid; grid-template-columns: 1fr; gap: 8px; }
-  .escalation a { min-height: 38px; display: grid; place-items: center; border: 1px solid; border-radius: 9px; background: #fff; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
-  .line-link { color: var(--orient-line); }
-  .escalation .contact-link { color: #fff; border-color: var(--orient-primary); background: var(--orient-primary); }
-  .escalation .contact-link:hover, .escalation .contact-link:focus-visible { border-color: var(--orient-primary-strong); background: var(--orient-primary-strong); outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
+  .line-link { min-height: 40px; display: grid; place-items: center; color: #fff; border: 1px solid var(--orient-line); border-radius: 9px; background: var(--orient-line); font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
+  .line-link:hover, .line-link:focus-visible { color: #fff; border-color: #05ae4a; background: #05ae4a; outline: 2px solid rgba(6,199,85,.2); outline-offset: 1px; }
+  .escalation .contact-link { justify-self: center; color: var(--orient-muted); font-size: 10px; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .escalation .contact-link:hover, .escalation .contact-link:focus-visible { color: var(--orient-ink); outline: none; }
   .turnstile-slot { position: absolute; left: 12px; bottom: 12px; z-index: 8; }
   .cat { background-image: var(--orient-asset); background-repeat: no-repeat; background-size: 200% 200%; background-position: 0 0; }
   .cat[data-cat-state="listening"] { background-position: 100% 0; }
@@ -279,6 +284,7 @@ class OrientChat extends HTMLElement {
 
   private get apiUrl() { return (this.getAttribute('api-url') || '').replace(/\/$/, ''); }
   private get demoMode() { return this.getAttribute('demo-mode') === 'true' || !this.apiUrl; }
+  private get lineUrl() { return this.getAttribute('line-url') || 'https://page.line.me/089wmudt'; }
 
   private get sessionStorageKey() {
     try {
@@ -351,7 +357,7 @@ class OrientChat extends HTMLElement {
     const line = this.root.querySelector<HTMLAnchorElement>('.line-link');
     const contact = this.root.querySelector<HTMLAnchorElement>('.contact-link');
     const privacy = this.root.querySelector<HTMLAnchorElement>('.privacy-link');
-    if (line) line.href = this.getAttribute('line-url') || 'https://line.me/';
+    if (line) line.href = this.lineUrl;
     if (contact) contact.href = this.getAttribute('contact-url') || 'https://orijyu.com/reception.html';
     if (privacy) {
       privacy.href = this.getAttribute('privacy-policy-url')
@@ -511,6 +517,7 @@ class OrientChat extends HTMLElement {
         message.content = this.displayAnswer(result.answer).slice(0, 1);
         message.sources = result.sources;
         message.choices = result.choices;
+        message.lineCta = this.shouldShowLineCta(content, result.answer, result.choices, result.policy);
       }
       this.renderMessages();
       this.setCatState('speaking');
@@ -536,10 +543,10 @@ class OrientChat extends HTMLElement {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ conversationId: this.conversationId, sessionToken: this.sessionToken, message: content }),
     }, 30_000);
-    const data = await response.json() as { answer?: string; sources?: Source[]; choices?: ChatChoice[]; error?: string };
+    const data = await response.json() as { answer?: string; sources?: Source[]; choices?: ChatChoice[]; policy?: string; error?: string };
     if (response.status === 401) this.clearStoredSession();
     if (!response.ok) throw new Error(data.error || '回答を取得できませんでした');
-    return { answer: data.answer || '', sources: data.sources || [], choices: data.choices || [] };
+    return { answer: data.answer || '', sources: data.sources || [], choices: data.choices || [], policy: data.policy || 'allow' };
   }
 
   private async fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
@@ -560,13 +567,23 @@ class OrientChat extends HTMLElement {
   private async demoResponse(content: string) {
     await new Promise((resolve) => window.setTimeout(resolve, 650));
     if (/値引|価格交渉|法的|重要事項/u.test(content)) {
-      return { answer: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。', sources: [], choices: [] };
+      return { answer: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。', sources: [], choices: [], policy: 'out_of_scope' };
     }
     return {
       answer: 'オリにゃんは、物件探し・住まい・店舗のことを案内できるにゃん。気になるエリアや条件を教えてね。[1]',
       sources: [{ index: 1, title: 'オリエントホールディングス 公式サイト', url: 'https://orijyu.com/' }],
       choices: [],
+      policy: 'allow',
     };
+  }
+
+  private shouldShowLineCta(input: string, answer: string, choices: ChatChoice[], policy: string) {
+    if (/(?:out_of_scope|prompt_injection)/u.test(policy)) return false;
+    if (/(?:あなた|君|きみ|オリにゃん).*(?:誰|だれ|何者)|^(?:おはよう|こんにちは|こんばんは|ありがとう)[。！!？?]?$/u.test(input.normalize('NFKC').trim())) return false;
+    const isGuidedQuestion = choices.length > 0
+      && /(?:教えてにゃん|選んでにゃん|どちらを探|のまま探すか)/u.test(answer);
+    if (isGuidedQuestion) return false;
+    return /(?:物件|住まい|賃貸|購入|戸建|マンション|土地|家づくり|住宅|店舗|テナント|内見|見学|空室|申込|売却|査定|担当者|専門家|確認できない|価格交渉|重要事項)/u.test(answer);
   }
 
   private displayAnswer(answer: string) {
@@ -601,7 +618,10 @@ class OrientChat extends HTMLElement {
     if (reduce) {
       updateBubble(displayAnswer);
       this.renderAnswerWithSources(bubble, answer, message.sources || []);
-      if (item) this.renderChoices(item, message.choices || []);
+      if (item) {
+        this.renderLineCta(item, Boolean(message.lineCta));
+        this.renderChoices(item, message.choices || []);
+      }
       return;
     }
     await new Promise<void>((resolve) => {
@@ -626,7 +646,24 @@ class OrientChat extends HTMLElement {
       window.requestAnimationFrame(renderFrame);
     });
     this.renderAnswerWithSources(bubble, answer, message.sources || []);
-    if (item) this.renderChoices(item, message.choices || []);
+    if (item) {
+      this.renderLineCta(item, Boolean(message.lineCta));
+      this.renderChoices(item, message.choices || []);
+    }
+  }
+
+  private renderLineCta(item: HTMLElement, visible: boolean) {
+    item.querySelector('.message-line-cta')?.remove();
+    if (!visible) return;
+    const messageContent = item.querySelector<HTMLElement>('.message-content');
+    if (!messageContent) return;
+    const link = document.createElement('a');
+    link.className = 'message-line-cta';
+    link.href = this.lineUrl;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = '公式LINEを見る ↗';
+    messageContent.append(link);
   }
 
   private renderChoices(item: HTMLElement, choices: ChatChoice[]) {
@@ -823,12 +860,11 @@ class OrientChat extends HTMLElement {
     const messageContent = document.createElement('div');
     messageContent.className = 'message-content';
     messageContent.append(bubble);
-    if (message.role === 'assistant' && !message.pending && message.rawContent && message.choices?.length) {
-      item.append(messageContent);
-      this.renderChoices(item, message.choices);
-      return item;
-    }
     item.append(messageContent);
+    if (message.role === 'assistant' && !message.pending && message.rawContent) {
+      this.renderLineCta(item, Boolean(message.lineCta));
+      if (message.choices?.length) this.renderChoices(item, message.choices);
+    }
     return item;
   }
 

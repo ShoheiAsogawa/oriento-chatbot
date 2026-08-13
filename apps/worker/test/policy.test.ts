@@ -66,7 +66,7 @@ describe('evaluatePolicy', () => {
 
   it('uses a concise, in-character message when knowledge is unavailable', () => {
     expect(noGroundingDecision().response).toBe(
-      'ごめんね、その情報はオリにゃんでは確認できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
+      'ごめんね、その情報はオリにゃんでは確認できないにゃん。公式LINEから担当者に確認してにゃん。',
     );
   });
 
@@ -99,7 +99,9 @@ describe('SYSTEM_PROMPT', () => {
     expect(SYSTEM_PROMPT).toContain('利用者が話した事情を根拠に判断軸を整理');
     expect(SYSTEM_PROMPT).toContain('物件価格、間取り、所在地、設備、空室');
     expect(SYSTEM_PROMPT).toContain('日本語の公式物件詳細ページ');
-    expect(SYSTEM_PROMPT).toContain('毎回答には付けません');
+    expect(SYSTEM_PROMPT).toContain('公式LINEを主要な案内先');
+    expect(SYSTEM_PROMPT).toContain('条件を一つ尋ねるだけの検索途中では繰り返し案内しません');
+    expect(SYSTEM_PROMPT).toContain('LINEを利用できない場合の補助的な案内先');
   });
 });
 
