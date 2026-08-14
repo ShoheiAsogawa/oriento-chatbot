@@ -105,6 +105,11 @@ export interface OverviewPolicyCount {
   count: number;
 }
 
+export interface OverviewIntentCount {
+  intent: 'rent' | 'buy' | 'sell' | 'build' | 'other';
+  count: number;
+}
+
 export interface OverviewHourCount {
   hour: number;
   count: number;
@@ -128,6 +133,7 @@ export interface OverviewData {
   daily: OverviewDailyPoint[];
   topPages: OverviewPageCount[];
   policy: OverviewPolicyCount[];
+  intents: OverviewIntentCount[];
   hours: OverviewHourCount[];
   usage: OverviewUsagePoint[];
   costGuard: {
@@ -219,6 +225,13 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
       { action: 'out_of_scope', count: 22 },
       { action: 'price_negotiation', count: 11 },
       { action: 'no_grounding', count: 6 },
+    ],
+    intents: [
+      { intent: 'rent', count: 214 },
+      { intent: 'buy', count: 142 },
+      { intent: 'sell', count: 61 },
+      { intent: 'build', count: 31 },
+      { intent: 'other', count: 14 },
     ],
     hours,
     usage,

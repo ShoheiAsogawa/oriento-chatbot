@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ChevronRight, CircleAlert, Clock3, Database, Gauge, Globe, MessageSquareText,
-  TrendingUp, UsersRound,
+  BellRing, Building2, CalendarDays, CheckCircle2, ChevronRight, CircleAlert, Clock3,
+  Globe, MessageSquareText, TrendingUp, UsersRound,
 } from 'lucide-react';
 import {
   api,
@@ -9,8 +9,8 @@ import {
   type OverviewDailyPoint,
   type OverviewData,
   type OverviewHourCount,
+  type OverviewIntentCount,
   type OverviewPageCount,
-  type OverviewPolicyCount,
 } from './api';
 
 const emptyOverview: OverviewData = {
@@ -25,29 +25,18 @@ const emptyOverview: OverviewData = {
   daily: [],
   topPages: [],
   policy: [],
+  intents: [],
   hours: Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 })),
   usage: [],
   costGuard: { day: '', sessions: 0, sessionLimit: 500, aiRequests: 0, aiRequestLimit: 500 },
 };
 
-const policyLabels: Record<string, string> = {
-  allow: '回答済み',
-  price_negotiation: '価格交渉',
-  legal_judgment: '法的判断',
-  important_matters: '重要事項',
-  prompt_injection: '不正な指示',
-  out_of_scope: '対象外',
-  no_grounding: '根拠不足',
-};
-
-const policyColors: Record<string, string> = {
-  allow: '#20a95b',
-  price_negotiation: '#e98b09',
-  legal_judgment: '#2563b8',
-  important_matters: '#ff680b',
-  prompt_injection: '#ef4444',
-  out_of_scope: '#74757f',
-  no_grounding: '#7c3aed',
+const intentLabels: Record<OverviewIntentCount['intent'], string> = {
+  rent: '賃貸探し',
+  buy: '購入検討',
+  sell: '売却・査定',
+  build: '注文住宅・リフォーム',
+  other: 'その他',
 };
 
 function formatDate(value: string) {
@@ -117,7 +106,7 @@ function TrendChart({ series, metric }: { series: OverviewDailyPoint[]; metric: 
   const color = metric === 'conversations' ? '#ff680b' : '#2563b8';
 
   return <div className="trend-chart">
-    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="過去30日の推移">
+    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="過去30日の相談推移">
       <defs>
         <linearGradient id="overview-trend-fill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.28" />
@@ -157,7 +146,7 @@ function TrendChart({ series, metric }: { series: OverviewDailyPoint[]; metric: 
     </svg>
     {active ? <div className="chart-tooltip" style={{ left: `${((active.x - pad.left) / innerW) * 100}%` }}>
       <strong>{formatDay(active.day)}</strong>
-      <span>{metric === 'conversations' ? '会話' : '訪問者'} {active[metric].toLocaleString()}件</span>
+      <span>{metric === 'conversations' ? '相談' : '相談者'} {active[metric].toLocaleString()}件</span>
     </div> : null}
   </div>;
 }
@@ -165,7 +154,7 @@ function TrendChart({ series, metric }: { series: OverviewDailyPoint[]; metric: 
 function HourChart({ hours }: { hours: OverviewHourCount[] }) {
   const max = Math.max(1, ...hours.map((item) => item.count));
   const current = japanHour();
-  return <div className="hour-chart" role="img" aria-label="時間帯別の会話数">
+  return <div className="hour-chart" role="img" aria-label="時間帯別の相談数">
     {hours.map((item) => (
       <div key={item.hour} className={`hour-bar ${item.hour === current ? 'current' : ''}`} title={`${item.hour}時 ${item.count.toLocaleString()}件`}>
         <i style={{ height: `${Math.max(6, (item.count / max) * 100)}%` }} />
@@ -190,72 +179,45 @@ function PageBars({ pages }: { pages: OverviewPageCount[] }) {
   </div>;
 }
 
-function PolicyDonut({ policy }: { policy: OverviewPolicyCount[] }) {
-  const total = policy.reduce((sum, item) => sum + item.count, 0);
-  const radius = 54;
-  const circumference = 2 * Math.PI * radius;
-  let offset = 0;
-  if (!total) return <p className="chart-empty">まだ回答判定の集計がありません。</p>;
-  return <div className="policy-donut">
-    <svg viewBox="0 0 140 140" aria-hidden="true">
-      {policy.map((item) => {
-        const length = (item.count / total) * circumference;
-        const circle = <circle
-          key={item.action}
-          cx="70"
-          cy="70"
-          r={radius}
-          fill="none"
-          stroke={policyColors[item.action] || '#74757f'}
-          strokeWidth="16"
-          strokeDasharray={`${length} ${circumference - length}`}
-          strokeDashoffset={-offset}
-          transform="rotate(-90 70 70)"
-        />;
-        offset += length;
-        return circle;
-      })}
-      <text x="70" y="66" textAnchor="middle" className="donut-value">{total.toLocaleString()}</text>
-      <text x="70" y="84" textAnchor="middle" className="donut-label">件</text>
-    </svg>
-    <ul>
-      {policy.map((item) => (
-        <li key={item.action}>
-          <i style={{ background: policyColors[item.action] || '#74757f' }} />
-          <span>{policyLabels[item.action] || item.action}</span>
-          <strong>{percent(item.count, total)}%</strong>
-        </li>
-      ))}
-    </ul>
+function IntentBars({ intents }: { intents: OverviewIntentCount[] }) {
+  const counts = new Map(intents.map((item) => [item.intent, item.count]));
+  const ordered = (Object.keys(intentLabels) as OverviewIntentCount['intent'][]).map((intent) => ({
+    intent,
+    count: counts.get(intent) || 0,
+  }));
+  const total = ordered.reduce((sum, item) => sum + item.count, 0);
+  if (!total) return <p className="chart-empty">相談内容が集まると、検討傾向をここに表示します。</p>;
+  return <div className="intent-bars">
+    {ordered.map((item) => <div key={item.intent}>
+      <span>{intentLabels[item.intent]}</span>
+      <b><i style={{ width: `${Math.max(item.count ? 7 : 0, percent(item.count, total))}%` }} /></b>
+      <strong>{item.count.toLocaleString()}件</strong>
+      <small>{percent(item.count, total)}%</small>
+    </div>)}
   </div>;
 }
 
-function UsageMeter({ label, value, limit }: { label: string; value: number; limit: number }) {
-  const ratio = limit > 0 ? Math.min(1, value / limit) : 0;
-  const tone = ratio >= 0.9 ? 'danger' : ratio >= 0.8 ? 'warning' : 'ok';
-  const radius = 34;
-  const circumference = 2 * Math.PI * radius;
-  return <div className={`usage-meter ${tone}`}>
-    <svg viewBox="0 0 88 88" aria-hidden="true">
-      <circle cx="44" cy="44" r={radius} fill="none" stroke="#eceef3" strokeWidth="8" />
-      <circle
-        cx="44"
-        cy="44"
-        r={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeDasharray={`${circumference * ratio} ${circumference}`}
-        transform="rotate(-90 44 44)"
-      />
-      <text x="44" y="48" textAnchor="middle">{percent(value, limit)}%</text>
-    </svg>
-    <div>
-      <p>{label}</p>
-      <strong>{value.toLocaleString()} / {limit.toLocaleString()}</strong>
+function ReceptionSummary({ data }: { data: OverviewData }) {
+  const usageRate = percent(data.costGuard.sessions, data.costGuard.sessionLimit);
+  const delta = dayDelta(data.conversationsToday, data.conversationsYesterday);
+  const busiest = data.hours.reduce((best, item) => item.count > best.count ? item : best, { hour: 0, count: 0 });
+  const normal = usageRate < 80;
+  return <section className="surface reception-summary">
+    <div className="section-heading"><div><h2>本日の受付状況</h2><p>{data.costGuard.day || '本日'}の相談受付</p></div><CheckCircle2 /></div>
+    <div className={`reception-health ${normal ? 'ok' : 'warning'}`}>
+      <span />
+      <strong>{normal ? '正常に受付中' : '受付数が上限に近づいています'}</strong>
     </div>
-  </div>;
+    <div className="reception-stats">
+      <div><small>本日の相談</small><strong>{data.conversationsToday.toLocaleString()}件</strong></div>
+      <div><small>前日比</small><strong className={`delta ${delta.tone}`}>{delta.label.replace(' 前日比', '')}</strong></div>
+      <div><small>相談が多い時間</small><strong>{busiest.count ? `${busiest.hour}時台` : '—'}</strong></div>
+    </div>
+    <div className="reception-capacity">
+      <div><span>受付上限の使用状況</span><strong>{data.costGuard.sessions.toLocaleString()} / {data.costGuard.sessionLimit.toLocaleString()}件</strong></div>
+      <b><i style={{ width: `${Math.min(100, usageRate)}%` }} /></b>
+    </div>
+  </section>;
 }
 
 export function OverviewPage({ onOpenConversations }: { onOpenConversations: () => void }) {
@@ -273,20 +235,18 @@ export function OverviewPage({ onOpenConversations }: { onOpenConversations: () 
 
   const todayDelta = dayDelta(data.conversationsToday, data.conversationsYesterday);
   const questionsPerConversation = data.conversations30d ? (data.questions30d / data.conversations30d) : 0;
-  const consentRate = percent(data.consented30d, data.conversations30d);
-  const latestUsage = useMemo(() => data.usage.slice(-7), [data.usage]);
-  const usageMax = Math.max(1, ...latestUsage.map((item) => item.sessions));
+  const flagged = useMemo(() => recent.filter((item) => item.has_refusal).slice(0, 5), [recent]);
 
   const metrics = [
-    { label: '今日の会話', value: data.conversationsToday, note: todayDelta.label, tone: todayDelta.tone, icon: TrendingUp },
-    { label: '過去30日の会話', value: data.conversations30d, note: 'チャット開始数', tone: 'flat' as const, icon: MessageSquareText },
-    { label: '訪問者', value: data.visitors30d, note: '過去30日のユニーク', tone: 'flat' as const, icon: UsersRound },
-    { label: '回答を控えた質問', value: data.refused30d, note: '担当確認の候補', tone: data.refused30d ? 'down' as const : 'flat' as const, icon: CircleAlert },
-    { label: 'ナレッジ資料', value: data.knowledgeItems, note: 'AI Search登録数', tone: 'flat' as const, icon: Database },
+    { label: '今日の相談', value: data.conversationsToday, note: todayDelta.label, tone: todayDelta.tone, icon: TrendingUp },
+    { label: '30日間の相談', value: data.conversations30d, note: '相談受付数', tone: 'flat' as const, icon: CalendarDays },
+    { label: '相談者', value: data.visitors30d, note: '過去30日のユニーク数', tone: 'flat' as const, icon: UsersRound },
+    { label: '対応確認', value: data.refused30d, note: '会話ログで要確認', tone: data.refused30d ? 'down' as const : 'flat' as const, icon: BellRing },
+    { label: '登録物件・資料', value: data.knowledgeItems, note: '案内に使える情報', tone: 'flat' as const, icon: Building2 },
   ] as const;
 
   return <>
-    <PageHeader title="概要" description="チャットの訪問数、会話の推移、よく見られているページをまとめて確認します。" />
+    <PageHeader title="概要" description="反響の動きと対応が必要な相談をまとめて確認します。" />
     {error ? <p className="knowledge-notice" role="alert">{error}</p> : null}
     <section className="metric-strip overview-metrics">
       {metrics.map((item) => {
@@ -304,71 +264,57 @@ export function OverviewPage({ onOpenConversations }: { onOpenConversations: () 
       <section className="surface">
         <div className="section-heading">
           <div>
-            <h2>訪問と会話の推移</h2>
-            <p>日本時間の過去30日。会話1件はチャットを開いた訪問として数えます。</p>
+            <h2>相談の推移</h2>
+            <p>日本時間の過去30日。相談件数と相談者数の動きを確認できます。</p>
           </div>
-          <div className="chart-toggle" role="tablist" aria-label="グラフの指標">
-            <button type="button" role="tab" aria-selected={metric === 'conversations'} className={metric === 'conversations' ? 'active' : ''} onClick={() => setMetric('conversations')}>会話</button>
-            <button type="button" role="tab" aria-selected={metric === 'visitors'} className={metric === 'visitors' ? 'active' : ''} onClick={() => setMetric('visitors')}>訪問者</button>
+          <div className="chart-toggle" role="tablist" aria-label="相談推移の指標">
+            <button type="button" role="tab" aria-selected={metric === 'conversations'} className={metric === 'conversations' ? 'active' : ''} onClick={() => setMetric('conversations')}>相談</button>
+            <button type="button" role="tab" aria-selected={metric === 'visitors'} className={metric === 'visitors' ? 'active' : ''} onClick={() => setMetric('visitors')}>相談者</button>
           </div>
         </div>
         <TrendChart series={data.daily} metric={metric} />
-        <p className="chart-caption">会話あたりの質問 {questionsPerConversation.toFixed(1)}件 ／ 案内同意 {data.consented30d.toLocaleString()}件（{consentRate}%）</p>
+        <p className="chart-caption">相談あたりの質問 {questionsPerConversation.toFixed(1)}件 ／ 対応確認 {data.refused30d.toLocaleString()}件</p>
       </section>
-      <section className="surface overview-guard">
-        <div className="section-heading"><div><h2>本日の稼働</h2><p>日次コストガード {data.costGuard.day || '—'}</p></div><Gauge /></div>
-        <UsageMeter label="セッション" value={data.costGuard.sessions} limit={data.costGuard.sessionLimit} />
-        <UsageMeter label="AI回答" value={data.costGuard.aiRequests} limit={data.costGuard.aiRequestLimit} />
-        <div className="usage-spark" aria-label="直近7日のセッション">
-          {latestUsage.map((item) => <i key={item.day} style={{ height: `${Math.max(8, (item.sessions / usageMax) * 100)}%` }} title={`${formatDay(item.day)} ${item.sessions.toLocaleString()}件`} />)}
-        </div>
-        <p className="chart-caption">直近7日のセッション数</p>
-      </section>
+      <ReceptionSummary data={data} />
     </div>
 
     <div className="overview-charts">
       <section className="surface">
-        <div className="section-heading"><div><h2>時間帯</h2><p>会話が始まった時間（日本時間）</p></div><Clock3 /></div>
-        <HourChart hours={data.hours} />
+        <div className="section-heading"><div><h2>相談ニーズ</h2><p>相談内容から集計した検討傾向（過去30日）</p></div><Building2 /></div>
+        <IntentBars intents={data.intents} />
       </section>
       <section className="surface">
-        <div className="section-heading"><div><h2>よく使われるページ</h2><p>チャット開始時の掲載ページ</p></div><Globe /></div>
+        <div className="section-heading"><div><h2>よく見られているページ</h2><p>相談が始まった掲載ページ（過去30日）</p></div><Globe /></div>
         <PageBars pages={data.topPages} />
       </section>
       <section className="surface">
-        <div className="section-heading"><div><h2>回答判定</h2><p>過去30日のアシスタント応答</p></div></div>
-        <PolicyDonut policy={data.policy} />
+        <div className="section-heading"><div><h2>相談が多い時間帯</h2><p>相談が始まった時間（日本時間・過去30日）</p></div><Clock3 /></div>
+        <HourChart hours={data.hours} />
       </section>
     </div>
 
     <div className="overview-grid">
       <section className="surface activity-list">
         <div className="section-heading">
-          <div><h2>最近の会話</h2><p>直近の質問と回答状態</p></div>
+          <div><h2>最近の相談</h2><p>直近の相談内容と対応状況</p></div>
           <button className="text-button" type="button" onClick={onOpenConversations}>すべて見る <ChevronRight /></button>
         </div>
         {recent.length ? recent.map((item) => <button className="activity-row" key={item.id} type="button" onClick={onOpenConversations}>
           <span className={`activity-icon ${item.has_refusal ? 'warn' : ''}`}>{item.has_refusal ? <CircleAlert /> : <MessageSquareText />}</span>
           <span><strong>{item.latest_message}</strong><small>{shortenPage(item.source_page)}</small></span>
           <time>{formatDate(item.updated_at)}</time><ChevronRight />
-        </button>) : <p className="chart-empty">まだ会話はありません。</p>}
+        </button>) : <p className="chart-empty">まだ相談はありません。</p>}
       </section>
       <section className="surface attention-list">
-        <div className="section-heading"><div><h2>確認が必要</h2><p>運用担当者向けの通知</p></div></div>
-        <button className="attention" type="button" onClick={onOpenConversations}>
-          <span className="warning-dot"></span>
-          <div><strong>回答を控えた質問</strong><p>過去30日で{data.refused30d.toLocaleString()}件あります。会話ログから確認できます。</p></div>
+        <div className="section-heading"><div><h2>対応が必要</h2><p>担当者が確認したい相談</p></div></div>
+        {flagged.length ? flagged.map((item) => <button className="attention" key={item.id} type="button" onClick={onOpenConversations}>
+          <span className="warning-dot" />
+          <div><strong>{item.latest_message}</strong><p>{shortenPage(item.source_page)} ・ {formatDate(item.updated_at)}</p></div>
           <ChevronRight />
-        </button>
-        <div className="attention">
-          <span className="info-dot"></span>
-          <div><strong>ナレッジの登録状況</strong><p>{data.knowledgeItems.toLocaleString()}件の資料が管理対象です。</p></div>
-        </div>
-        <div className="attention">
-          <span className={data.costGuard.aiRequests / data.costGuard.aiRequestLimit >= 0.8 ? 'warning-dot' : 'success-dot'}></span>
-          <div><strong>日次コストガード</strong><p>AI回答 {data.costGuard.aiRequests.toLocaleString()} / {data.costGuard.aiRequestLimit.toLocaleString()}件、セッション {data.costGuard.sessions.toLocaleString()} / {data.costGuard.sessionLimit.toLocaleString()}件</p></div>
-          <Gauge />
-        </div>
+        </button>) : <div className="attention-empty">
+          <CheckCircle2 />
+          <div><strong>対応確認はありません</strong><p>現在、確認が必要な相談はありません。</p></div>
+        </div>}
       </section>
     </div>
   </>;

@@ -63,7 +63,7 @@ describe('overview series helpers', () => {
 });
 
 describe('loadOverview', () => {
-  it('aggregates visit, conversation, and policy charts for the admin dashboard', async () => {
+  it('aggregates real-estate consultation charts for the admin dashboard', async () => {
     const { db, prepare } = mockDb([
       {
         match: 'overview.summary',
@@ -90,6 +90,10 @@ describe('loadOverview', () => {
       {
         match: 'overview.policy',
         result: { all: [{ action: 'allow', count: 80 }, { action: 'out_of_scope', count: 5 }] },
+      },
+      {
+        match: 'overview.intents',
+        result: { all: [{ intent: 'rent', count: 18 }, { intent: 'buy', count: 9 }] },
       },
       { match: 'overview.hours', result: { all: [{ hour: 10, count: 7 }] } },
       {
@@ -125,6 +129,10 @@ describe('loadOverview', () => {
     expect(overview.policy).toEqual([
       { action: 'allow', count: 80 },
       { action: 'out_of_scope', count: 5 },
+    ]);
+    expect(overview.intents).toEqual([
+      { intent: 'rent', count: 18 },
+      { intent: 'buy', count: 9 },
     ]);
     expect(overview.hours[10]).toEqual({ hour: 10, count: 7 });
     expect(overview.usage.at(-1)).toEqual({ day: '2026-08-13', sessions: 6, aiRequests: 0 });

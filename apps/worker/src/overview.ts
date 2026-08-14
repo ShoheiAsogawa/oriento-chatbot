@@ -16,6 +16,11 @@ export interface OverviewPolicyCount {
   count: number;
 }
 
+export interface OverviewIntentCount {
+  intent: 'rent' | 'buy' | 'sell' | 'build' | 'other';
+  count: number;
+}
+
 export interface OverviewHourCount {
   hour: number;
   count: number;
@@ -39,6 +44,7 @@ export interface OverviewData {
   daily: OverviewDailyPoint[];
   topPages: OverviewPageCount[];
   policy: OverviewPolicyCount[];
+  intents: OverviewIntentCount[];
   hours: OverviewHourCount[];
   usage: OverviewUsagePoint[];
   costGuard: {
@@ -127,6 +133,7 @@ export async function loadOverview(
     dailyRows,
     pageRows,
     policyRows,
+    intentRows,
     hourRows,
     usageRows,
     dailyUsage,
@@ -184,6 +191,28 @@ export async function loadOverview(
        ORDER BY count DESC`,
     ).all<{ action: string; count: number }>(),
     db.prepare(
+      `WITH conversation_text AS (
+         SELECT c.id, group_concat(m.content_redacted, ' ') AS body
+         FROM conversations c
+         JOIN messages m ON m.conversation_id = c.id AND m.role = 'user'
+         WHERE c.created_at >= datetime('now', '-30 days')
+         GROUP BY c.id
+       ), classified AS (
+         SELECT CASE
+           WHEN body LIKE '%売却%' OR body LIKE '%査定%' OR body LIKE '%売りたい%' THEN 'sell'
+           WHEN body LIKE '%注文住宅%' OR body LIKE '%建てたい%' OR body LIKE '%リフォーム%' OR body LIKE '%リノベーション%' THEN 'build'
+           WHEN body LIKE '%賃貸%' OR body LIKE '%家賃%' OR body LIKE '%部屋探し%' OR body LIKE '%一人暮らし%' OR body LIKE '%入居%' THEN 'rent'
+           WHEN body LIKE '%購入%' OR body LIKE '%買いたい%' OR body LIKE '%住宅ローン%' OR body LIKE '%新築%' OR body LIKE '%中古%' THEN 'buy'
+           ELSE 'other'
+         END AS intent
+         FROM conversation_text
+       )
+       SELECT intent, COUNT(*) AS count
+       FROM classified
+       GROUP BY intent
+       ORDER BY count DESC -- overview.intents`,
+    ).all<{ intent: OverviewIntentCount['intent']; count: number }>(),
+    db.prepare(
       `SELECT CAST(strftime('%H', datetime(created_at, '+9 hours')) AS INTEGER) AS hour,
         COUNT(*) AS count
        FROM conversations
@@ -215,6 +244,10 @@ export async function loadOverview(
     })),
     policy: (policyRows.results || []).map((row) => ({
       action: row.action || 'allow',
+      count: asCount(row.count),
+    })),
+    intents: (intentRows.results || []).map((row) => ({
+      intent: row.intent || 'other',
       count: asCount(row.count),
     })),
     hours: fillHourlySeries(hourRows.results || []),

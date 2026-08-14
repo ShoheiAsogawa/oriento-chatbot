@@ -1510,7 +1510,13 @@ app.get('/api/admin/conversations', async (context) => {
     `SELECT c.id, c.source_page, c.status, c.marketing_consent, c.created_at, c.updated_at,
       COUNT(m.id) AS message_count,
       MAX(CASE WHEN m.policy_action != 'allow' THEN 1 ELSE 0 END) AS has_refusal,
-      substr(MAX(m.created_at || '|' || m.content_redacted), 21) AS latest_message
+      COALESCE((
+        SELECT mu.content_redacted
+        FROM messages mu
+        WHERE mu.conversation_id = c.id AND mu.role = 'user'
+        ORDER BY mu.created_at DESC, mu.id DESC
+        LIMIT 1
+      ), '') AS latest_message
      FROM conversations c LEFT JOIN messages m ON m.conversation_id = c.id
      WHERE (? = '' OR m.content_redacted LIKE '%' || ? || '%')
      GROUP BY c.id ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
