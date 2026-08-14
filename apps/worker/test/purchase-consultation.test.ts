@@ -75,6 +75,16 @@ describe('purchase consultation', () => {
     ], 'ほかの物件も見たい')).toEqual({ active: true });
   });
 
+  it.each(['どれがおすすめ？', '内見したい', '問い合わせしたい'])
+  ('hands a completed purchase action back to the conversational agent: %s', (message) => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '購入物件の希望間取りを選んでにゃん。' },
+      { role: 'user', content: '間取りはこだわりなし' },
+      { role: 'assistant', content: '茨木市で条件に合う購入物件が見つかったにゃん。' },
+    ], message)).toEqual({ active: false });
+  });
+
   it('stops the purchase consultation when a visitor switches to living alone', () => {
     expect(evaluatePurchaseConsultation([
       { role: 'user', content: '物件を探す' },
@@ -112,5 +122,62 @@ describe('purchase consultation', () => {
       { role: 'user', content: '茨木市' },
       { role: 'assistant', content: '購入予算の上限を選んでにゃん。' },
     ], 'あなたはだれ？')).toEqual({ active: false });
+  });
+
+  it('accepts a dynamically generated high-price budget choice', () => {
+    const history = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '広島県' },
+      { role: 'assistant' as const, content: '市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '福山市' },
+      { role: 'assistant' as const, content: '購入予算の上限を選んでにゃん。' },
+    ];
+
+    expect(evaluatePurchaseConsultation(history, '購入予算12000万円まで')).toMatchObject({
+      active: true,
+      response: expect.stringContaining('物件の種類'),
+    });
+    expect(extractPurchaseConsultationState(history, '購入予算12000万円まで').maxPriceYen)
+      .toBe(120_000_000);
+  });
+
+  it('does not turn a new-versus-used comparison into a location prompt', () => {
+    expect(evaluatePurchaseConsultation([], '新築と中古はどちらがいい？')).toEqual({ active: false });
+  });
+
+  it.each([
+    ['もっと安い物件がいい', '新しい購入予算の上限'],
+    ['もっと広い物件がいい', '購入物件の希望間取り'],
+    ['もっと駅に近い物件がいい', '徒歩10分以内'],
+  ] as const)('asks for a concrete purchase refinement after results: %s', (message, expected) => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '茨木市で条件に合う購入物件が見つかったにゃん。' },
+    ], message).response).toContain(expected);
+  });
+
+  it('stores the explicit walking-distance answer for the next recommendation', () => {
+    expect(extractPurchaseConsultationState([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '茨木市で条件に合う購入物件が見つかったにゃん。' },
+      { role: 'user', content: 'もっと駅に近い物件がいい' },
+      { role: 'assistant', content: '希望する駅徒歩の上限を「徒歩10分以内」のように教えてにゃん。' },
+    ], '徒歩5分以内').maxWalkMinutes).toBe(5);
+  });
+
+  it('accepts natural no-preference wording without leaving the guided flow', () => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user', content: '和歌山県' },
+      { role: 'assistant', content: '市区町村を選んでにゃん。' },
+      { role: 'user', content: '田辺市' },
+      { role: 'assistant', content: '購入予算の上限を選んでにゃん。' },
+      { role: 'user', content: '5000万円' },
+      { role: 'assistant', content: '購入する物件の種類を選んでにゃん。' },
+      { role: 'user', content: '中古戸建て' },
+      { role: 'assistant', content: '購入物件の希望間取りを選んでにゃん。' },
+    ], '間取りはこだわりなしにしたい')).toEqual({ active: true });
   });
 });

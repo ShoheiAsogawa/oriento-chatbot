@@ -70,4 +70,48 @@ describe('rental catalog', () => {
       area: '堺市', maxRentYen: 100_000, layout: '2LDK', maxWalkMinutes: undefined,
     });
   });
+
+  it('includes common fees in the ceiling only when the visitor requests it', () => {
+    expect(recommendRentalProperties([properties[0]!], {
+      area: '大阪市',
+      maxRentYen: 44_000,
+      includeCommonFee: true,
+    })).toEqual([]);
+    expect(recommendRentalProperties([properties[0]!], {
+      area: '大阪市',
+      maxRentYen: 44_000,
+      includeCommonFee: false,
+    })).toEqual([properties[0]]);
+  });
+
+  it('supports minimum layout requests instead of treating them as an exact layout', () => {
+    const familyProperties: RentalProperty[] = [
+      { ...properties[0]!, id: '4', title: '2LDK', layout: '2LDK', rent_yen: 90_000 },
+      { ...properties[0]!, id: '5', title: '3LDK', layout: '3LDK', rent_yen: 100_000 },
+      { ...properties[0]!, id: '6', title: '1LDK', layout: '1LDK', rent_yen: 80_000 },
+    ];
+    expect(recommendRentalProperties(familyProperties, { layout: '2LDK+' }).map((item) => item.layout))
+      .toEqual(['2LDK', '3LDK']);
+  });
+
+  it('normalizes catalog layouts before exact matching', () => {
+    expect(recommendRentalProperties([
+      { ...properties[0]!, layout: 'ワンルーム' },
+    ], { layout: '1R' })).toHaveLength(1);
+  });
+
+  it.each(['成約済', '契約済', '申込済', '募集終了', '非公開', '空室なし'])('never recommends unavailable inventory marked %s', (status) => {
+    expect(recommendRentalProperties([{ ...properties[0]!, status }], {})).toEqual([]);
+  });
+
+  it('can exclude properties already shown when the visitor asks for other candidates', () => {
+    const candidates = [
+      properties[0]!,
+      { ...properties[0]!, id: '4', url: 'https://orijyu.com/rent/post-4.html', title: '次の候補', rent_yen: 45_000 },
+    ];
+    expect(recommendRentalProperties(candidates, {}, new Set([properties[0]!.url])))
+      .toEqual([candidates[1]]);
+    expect(recommendRentalProperties(candidates, {}, new Set(['4'])))
+      .toEqual([candidates[0]]);
+  });
 });

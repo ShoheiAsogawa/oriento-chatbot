@@ -26,12 +26,6 @@ interface ChatMessage {
   pending?: boolean;
 }
 
-interface StoredChatSession {
-  conversationId: string;
-  sessionToken: string;
-  expiresAt: number;
-}
-
 interface TurnstileApi {
   render(container: HTMLElement, options: Record<string, unknown>): string;
   execute(widgetId: string): void;
@@ -74,7 +68,7 @@ template.innerHTML = `
       <div class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
       <div class="suggestions" aria-label="よくある質問">
         <button type="button" data-question="物件を探す"><span>⌕</span>物件を探す</button>
-        <button type="button" data-question="オリエントホームの良さ"><span>⌂</span>オリエントホームの良さ</button>
+        <button type="button" data-question="オリエントホームのこだわり"><span>⌂</span>オリエントホームのこだわり</button>
       </div>
       <form class="composer">
         <label class="sr-only" for="orient-chat-input">メッセージを入力</label>
@@ -266,6 +260,7 @@ class OrientChat extends HTMLElement {
   private sessionToken = '';
   private catState: CatState = 'idle';
   private sending = false;
+  private initialized = false;
   private turnstileWidgetId = '';
   private turnstilePromise: Promise<string> | null = null;
 
@@ -281,14 +276,20 @@ class OrientChat extends HTMLElement {
 
   connectedCallback() {
     this.applyConfiguration();
-    this.bindEvents();
     void this.recordPropertyPageView();
-    this.messages = [{
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: 'こんにちは、オリにゃんだよ！\nお部屋探しや住まいのこと、気軽に聞いてにゃん。',
-    }];
-    this.renderMessages();
+    if (!this.initialized) {
+      this.initialized = true;
+      // Visible chat history is intentionally in-memory only. Discard legacy
+      // stored credentials so a page reload cannot resume hidden server state.
+      this.clearStoredSession();
+      this.bindEvents();
+      this.messages = [{
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: 'こんにちは、オリにゃんだよ！\nお部屋探しや住まいのこと、気軽に聞いてにゃん。',
+      }];
+      this.renderMessages();
+    }
     if (this.hasAttribute('open')) this.open();
   }
 
@@ -330,47 +331,6 @@ class OrientChat extends HTMLElement {
       return `orient-chat.session.v1:${new URL(this.apiUrl).origin}`;
     } catch {
       return '';
-    }
-  }
-
-  private restoreStoredSession() {
-    const key = this.sessionStorageKey;
-    if (!key || this.demoMode) return false;
-    try {
-      const value = window.sessionStorage.getItem(key);
-      if (!value) return false;
-      const stored = JSON.parse(value) as Partial<StoredChatSession>;
-      const { conversationId, sessionToken, expiresAt } = stored;
-      const isValid = typeof conversationId === 'string'
-        && typeof sessionToken === 'string'
-        && typeof expiresAt === 'number'
-        && expiresAt > Date.now();
-      if (!isValid) {
-        window.sessionStorage.removeItem(key);
-        return false;
-      }
-      this.conversationId = conversationId;
-      this.sessionToken = sessionToken;
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  private storeSession(expiresIn: number) {
-    const key = this.sessionStorageKey;
-    if (!key || this.demoMode || !this.conversationId || !this.sessionToken) return;
-    try {
-      // Keep this tab-only session slightly shorter than the server-side token.
-      const lifetime = Math.max(1, Math.min(expiresIn - 60, 86_340));
-      const stored: StoredChatSession = {
-        conversationId: this.conversationId,
-        sessionToken: this.sessionToken,
-        expiresAt: Date.now() + lifetime * 1_000,
-      };
-      window.sessionStorage.setItem(key, JSON.stringify(stored));
-    } catch {
-      // Browsers may disable sessionStorage; the in-memory session still works.
     }
   }
 
@@ -456,7 +416,6 @@ class OrientChat extends HTMLElement {
 
   private async ensureSession() {
     if (this.demoMode || this.conversationId) return;
-    if (this.restoreStoredSession()) return;
     const turnstileToken = await this.getTurnstileToken();
     const response = await this.fetchWithTimeout(`${this.apiUrl}/api/chat/session`, {
       method: 'POST',
@@ -468,10 +427,9 @@ class OrientChat extends HTMLElement {
       if (this.turnstileWidgetId && window.turnstile) window.turnstile.reset(this.turnstileWidgetId);
       throw new Error('セッションを開始できませんでした。もう一度お試しください。');
     }
-    const data = await response.json() as { conversationId: string; sessionToken: string; expiresIn?: number };
+    const data = await response.json() as { conversationId: string; sessionToken: string };
     this.conversationId = data.conversationId;
     this.sessionToken = data.sessionToken;
-    this.storeSession(data.expiresIn || 86_400);
   }
 
   private async getTurnstileToken() {
@@ -648,9 +606,12 @@ class OrientChat extends HTMLElement {
     const textNode = document.createTextNode(initialContent);
     bubble.replaceChildren(textNode);
     const updateBubble = (content: string) => {
+      const keepPinnedToBottom = container
+        ? container.scrollHeight - container.scrollTop - container.clientHeight <= 32
+        : false;
       message.content = content;
       textNode.data = content;
-      if (container) container.scrollTop = container.scrollHeight;
+      if (container && keepPinnedToBottom) container.scrollTop = container.scrollHeight;
     };
 
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -731,7 +692,25 @@ class OrientChat extends HTMLElement {
     section.append(label, grid);
     messageContent.append(section);
     const container = this.root.querySelector<HTMLElement>('.messages');
-    if (container) container.scrollTop = container.scrollHeight;
+    if (container) this.revealMessageChoices(item, container);
+  }
+
+  private revealMessageChoices(item: HTMLElement, container: HTMLElement) {
+    if (!item.isConnected || !container.isConnected) return;
+    const itemRect = item.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const padding = 8;
+    const availableHeight = Math.max(0, containerRect.height - padding * 2);
+
+    if (itemRect.height > availableHeight) {
+      container.scrollTop += itemRect.top - containerRect.top - padding;
+      return;
+    }
+    if (itemRect.bottom > containerRect.bottom - padding) {
+      container.scrollTop += itemRect.bottom - containerRect.bottom + padding;
+    } else if (itemRect.top < containerRect.top + padding) {
+      container.scrollTop += itemRect.top - containerRect.top - padding;
+    }
   }
 
   private shouldShowPropertyDetailLink(answer: string, source: Source) {

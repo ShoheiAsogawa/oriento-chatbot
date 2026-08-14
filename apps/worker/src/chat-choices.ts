@@ -48,6 +48,7 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
       choice('中古戸建て', '中古戸建て'),
       choice('中古マンション', '中古マンション'),
       choice('土地', '土地'),
+      choice('その他・事業用', 'その他・事業用'),
       choice('こだわりなし', '物件種別はこだわりなし'),
     ];
   }
@@ -70,10 +71,15 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
     ];
   }
   if (/かなり手狭/u.test(answer)) {
+    const compactLayout = answer.match(/(?:ワンルーム|1R|1K)/u)?.[0] || 'ワンルーム';
     return [
-      choice('2LDK以上で探す', '2LDK', 'primary'),
-      choice('そのまま探す', 'ワンルームのまま'),
+      choice('2LDK以上で探す', '2LDK以上', 'primary'),
+      choice('そのまま探す', `${compactLayout}のまま`),
     ];
+  }
+  if (/登録物件情報だけでは全件を正確に絞り込めない/u.test(answer)) {
+    const condition = answer.match(/「([^」]+)」/u)?.[1] || 'この条件';
+    return [choice('この条件を外して検索', `${condition}を条件から外す`, 'primary')];
   }
   if (/条件に合う.*(?:物件|賃貸).*(?:見つかった|見つからなかった)/su.test(answer)) {
     return [choice('条件を変えて探す', '物件を探す')];

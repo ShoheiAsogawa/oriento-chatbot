@@ -28,13 +28,26 @@ COMMON_FEE_LABELS = ("\u5171\u76ca\u8cbb", "\u7ba1\u7406\u8cbb")
 ADDRESS = "\u6240\u5728\u5730"
 LAYOUT_LABELS = ("\u30bf\u30a4\u30d7", "\u9593\u53d6", "\u9593\u53d6\u308a")
 STATUS_LABELS = ("\u8cc3\u8cb8\u72b6\u6cc1", "\u73fe\u6cc1")
+PHP_DIAGNOSTIC_RE = re.compile(
+    r"^(?:PHP\s+)?(?:Warning|Notice|Deprecated|Strict Standards|Fatal error|Parse error):"
+    r"\s.*(?:wp-content|\.php\b).*\bon line\s+\d+\s*$",
+    re.I,
+)
 
 
 def field(section: str, *labels: str) -> str | None:
+    lines = section.splitlines()
     for label in labels:
-        match = re.search(rf"(?m)^{re.escape(label)}\n([^\n]+)", section)
-        if match:
-            return match.group(1).strip()
+        for index, line in enumerate(lines):
+            if line.strip() != label:
+                continue
+            for candidate in lines[index + 1:]:
+                candidate = candidate.strip()
+                if PHP_DIAGNOSTIC_RE.match(candidate):
+                    continue
+                if not candidate or candidate.startswith('#'):
+                    return None
+                return candidate
     return None
 
 

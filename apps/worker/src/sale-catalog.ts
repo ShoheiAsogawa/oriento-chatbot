@@ -2,6 +2,7 @@ import type { ConversationContextMessage } from './conversation-context';
 import { extractPurchaseConsultationState } from './purchase-consultation';
 import type { SearchChunk } from './types';
 import { loadManagedProperties, transportFromText, walkMinutesFromText, yenFromText } from './property-inventory';
+import { prefectureFromText } from './property-areas';
 
 export type SaleProperty = {
   id: string;
@@ -22,6 +23,12 @@ export type SaleCriteria = {
   maxPriceYen?: number;
   propertyType?: string;
   layout?: string;
+  maxWalkMinutes?: number;
+};
+
+export type SaleRecommendationExclusions = {
+  ids?: Iterable<string>;
+  urls?: Iterable<string>;
 };
 
 export function extractSaleCriteria(
@@ -35,6 +42,7 @@ export function extractSaleCriteria(
     maxPriceYen: state.maxPriceYen,
     propertyType: state.propertyType,
     layout: state.layout,
+    maxWalkMinutes: state.maxWalkMinutes,
   };
 }
 
@@ -71,33 +79,65 @@ export async function loadSaleCatalog(env: Env): Promise<SaleProperty[]> {
 }
 
 function matchesPropertyType(actual: string, requested: string) {
+  actual = normalizePropertyType(actual);
   if (requested === '新築戸建て') return /新築.*(?:一戸建て|戸建)/u.test(actual);
   if (requested === '中古戸建て') return /中古.*(?:一戸建て|戸建)/u.test(actual);
   if (requested === '中古マンション') return /マンション/u.test(actual) && !/新築/u.test(actual);
   if (requested === '土地') return /土地/u.test(actual);
+  if (requested === '戸建て') return /(?:一戸建て|戸建)/u.test(actual);
+  if (requested === 'マンション') return /マンション/u.test(actual);
+  if (requested === 'その他・事業用') {
+    return /(?:その他|店舗|事務所|収益|アパート|ビル|テラスハウス)/u.test(actual);
+  }
   return actual.includes(requested);
 }
 
-export function recommendSaleProperties(properties: SaleProperty[], criteria: SaleCriteria) {
+function normalizePropertyType(value: string) {
+  return [...new Set(value.split(/[,、]/u).map((item) => item.trim()).filter(Boolean))].join('、');
+}
+
+function normalizeLayout(value: string) {
+  return value.normalize('NFKC').toUpperCase().replace(/([SLDKR])\1+/gu, '$1');
+}
+
+function isUnavailableStatus(value: string) {
+  return /(?:成約済|契約済|販売終了|掲載終了|非公開|取(?:り)?下げ|売(?:り)?止)/u.test(value);
+}
+
+export function recommendSaleProperties(
+  properties: SaleProperty[],
+  criteria: SaleCriteria,
+  exclusions: SaleRecommendationExclusions = {},
+) {
+  const excludedIds = new Set(exclusions.ids || []);
+  const excludedUrls = new Set(exclusions.urls || []);
   return properties.filter((property) => {
+    if (excludedIds.has(property.id) || excludedUrls.has(property.url)) return false;
     if (!property.url.startsWith('https://orijyu.com/buy/')) return false;
+    if (isUnavailableStatus(property.status)) return false;
+    const location = `${property.title}\n${property.address}\n${property.transport.join('\n')}`;
+    const listedPrefecture = prefectureFromText(property.address) || prefectureFromText(property.title);
+    if (criteria.prefecture && listedPrefecture && listedPrefecture !== criteria.prefecture) return false;
     if (criteria.area) {
-      const location = `${property.title}\n${property.address}\n${property.transport.join('\n')}`;
       if (!location.includes(criteria.area)) return false;
     }
     if (criteria.maxPriceYen != null && property.price_yen > criteria.maxPriceYen) return false;
     if (criteria.propertyType && !matchesPropertyType(property.property_type, criteria.propertyType)) return false;
-    if (criteria.layout && !property.layout.toUpperCase().includes(criteria.layout)) return false;
+    if (criteria.layout && !normalizeLayout(property.layout).includes(normalizeLayout(criteria.layout))) return false;
+    if (criteria.maxWalkMinutes != null
+      && (property.walk_minutes == null || property.walk_minutes > criteria.maxWalkMinutes)) return false;
     return true;
   }).sort((left, right) => left.price_yen - right.price_yen || (left.walk_minutes ?? 999) - (right.walk_minutes ?? 999)).slice(0, 3);
 }
 
 export function salePropertyChunk(property: SaleProperty, index: number): SearchChunk {
+  const propertyType = normalizePropertyType(property.property_type);
+  const layout = normalizeLayout(property.layout);
   return {
     id: `sale-${property.id}`,
     type: 'text',
     score: 1 - index * 0.01,
-    text: `## ${property.title}\n公式ページ: ${property.url}\n\n販売価格 ${property.price_yen}円\n所在地 ${property.address}\n物件種別 ${property.property_type}\n間取り ${property.layout}\n交通 ${property.transport.join('、')}`,
+    text: `## ${property.title}\n公式ページ: ${property.url}\n\n販売価格 ${property.price_yen}円\n所在地 ${property.address}\n物件種別 ${propertyType}\n間取り ${layout}\n交通 ${property.transport.join('、')}`,
     item: {
       key: `sale_catalog/${property.id}.json`,
       metadata: { title: property.title, source_url: property.url, category: 'properties_for_sale', language: 'ja' },
@@ -111,9 +151,10 @@ export function formatSaleAnswer(properties: SaleProperty[], criteria: SaleCrite
   }
   const lines = properties.map((property, index) => {
     const price = `${Math.round(property.price_yen / 1_000) / 10}万円`;
-    const layout = property.layout ? `、${property.layout}` : '';
+    const propertyType = normalizePropertyType(property.property_type);
+    const layout = property.layout ? `、${normalizeLayout(property.layout)}` : '';
     const walk = property.walk_minutes != null ? `、駅徒歩${property.walk_minutes}分` : '';
-    return `- ${property.title}：${property.property_type}、販売価格${price}${layout}、${property.address}${walk}にゃん。[${index + 1}]`;
+    return `- ${property.title}：${propertyType}、販売価格${price}${layout}、${property.address}${walk}にゃん。[${index + 1}]`;
   });
-  return `${criteria.area || ''}で条件に合う購入物件が見つかったにゃん。\n${lines.join('\n')}`;
+  return `${criteria.area || criteria.prefecture || '指定エリア'}で条件に合う購入物件が見つかったにゃん。\n${lines.join('\n')}`;
 }

@@ -21,11 +21,13 @@ export type RentalCriteria = {
   prefecture?: string;
   area?: string;
   maxRentYen?: number;
+  includeCommonFee?: boolean;
   layout?: string;
   maxWalkMinutes?: number;
 };
 
 const RESIDENTIAL_TYPES = /(?:賃貸住宅|マンション|アパート|貸家|一戸建|テラスハウス)/u;
+const UNAVAILABLE_STATUS = /(?:成約|契約済|申込済|募集終了|非公開|掲載終了|取扱終了|空室なし)/u;
 
 export function extractRentalCriteria(
   history: ConversationContextMessage[],
@@ -36,9 +38,20 @@ export function extractRentalCriteria(
     prefecture: state.prefecture,
     area: state.area,
     maxRentYen: state.maxRentYen,
+    ...(state.includeCommonFee == null ? {} : { includeCommonFee: state.includeCommonFee }),
     layout: state.layout,
     maxWalkMinutes: state.maxWalkMinutes,
   };
+}
+
+function layoutMatches(actual: string, requested: string) {
+  const normalizedActual = actual.normalize('NFKC').toUpperCase().replace('ワンルーム', '1R');
+  if (!requested.endsWith('+')) return normalizedActual === requested;
+  const minimumRooms = Number(requested.match(/^\d+/u)?.[0]);
+  const actualRooms = Number(normalizedActual.match(/^\d+/u)?.[0]);
+  return Number.isFinite(minimumRooms)
+    && Number.isFinite(actualRooms)
+    && actualRooms >= minimumRooms;
 }
 
 export async function loadRentalCatalog(env: Env): Promise<RentalProperty[]> {
@@ -74,16 +87,23 @@ export async function loadRentalCatalog(env: Env): Promise<RentalProperty[]> {
   ];
 }
 
-export function recommendRentalProperties(properties: RentalProperty[], criteria: RentalCriteria) {
+export function recommendRentalProperties(
+  properties: RentalProperty[],
+  criteria: RentalCriteria,
+  excludedPropertyIdsOrUrls: ReadonlySet<string> = new Set(),
+) {
   return properties.filter((property) => {
+    if (excludedPropertyIdsOrUrls.has(property.id) || excludedPropertyIdsOrUrls.has(property.url)) return false;
     if (!RESIDENTIAL_TYPES.test(property.property_type)) return false;
     if (!property.url.startsWith('https://orijyu.com/rent/')) return false;
+    if (UNAVAILABLE_STATUS.test(property.status)) return false;
     if (criteria.area) {
       const location = `${property.title}\n${property.address}\n${property.transport.join('\n')}`;
       if (!location.includes(criteria.area)) return false;
     }
-    if (criteria.maxRentYen != null && property.rent_yen > criteria.maxRentYen) return false;
-    if (criteria.layout && property.layout.toUpperCase() !== criteria.layout) return false;
+    const commonFeeYen = criteria.includeCommonFee ? (yenFromText(property.common_fee) || 0) : 0;
+    if (criteria.maxRentYen != null && property.rent_yen + commonFeeYen > criteria.maxRentYen) return false;
+    if (criteria.layout && !layoutMatches(property.layout, criteria.layout)) return false;
     if (criteria.maxWalkMinutes != null && (property.walk_minutes == null || property.walk_minutes > criteria.maxWalkMinutes)) return false;
     return true;
   }).sort((left, right) => left.rent_yen - right.rent_yen || (left.walk_minutes ?? 999) - (right.walk_minutes ?? 999)).slice(0, 3);

@@ -24,14 +24,31 @@ export type GuidedSearchOptions = {
 };
 
 const RESIDENTIAL_RENTAL = /(?:賃貸住宅|マンション|アパート|貸家|一戸建|テラスハウス)/u;
+const UNAVAILABLE_RENTAL_STATUS = /(?:成約|契約済|募集終了|非公開|掲載終了|取扱終了)/u;
+const UNAVAILABLE_SALE_STATUS = /(?:成約済|契約済|販売終了|掲載終了|非公開|取(?:り)?下げ|売(?:り)?止)/u;
 const RESTART_CHOICE: ChatChoice = {
   label: '条件を変えて探す',
   value: '物件を探す',
   tone: 'primary',
 };
+const RENTAL_BUDGET_STEP_YEN = 10_000;
+const PURCHASE_BUDGET_STEP_YEN = 10_000_000;
 
 function filteredOrRestart(choices: ChatChoice[]) {
   return choices.length > 0 ? choices : [RESTART_CHOICE];
+}
+
+export function guidedAnswerForAvailability(
+  answer: string,
+  choices: ChatChoice[],
+  mode: 'rental' | 'purchase',
+  criteria: Pick<RentalCriteria | SaleCriteria, 'area' | 'prefecture'>,
+) {
+  const restartOnly = choices.length === 1 && choices[0]?.value === RESTART_CHOICE.value;
+  if (!restartOnly) return answer;
+  const location = criteria.area || criteria.prefecture || '選択した地域';
+  const propertyLabel = mode === 'rental' ? '賃貸' : '購入';
+  return `${location}では、現在の条件に合う登録中の${propertyLabel}物件が見つからないにゃん。条件や地域を変えて探すか、最新情報は公式LINEで問い合わせてにゃん。`;
 }
 
 function button(label: string): ChatChoice {
@@ -41,6 +58,30 @@ function button(label: string): ChatChoice {
 function budgetFromChoice(value: string) {
   const tenThousands = value.match(/(\d[\d,]*)万円/u)?.[1];
   return tenThousands ? Number(tenThousands.replace(/,/gu, '')) * 10_000 : undefined;
+}
+
+function inventoryBudgetChoice(
+  minimumPriceYen: number,
+  stepYen: number,
+  valuePrefix: '家賃' | '購入予算',
+): ChatChoice {
+  const ceilingYen = Math.ceil(minimumPriceYen / stepYen) * stepYen;
+  const tenThousands = ceilingYen / 10_000;
+  return {
+    label: `${tenThousands.toLocaleString('ja-JP')}万円まで`,
+    value: `${valuePrefix}${tenThousands}万円まで`,
+    tone: 'primary',
+  };
+}
+
+function availabilityForArea<T>(options: Record<string, T>, requestedArea?: string) {
+  if (!requestedArea) return undefined;
+  if (options[requestedArea]) return options[requestedArea];
+  const normalized = requestedArea.normalize('NFKC').replace(/[市区町村]$/u, '');
+  const matches = Object.entries(options).filter(([municipality]) => (
+    municipality.normalize('NFKC').replace(/[市区町村]$/u, '') === normalized
+  ));
+  return matches.length === 1 ? matches[0]?.[1] : undefined;
 }
 
 function rentalLayoutFromChoice(value: string) {
@@ -57,7 +98,16 @@ function canonicalSaleType(value: string) {
   if (/中古.*(?:一戸建て?|戸建)/u.test(value)) return '中古戸建て';
   if (/マンション/u.test(value) && !/新築/u.test(value)) return '中古マンション';
   if (/土地/u.test(value)) return '土地';
+  if (/(?:その他|店舗|事務所|収益|アパート|ビル|テラスハウス)/u.test(value)) return 'その他・事業用';
   return undefined;
+}
+
+function saleTypeKeys(value: string) {
+  const canonical = canonicalSaleType(value);
+  if (!canonical) return [];
+  if (canonical === '新築戸建て' || canonical === '中古戸建て') return [canonical, '戸建て'];
+  if (canonical === '中古マンション') return [canonical, 'マンション'];
+  return [canonical];
 }
 
 function updateMinimum(record: Record<string, number>, key: string, value: number) {
@@ -70,7 +120,9 @@ export function buildGuidedSearchOptions(
 ): GuidedSearchOptions {
   const rental: GuidedSearchOptions['rental'] = {};
   rentals.forEach((property) => {
-    if (!RESIDENTIAL_RENTAL.test(property.property_type) || !property.url.startsWith('https://orijyu.com/rent/')) return;
+    if (!RESIDENTIAL_RENTAL.test(property.property_type)
+      || UNAVAILABLE_RENTAL_STATUS.test(property.status)
+      || !property.url.startsWith('https://orijyu.com/rent/')) return;
     const area = propertyArea(property.address);
     if (!area) return;
     const entry = rental[area.municipality] ||= {
@@ -85,7 +137,7 @@ export function buildGuidedSearchOptions(
 
   const sale: GuidedSearchOptions['sale'] = {};
   sales.forEach((property) => {
-    if (!property.url.startsWith('https://orijyu.com/buy/')) return;
+    if (UNAVAILABLE_SALE_STATUS.test(property.status) || !property.url.startsWith('https://orijyu.com/buy/')) return;
     const area = propertyArea(property.address);
     if (!area) return;
     const entry = sale[area.municipality] ||= {
@@ -96,13 +148,15 @@ export function buildGuidedSearchOptions(
       layout_min_price_yen_by_type: {},
     };
     entry.min_price_yen = Math.min(entry.min_price_yen, property.price_yen);
-    const propertyType = canonicalSaleType(property.property_type);
+    const propertyTypes = saleTypeKeys(property.property_type);
     const layout = guidedLayout(property.layout);
-    if (propertyType) updateMinimum(entry.type_min_price_yen, propertyType, property.price_yen);
+    propertyTypes.forEach((propertyType) => {
+      updateMinimum(entry.type_min_price_yen, propertyType, property.price_yen);
+    });
     if (layout) updateMinimum(entry.layout_min_price_yen, layout, property.price_yen);
-    if (propertyType && layout) {
+    if (layout) propertyTypes.forEach((propertyType) => {
       updateMinimum(entry.layout_min_price_yen_by_type[propertyType] ||= {}, layout, property.price_yen);
-    }
+    });
   });
 
   return { version: 2, rental, sale };
@@ -152,13 +206,16 @@ export function rentalChoicesForAvailability(
   }
   if (choices.length === 0) return choices;
 
-  const area = criteria.area ? options.rental[criteria.area] : undefined;
+  const area = availabilityForArea(options.rental, criteria.area);
   if (/家賃の上限/u.test(answer)) {
     if (!area) return [RESTART_CHOICE];
-    return filteredOrRestart(choices.filter((item) => {
+    const availableChoices = choices.filter((item) => {
       const budget = budgetFromChoice(item.value);
       return budget != null && area.min_rent_yen <= budget;
-    }));
+    });
+    return availableChoices.length > 0
+      ? availableChoices
+      : [inventoryBudgetChoice(area.min_rent_yen, RENTAL_BUDGET_STEP_YEN, '家賃')];
   }
 
   if (/希望の間取りや条件/u.test(answer)) {
@@ -189,13 +246,16 @@ export function purchaseChoicesForAvailability(
   }
   if (choices.length === 0) return choices;
 
-  const area = criteria.area ? options.sale[criteria.area] : undefined;
+  const area = availabilityForArea(options.sale, criteria.area);
   if (/購入予算の上限/u.test(answer)) {
     if (!area) return [RESTART_CHOICE];
-    return filteredOrRestart(choices.filter((item) => {
+    const availableChoices = choices.filter((item) => {
       const budget = budgetFromChoice(item.value);
       return budget != null && area.min_price_yen <= budget;
-    }));
+    });
+    return availableChoices.length > 0
+      ? availableChoices
+      : [inventoryBudgetChoice(area.min_price_yen, PURCHASE_BUDGET_STEP_YEN, '購入予算')];
   }
 
   if (/購入する物件の種類/u.test(answer)) {

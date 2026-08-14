@@ -1,12 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateRentalConsultation } from '../src/rental-consultation';
+import { evaluateRentalConsultation, extractRentalConsultationState } from '../src/rental-consultation';
 
 describe('rental consultation', () => {
   it('starts a property search without returning property detail links before conditions are known', () => {
     expect(evaluateRentalConsultation([], '物件を探す')).toEqual({
       active: false,
-      response: '物件探しだね。賃貸と購入のどちらを探しているか、希望エリアを教えてにゃん。',
+      response: '物件探しだね。まず、賃貸と購入のどちらを探しているか選んでにゃん。',
     });
+  });
+
+  it('accepts a natural property-search starter', () => {
+    expect(evaluateRentalConsultation([], '物件を探したい')).toEqual({
+      active: false,
+      response: '物件探しだね。まず、賃貸と購入のどちらを探しているか選んでにゃん。',
+    });
+  });
+
+  it.each(['賃貸のメリットは？', '賃貸と購入はどちらがいい？'])
+  ('does not hijack an explanatory comparison as a guided rental search: %s', (question) => {
+    expect(evaluateRentalConsultation([], question)).toEqual({ active: false });
   });
 
   it('asks for the property type before searching when an area follows a property-search request', () => {
@@ -94,6 +106,13 @@ describe('rental consultation', () => {
 
   it('asks for an area first when a visitor wants to live alone', () => {
     expect(evaluateRentalConsultation([], '一人暮らししたい')).toEqual({
+      active: true,
+      response: expect.stringContaining('住みたい都道府県'),
+    });
+  });
+
+  it('understands that a newly built home can still be a rental request', () => {
+    expect(evaluateRentalConsultation([], '新築の賃貸に住みたい')).toEqual({
       active: true,
       response: expect.stringContaining('住みたい都道府県'),
     });
@@ -229,7 +248,44 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
       { role: 'user', content: 'こだわりなし' },
       { role: 'assistant', content: '堺市で条件に合う居住用賃貸が見つかったにゃん。' },
-    ], 'もっと駅に近い物件がいい')).toEqual({ active: true });
+    ], 'もっと駅に近い物件がいい')).toEqual({
+      active: true,
+      response: '希望する駅徒歩の上限を「徒歩10分以内」のように教えてにゃん。',
+    });
+  });
+
+  it.each([
+    ['もっと安い物件がいい', '新しい家賃の上限'],
+    ['もっと広い部屋がいい', '希望の間取りや条件'],
+  ] as const)('asks for a concrete rental refinement instead of repeating results: %s', (message, expected) => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '堺市で賃貸を探したい' },
+      { role: 'assistant', content: '条件に合う居住用賃貸が見つかったにゃん。' },
+    ], message).response).toContain(expected);
+  });
+
+  it.each(['どれがおすすめ？', '内見したい', '問い合わせしたい'])
+  ('hands a completed rental action back to the conversational agent: %s', (message) => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '堺市で賃貸を探したい' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+      { role: 'user', content: 'こだわりなし' },
+      { role: 'assistant', content: '堺市で条件に合う居住用賃貸が見つかったにゃん。' },
+    ], message)).toEqual({ active: false });
+  });
+
+  it('starts from prefecture again when rental is explicitly restarted after completed results', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '堺市で賃貸を探したい' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+      { role: 'user', content: '10万' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+      { role: 'user', content: '1K' },
+      { role: 'assistant', content: '堺市で条件に合う居住用賃貸が見つかったにゃん。' },
+    ], 'もう一度賃貸を探したい')).toEqual({
+      active: true,
+      response: expect.stringContaining('住みたい都道府県'),
+    });
   });
 
   it('starts a fresh rental consultation when a visitor switches from purchase to living alone', () => {
@@ -278,5 +334,119 @@ describe('rental consultation', () => {
       { role: 'user', content: '堺市' },
       { role: 'assistant', content: '次に、家賃の上限を教えてにゃん。' },
     ], 'あなたはだれ？')).toEqual({ active: false });
+  });
+
+  it.each([
+    '和歌山県田辺市',
+    '和歌山県の田辺市',
+    '和歌山県で田辺市',
+  ])('keeps both prefecture and municipality from one free-text answer: %s', (answer) => {
+    const history = [
+      { role: 'user' as const, content: '賃貸' },
+      { role: 'assistant' as const, content: '住みたい都道府県と市区町村を教えてにゃん。' },
+    ];
+    expect(extractRentalConsultationState(history, answer)).toMatchObject({
+      prefecture: '和歌山県',
+      area: '田辺市',
+    });
+    expect(evaluateRentalConsultation(history, answer).response).toContain('家賃の上限');
+  });
+
+  it('clears a municipality when the visitor changes only the prefecture', () => {
+    expect(extractRentalConsultationState([
+      { role: 'user', content: '大阪府堺市で賃貸を探したい' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+    ], '兵庫県に変更')).toMatchObject({
+      prefecture: '兵庫県',
+      area: undefined,
+    });
+  });
+
+  it.each([
+    ['家族は4人です', 4],
+    ['3人で暮らします', 3],
+    ['5名で入居予定', 5],
+    ['大人2人、子ども2人', 4],
+  ] as const)('understands household-size wording %s', (answer, expectedSize) => {
+    expect(extractRentalConsultationState([], `賃貸で${answer}`)).toMatchObject({
+      householdSize: expectedSize,
+    });
+  });
+
+  it.each([
+    ['家賃8万5千円まで', 85_000],
+    ['家賃8万5000円まで', 85_000],
+    ['家賃の上限は未定', Number.MAX_SAFE_INTEGER],
+  ] as const)('normalizes rent wording %s', (answer, expectedRent) => {
+    expect(extractRentalConsultationState([], `堺市の賃貸、${answer}`)).toMatchObject({
+      maxRentYen: expectedRent,
+    });
+  });
+
+  it('does not interpret having no budget as an unlimited rent ceiling', () => {
+    expect(extractRentalConsultationState([], '予算がないので賃貸は厳しい').maxRentYen).toBeUndefined();
+  });
+
+  it('records whether the rent ceiling includes the common fee', () => {
+    expect(extractRentalConsultationState([], '堺市の賃貸、共益費込みで10万円まで、1K')).toMatchObject({
+      maxRentYen: 100_000,
+      includeCommonFee: true,
+    });
+    expect(extractRentalConsultationState([], '堺市の賃貸、管理費は別で10万円まで、1K')).toMatchObject({
+      includeCommonFee: false,
+    });
+  });
+
+  it.each([
+    'こだわりなし',
+    '間取りはこだわりなし',
+    '間取りはなんでもいい',
+  ])('clears an earlier layout when the visitor removes the condition: %s', (answer) => {
+    const state = extractRentalConsultationState([
+      { role: 'user', content: '堺市で賃貸、家賃10万円、1K' },
+      { role: 'assistant', content: '条件に合う居住用賃貸が見つかったにゃん。' },
+    ], answer);
+    expect(state.layout).toBeUndefined();
+    expect(state.hasPreference).toBe(true);
+  });
+
+  it('does not return unfiltered recommendations for unsupported rental conditions', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '堺市で賃貸を探したい' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+      { role: 'user', content: '10万円まで' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+    ], 'ペット可')).toEqual({
+      active: true,
+      response: expect.stringMatching(/ペット.*正確に絞り込めない.*公式LINE/su),
+    });
+  });
+
+  it('can continue after the visitor removes an unsupported condition', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '堺市で賃貸を探したい' },
+      { role: 'assistant', content: '家賃の上限を教えてにゃん。' },
+      { role: 'user', content: '10万円まで' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+      { role: 'user', content: 'ペット可' },
+      { role: 'assistant', content: 'ペット可は正確に絞り込めないにゃん。' },
+    ], 'こだわりなし')).toEqual({ active: true });
+  });
+
+  it('removes only the unsupported condition when using the recovery button', () => {
+    const state = extractRentalConsultationState([
+      { role: 'user', content: '堺市で賃貸、家賃10万円' },
+      { role: 'assistant', content: '希望の間取りや条件を教えてにゃん。' },
+      { role: 'user', content: '2LDK、ペット可' },
+      { role: 'assistant', content: 'ペットは正確に絞り込めないにゃん。' },
+    ], 'ペットを条件から外す');
+    expect(state).toMatchObject({ layout: '2LDK' });
+    expect(state.unsupportedCondition).toBeUndefined();
+  });
+
+  it('keeps an explicit minimum-layout request for family searches', () => {
+    expect(extractRentalConsultationState([], '岸和田市で家族4人、家賃10万円、2LDK以上の賃貸')).toMatchObject({
+      layout: '2LDK+',
+    });
   });
 });

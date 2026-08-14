@@ -38,4 +38,11 @@ describe('sale catalog', () => {
       area: '堺市', maxPriceYen: 20_000_000, propertyType: '中古マンション', layout: '3LDK',
     })).toEqual([properties[2]]);
   });
+
+  it('filters a conversational station-distance refinement', () => {
+    expect(recommendSaleProperties(properties, {
+      area: '堺市',
+      maxWalkMinutes: 5,
+    })).toEqual([properties[0]]);
+  });
 });

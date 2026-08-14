@@ -12,6 +12,7 @@ export interface KnowledgeItem {
   file_size: number;
   created_at: string;
   last_seen_at: string;
+  error?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -276,6 +277,7 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
 }
 
 const demoMode = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+export const ADMIN_SESSION_EXPIRED_EVENT = 'orient-admin-session-expired';
 
 function adminHeaders(initial?: HeadersInit) {
   const headers = new Headers(initial);
@@ -288,6 +290,9 @@ async function request<T>(path: string, init?: RequestInit, fallback?: T): Promi
     const response = await fetch(path, { ...init, headers: adminHeaders(init?.headers), credentials: 'same-origin' });
     if (!response.ok) {
       const payload = await response.json().catch(() => null) as { error?: string } | null;
+      if (response.status === 401 && path.startsWith('/api/admin/')) {
+        window.dispatchEvent(new Event(ADMIN_SESSION_EXPIRED_EVENT));
+      }
       throw new Error(payload?.error || `API ${response.status}`);
     }
     return await response.json() as T;
@@ -298,19 +303,84 @@ async function request<T>(path: string, init?: RequestInit, fallback?: T): Promi
 }
 
 export const api = {
-  authSession: () => request<AdminSessionResponse>('/api/auth/admin/session'),
+  authSession: () => request<AdminSessionResponse>('/api/auth/admin/session', undefined, {
+    authenticated: true,
+    user: { loginId: 'local-admin', subject: 'local-admin' },
+  }),
   login: (loginId: string, password: string) => request<AdminLoginResponse>('/api/auth/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ loginId, password }) }),
   logout: () => request<{ ok: boolean }>('/api/auth/admin/logout', { method: 'POST' }),
   overview: () => request<OverviewData>('/api/admin/overview', undefined, mockOverviewData()),
   bootstrapKnowledge: () => request('/api/admin/knowledge/bootstrap', { method: 'POST' }),
-  seedKnowledge: () => request<{ ok: boolean; accepted: Array<{ file: string; id: string }>; skipped: string[] }>('/api/admin/knowledge/seed', { method: 'POST' }, { ok: true, accepted: [], skipped: [] }),
-  knowledge: (options: KnowledgeListOptions = {}) => {
-    const params = new URLSearchParams();
-    if (options.query) params.set('q', options.query);
-    if (options.category && options.category !== 'all') params.set('category', options.category);
-    if (options.sort) params.set('sort', options.sort);
-    params.set('perPage', String(options.perPage ?? 1000));
-    return request<{ result: KnowledgeItem[]; result_info: Record<string, number> }>(`/api/admin/knowledge?${params.toString()}`, undefined, { result: mockKnowledge, result_info: { total_count: 28, page: 1, per_page: 20 } });
+  seedKnowledge: (prune = true) => request<{
+    ok: boolean;
+    accepted: Array<{ file: string; id: string; status: string }>;
+    skipped: string[];
+    incomplete: Array<{ file: string; id: string; status: string }>;
+    deleted: string[];
+    pruneRequested: boolean;
+    pruneApplied: boolean;
+    pruneBlockedReason: string | null;
+    excluded: number;
+    coveredByManualItem: number;
+  }>('/api/admin/knowledge/seed', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ prune }),
+  }, {
+    ok: true,
+    accepted: [],
+    skipped: [],
+    incomplete: [],
+    deleted: [],
+    pruneRequested: prune,
+    pruneApplied: prune,
+    pruneBlockedReason: null,
+    excluded: 0,
+    coveredByManualItem: 0,
+  }),
+  knowledge: async (options: KnowledgeListOptions = {}) => {
+    const perPage = Math.min(1000, Math.max(1, options.perPage ?? 1000));
+    const result: KnowledgeItem[] = [];
+    const seen = new Set<string>();
+    let page = 1;
+    let totalCount = Number.POSITIVE_INFINITY;
+
+    while (page <= 100 && result.length < totalCount) {
+      const params = new URLSearchParams();
+      if (options.query) params.set('q', options.query);
+      if (options.category && options.category !== 'all') params.set('category', options.category);
+      if (options.sort) params.set('sort', options.sort);
+      params.set('page', String(page));
+      params.set('perPage', String(perPage));
+      const fallback = page === 1
+        ? { result: mockKnowledge, result_info: { total_count: mockKnowledge.length, page: 1, per_page: perPage } }
+        : undefined;
+      const data = await request<{ result: KnowledgeItem[]; result_info: Record<string, number> }>(
+        `/api/admin/knowledge?${params.toString()}`,
+        undefined,
+        fallback,
+      );
+      const before = result.length;
+      for (const item of data.result) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        result.push(item);
+      }
+      const reportedTotal = Number(data.result_info.total_count);
+      totalCount = Number.isFinite(reportedTotal) && reportedTotal >= 0 ? reportedTotal : result.length;
+      if (data.result.length < perPage || result.length === before) break;
+      page += 1;
+    }
+
+    return {
+      result,
+      result_info: {
+        count: result.length,
+        page: 1,
+        per_page: perPage,
+        total_count: Number.isFinite(totalCount) ? totalCount : result.length,
+      },
+    };
   },
   uploadKnowledge: (file: File, options: KnowledgeUploadOptions) => {
     const form = new FormData();
@@ -340,8 +410,16 @@ export const api = {
     { id, key: '', title: input.title, category: input.category, source_url: input.sourceUrl, replacedItemCount: 0, reindexStarted: true },
   ),
   deleteKnowledge: (id: string) => request(`/api/admin/knowledge/${id}`, { method: 'DELETE' }, { ok: true }),
-  reindexKnowledge: (id: string) => request(`/api/admin/knowledge/${id}/reindex`, { method: 'POST' }, { ok: true }),
-  conversations: () => request('/api/admin/conversations', undefined, { result: mockConversations, page: 1, perPage: 30 }),
+  reindexKnowledge: (id: string) => request<KnowledgeItem>(`/api/admin/knowledge/${id}/reindex`, { method: 'POST' }),
+  conversations: (search = '') => {
+    const params = new URLSearchParams({ page: '1', perPage: '100' });
+    if (search.trim()) params.set('search', search.trim());
+    return request<{ result: ConversationSummary[]; page: number; perPage: number }>(
+      `/api/admin/conversations?${params.toString()}`,
+      undefined,
+      { result: mockConversations.filter((row) => !search.trim() || row.latest_message.includes(search.trim())), page: 1, perPage: 100 },
+    );
+  },
   conversation: (id: string) => request<{ conversation: Record<string, unknown>; messages: ConversationMessage[] }>(`/api/admin/conversations/${id}`, undefined, {
     conversation: { id },
     messages: [
@@ -349,7 +427,7 @@ export const api = {
       { id: `${id}-a`, role: 'assistant', content_redacted: mockConversations.find((row) => row.id === id)?.has_refusal ? '価格交渉や個別の値引き判断はチャットではお答えできません。' : '公式サイトの登録情報をもとにご案内します。', policy_action: mockConversations.find((row) => row.id === id)?.has_refusal ? 'price_negotiation' : 'allow', created_at: '2026-08-09T09:23:02Z', citations: '[]' },
     ],
   }),
-  monthlyReport: () => request<{ availableMonths: string[]; report: MonthlyReport | null }>('/api/admin/reports/monthly', undefined, {
+  monthlyReport: (month?: string) => request<{ availableMonths: string[]; report: MonthlyReport | null }>(`/api/admin/reports/monthly${month ? `?month=${encodeURIComponent(month)}` : ''}`, undefined, {
     availableMonths: ['2026-07'],
     report: {
       month: '2026-07',
@@ -360,13 +438,16 @@ export const api = {
   }),
   downloadConversations: async () => {
     const response = await fetch('/api/admin/conversations/export.csv', { headers: adminHeaders(), credentials: 'same-origin' });
+    if (response.status === 401) window.dispatchEvent(new Event(ADMIN_SESSION_EXPIRED_EVENT));
     if (!response.ok) throw new Error(`CSV export ${response.status}`);
     const url = URL.createObjectURL(await response.blob());
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = `orient-conversations-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.append(anchor);
     anchor.click();
-    URL.revokeObjectURL(url);
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   },
   settings: () => request('/api/admin/settings', undefined, {
     answer_policy: { domain: '不動産・住まい・物件・家づくり・店舗案内・問い合わせ方法', min_retrieval_score: 0.48, refuse_price_negotiation: true, refuse_legal_judgment: true, refuse_important_matters: true },

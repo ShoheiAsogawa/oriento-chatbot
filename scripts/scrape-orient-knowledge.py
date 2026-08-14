@@ -60,6 +60,11 @@ SKIP_HINTS = re.compile(
 )
 SPACE_RE = re.compile(r"[\t\f\v ]+")
 BLANK_RE = re.compile(r"\n{3,}")
+PHP_DIAGNOSTIC_RE = re.compile(
+    r"^(?:PHP\s+)?(?:Warning|Notice|Deprecated|Strict Standards|Fatal error|Parse error):"
+    r"\s.*(?:wp-content|\.php\b).*\bon line\s+\d+\s*$",
+    re.I,
+)
 
 
 @dataclass(frozen=True)
@@ -227,6 +232,11 @@ def clean_text(value: str) -> str:
     for raw in value.replace("\r", "\n").split("\n"):
         line = SPACE_RE.sub(" ", raw).strip(" |\t")
         if not line or line == previous:
+            continue
+        # A legacy WordPress template can print PHP diagnostics into otherwise
+        # valid property pages. They are not knowledge and can be mistaken for
+        # the value immediately following a property field label.
+        if PHP_DIAGNOSTIC_RE.match(line):
             continue
         if re.fullmatch(r"[|・●▶▷>\-–—_]+", line):
             continue

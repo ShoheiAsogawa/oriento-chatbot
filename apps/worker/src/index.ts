@@ -10,6 +10,7 @@ import {
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
 import { choicesForChatAnswer } from './chat-choices';
 import {
+  guidedAnswerForAvailability,
   loadGuidedSearchOptions,
   purchaseChoicesForAvailability,
   rentalChoicesForAvailability,
@@ -21,6 +22,7 @@ import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
 import { directConversationAnswer, ensureOrinyanEnding, evaluatePolicy, isPropertyKnowledgeQuestion, noGroundingDecision, SYSTEM_PROMPT } from './policy';
 import { deleteManagedProperty, upsertManagedProperty } from './property-inventory';
+import { wantsOtherPropertyCandidates } from './property-search-continuation';
 import { evaluatePurchaseConsultation } from './purchase-consultation';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
@@ -311,6 +313,7 @@ function knowledgeCategoryFromFilename(filename: string) {
 }
 
 const MAX_KNOWLEDGE_ITEM_SIZE = 4 * 1024 * 1024;
+const SUPPORTED_KNOWLEDGE_ITEM = /\.(?:pdf|docx?|xlsx?|csv|txt|md|png|jpe?g|webp)$/iu;
 const INITIAL_KNOWLEDGE_PATH = /^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.md$/iu;
 const PROPERTY_KNOWLEDGE_CATEGORY = /^properties_for_(?:sale|rent)$/u;
 const KNOWLEDGE_LIST_STATUS = ['queued', 'running', 'completed', 'error', 'skipped', 'outdated'] as const;
@@ -367,7 +370,9 @@ function initialKnowledgeSourceUrl(entry: InitialKnowledgeEntry) {
 
 function initialKnowledgeItemKey(entry: InitialKnowledgeEntry) {
   const filename = entry.file.replaceAll('/', '__');
-  return entry.sha256 ? `${entry.sha256.slice(0, 12)}-${filename}` : filename;
+  return entry.sha256
+    ? `initial-${entry.sha256.slice(0, 16)}-${filename}`
+    : `initial-${filename}`;
 }
 
 function isPropertyKnowledgeCategory(category: string | undefined) {
@@ -491,6 +496,11 @@ function propertyKnowledgeFromMarkdown(markdown: string, fallback: { title: stri
       else if (section === '特徴・設備' || section === '特徴') features.push(line.replace(/^[-*]\s+/u, '').trim());
       continue;
     }
+    const featureBullet = line.match(/^[-*]\s+(.+)$/u);
+    if ((section === '特徴・設備' || section === '特徴') && featureBullet?.[1]?.trim()) {
+      features.push(featureBullet[1].trim());
+      continue;
+    }
     const legacyTarget = legacyFieldMap[trimmedLine];
     if (legacyTarget) {
       const collected: string[] = [];
@@ -550,12 +560,18 @@ function excludeInitialPropertiesCoveredByManualItems(entries: InitialKnowledgeE
 }
 
 export {
+  canonicalInitialKnowledgeItem,
   excludeInitialPropertiesCoveredByManualItems,
+  initialKnowledgeItemKey,
+  initialKnowledgePruneSafety,
+  isFreshPendingInitialItem,
+  matchingInitialKnowledgeItems,
   propertyKnowledgeCategory,
   propertyKnowledgeItemKey,
   propertyKnowledgeMarkdown,
   propertyKnowledgeFromMarkdown,
   propertyKnowledgeSchema,
+  syncInitialKnowledgeFiles,
 };
 
 async function readInitialKnowledgeManifest(env: Env, baseUrl: URL) {
@@ -569,6 +585,18 @@ async function readInitialKnowledgeManifest(env: Env, baseUrl: URL) {
     return isPropertyKnowledgeCategory(initialKnowledgeCategory(entry)) && !safeSourceUrl(entry.source_url);
   });
   if (invalidPropertySource) throw new Error(`Property knowledge is missing an official source URL: ${invalidPropertySource.file}`);
+  const files = new Set<string>();
+  const propertySources = new Set<string>();
+  for (const entry of parsed.data.files) {
+    if (files.has(entry.file)) throw new Error(`Initial knowledge manifest contains a duplicate file: ${entry.file}`);
+    files.add(entry.file);
+    if (!isPropertyKnowledgeCategory(initialKnowledgeCategory(entry))) continue;
+    const sourceUrl = initialKnowledgeSourceUrl(entry);
+    if (propertySources.has(sourceUrl)) {
+      throw new Error(`Initial knowledge manifest contains a duplicate property source URL: ${sourceUrl}`);
+    }
+    propertySources.add(sourceUrl);
+  }
   return parsed.data.files;
 }
 
@@ -631,6 +659,176 @@ async function listAllKnowledgeItems(items: AiSearchItems, status?: KnowledgeLis
   return all;
 }
 
+type InitialKnowledgeSyncItem = {
+  file: string;
+  key: string;
+  id: string;
+  status: string;
+};
+
+function matchingInitialKnowledgeItems(entry: InitialKnowledgeEntry, existingItems: AiSearchItemInfo[]) {
+  const legacyFilename = entry.file.replaceAll('/', '__');
+  const category = initialKnowledgeCategory(entry);
+  const sourceUrl = initialKnowledgeSourceUrl(entry);
+  return existingItems.filter((item) => {
+    if (!isManagedInitialKnowledgeItem(item)) return false;
+    if (isPropertyKnowledgeCategory(category) && new URL(sourceUrl).pathname !== '/') {
+      return knowledgeItemSourceUrl(item) === sourceUrl;
+    }
+    return item.key === initialKnowledgeItemKey(entry)
+      || item.key === legacyFilename
+      || item.key.endsWith(`-${legacyFilename}`);
+  });
+}
+
+function isFreshPendingInitialItem(item: AiSearchItemInfo, expectedSha256?: string) {
+  if (!expectedSha256 || metadataString(item.metadata, 'manifest_sha256') !== expectedSha256) return false;
+  if (item.status !== 'queued' && item.status !== 'running') return false;
+  const timestamp = Date.parse(item.last_seen_at || item.created_at || '');
+  return Number.isFinite(timestamp) && Date.now() - timestamp < 15 * 60 * 1000;
+}
+
+function canonicalInitialKnowledgeItem(entry: InitialKnowledgeEntry, existingItems: AiSearchItemInfo[]) {
+  const versionKey = initialKnowledgeItemKey(entry);
+  return matchingInitialKnowledgeItems(entry, existingItems)
+    .sort((left, right) => {
+      const score = (item: AiSearchItemInfo) => (
+        (metadataString(item.metadata, 'manifest_sha256') === entry.sha256 ? 100 : 0)
+        + (item.status === 'completed' ? 30 : 0)
+        + (isFreshPendingInitialItem(item, entry.sha256) ? 20 : 0)
+        + (item.key === versionKey ? 10 : 0)
+      );
+      return score(right) - score(left) || left.key.localeCompare(right.key);
+    })[0];
+}
+
+function recoveryInitialKnowledgeItemKey(entry: InitialKnowledgeEntry) {
+  const filename = entry.file.replaceAll('/', '__');
+  const version = entry.sha256?.slice(0, 16) || 'unversioned';
+  return `initial-${version}-retry-${crypto.randomUUID().slice(0, 8)}-${filename}`.slice(0, 240);
+}
+
+function isCurrentInitialKnowledgeItem(entry: InitialKnowledgeEntry, item: AiSearchItemInfo | undefined) {
+  if (!item) return false;
+  if (entry.sha256 && metadataString(item.metadata, 'manifest_sha256') !== entry.sha256) return false;
+  return item.status === 'completed';
+}
+
+async function uploadInitialKnowledgeItem(
+  env: Env,
+  baseUrl: URL,
+  items: AiSearchItems,
+  entry: InitialKnowledgeEntry,
+  key: string,
+) {
+  const file = await fetchInitialKnowledgeAsset(env, baseUrl, entry);
+  const result = await items.upload(key, file, { metadata: initialKnowledgeMetadata(entry) });
+  return { file: entry.file, key: result.key || key, id: result.id, status: result.status };
+}
+
+async function syncInitialKnowledgeFiles(
+  env: Env,
+  baseUrl: URL,
+  items: AiSearchItems,
+  files: InitialKnowledgeEntry[],
+  existingItems: AiSearchItemInfo[],
+) {
+  const accepted: InitialKnowledgeSyncItem[] = [];
+  const skipped: InitialKnowledgeSyncItem[] = [];
+
+  for (let offset = 0; offset < files.length; offset += 3) {
+    const batch = files.slice(offset, offset + 3);
+    const results = await Promise.all(batch.flatMap((entry) => {
+      const matching = matchingInitialKnowledgeItems(entry, existingItems);
+      const sameVersion = entry.sha256
+        ? matching.filter((item) => metadataString(item.metadata, 'manifest_sha256') === entry.sha256)
+        : matching.filter((item) => item.key === initialKnowledgeItemKey(entry));
+      const existing = canonicalInitialKnowledgeItem(entry, sameVersion);
+      if (existing && (isCurrentInitialKnowledgeItem(entry, existing)
+        || isFreshPendingInitialItem(existing, entry.sha256))) {
+        skipped.push({ file: entry.file, key: existing.key, id: existing.id, status: existing.status });
+        return [];
+      }
+
+      if (existing) {
+        return [items.get(existing.id).sync()
+          .then((result) => ({
+            file: entry.file,
+            key: result.key || existing.key,
+            id: result.id || existing.id,
+            status: result.status,
+          }))
+          .catch(() => uploadInitialKnowledgeItem(
+            env,
+            baseUrl,
+            items,
+            entry,
+            recoveryInitialKnowledgeItemKey(entry),
+          ))];
+      }
+
+      return [uploadInitialKnowledgeItem(
+        env,
+        baseUrl,
+        items,
+        entry,
+        initialKnowledgeItemKey(entry),
+      )];
+    }));
+    accepted.push(...results);
+  }
+
+  return { accepted, skipped };
+}
+
+function initialKnowledgePruneSafety(files: InitialKnowledgeEntry[], existingItems: AiSearchItemInfo[]) {
+  if (files.length === 0) return { safe: false, reason: 'manifest_empty' } as const;
+  const desiredPropertySources = new Set(files
+    .filter((entry) => isPropertyKnowledgeCategory(initialKnowledgeCategory(entry)))
+    .map(initialKnowledgeSourceUrl));
+  const existingPropertySources = new Set(existingItems
+    .filter(isManagedInitialKnowledgeItem)
+    .filter((item) => isPropertyKnowledgeCategory(normalizeKnowledgeCategory(metadataString(item.metadata, 'category'))))
+    .map(knowledgeItemSourceUrl)
+    .filter((sourceUrl): sourceUrl is string => (
+      typeof sourceUrl === 'string' && new URL(sourceUrl).pathname !== '/'
+    )));
+  if (existingPropertySources.size > 0
+    && desiredPropertySources.size < Math.ceil(existingPropertySources.size * 0.95)) {
+    return { safe: false, reason: 'property_count_dropped_unexpectedly' } as const;
+  }
+  return { safe: true, reason: null } as const;
+}
+
+function completedInitialKnowledgeItemIds(files: InitialKnowledgeEntry[], existingItems: AiSearchItemInfo[]) {
+  const ids = new Set<string>();
+  for (const entry of files) {
+    const current = canonicalInitialKnowledgeItem(entry, existingItems);
+    if (!isCurrentInitialKnowledgeItem(entry, current)) return null;
+    ids.add(current!.id);
+  }
+  return ids;
+}
+
+async function pruneManagedInitialKnowledgeItems(
+  items: AiSearchItems,
+  existingItems: AiSearchItemInfo[],
+  desiredItemIds: Set<string>,
+) {
+  const obsolete = existingItems.filter((item) => (
+    isManagedInitialKnowledgeItem(item) && !desiredItemIds.has(item.id)
+  ));
+  const deleted: string[] = [];
+  for (let offset = 0; offset < obsolete.length; offset += 3) {
+    const batch = obsolete.slice(offset, offset + 3);
+    await Promise.all(batch.map(async (item) => {
+      await items.delete(item.id);
+      deleted.push(item.key);
+    }));
+  }
+  return deleted;
+}
+
 function boundedPositiveInteger(value: string | undefined, fallback: number, maximum: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
@@ -686,6 +884,17 @@ async function recordTurn(
   return assistantMessageId;
 }
 
+async function previouslyCitedPropertyUrls(database: D1Database, conversationId: string) {
+  const result = await database.prepare(`
+    SELECT DISTINCT c.source_url
+    FROM citations c
+    INNER JOIN messages m ON m.id = c.message_id
+    WHERE m.conversation_id = ?
+      AND c.source_url IS NOT NULL
+  `).bind(conversationId).all<{ source_url: string }>();
+  return new Set((result.results || []).map((row) => row.source_url).filter(Boolean));
+}
+
 app.post('/api/chat/message', async (context) => {
   const startedAt = Date.now();
   const input = messageSchema.parse(await context.req.json());
@@ -695,7 +904,7 @@ app.post('/api/chat/message', async (context) => {
   const conversation = await context.env.DB.prepare(`SELECT id FROM conversations WHERE id = ?`).bind(input.conversationId).first();
   if (!conversation) return context.json({ error: 'Conversation not found' }, 404);
 
-  const rate = await context.env.RATE_LIMITER.limit({ key: input.conversationId });
+  const rate = await context.env.CHAT_RATE_LIMITER.limit({ key: input.conversationId });
   if (!rate.success) return context.json({ error: '少し時間をおいてからお試しください' }, 429);
 
   const redacted = redactPII(input.message);
@@ -757,18 +966,22 @@ app.post('/api/chat/message', async (context) => {
     ? { active: false, response: undefined }
     : evaluateRentalConsultation(conversationHistory, redacted);
   if (rentalConsultation.response) {
+    const criteria = extractRentalCriteria(conversationHistory, redacted);
     const choices = rentalConsultation.active
       ? rentalChoicesForAvailability(
         rentalConsultation.response,
         await loadGuidedSearchOptions(context.env),
-        extractRentalCriteria(conversationHistory, redacted),
+        criteria,
       )
       : choicesForChatAnswer(rentalConsultation.response);
+    const answer = rentalConsultation.active
+      ? guidedAnswerForAvailability(rentalConsultation.response, choices, 'rental', criteria)
+      : rentalConsultation.response;
     const messageId = await recordTurn(
       context.env,
       input.conversationId,
       redacted,
-      rentalConsultation.response,
+      answer,
       'allow',
       null,
       Date.now() - startedAt,
@@ -781,7 +994,7 @@ app.post('/api/chat/message', async (context) => {
       metadata: { flow: 'rental_consultation' },
     });
     return context.json({
-      answer: rentalConsultation.response,
+      answer,
       sources: [],
       choices,
       action: 'none',
@@ -792,8 +1005,18 @@ app.post('/api/chat/message', async (context) => {
 
   if (rentalConsultation.active) {
     const criteria = extractRentalCriteria(conversationHistory, redacted);
-    const recommendations = recommendRentalProperties(await loadRentalCatalog(context.env), criteria);
-    const answer = formatRentalAnswer(recommendations, criteria);
+    const wantsOtherCandidates = wantsOtherPropertyCandidates(redacted);
+    const excludedUrls = wantsOtherCandidates
+      ? await previouslyCitedPropertyUrls(context.env.DB, input.conversationId)
+      : new Set<string>();
+    const recommendations = recommendRentalProperties(
+      await loadRentalCatalog(context.env),
+      criteria,
+      excludedUrls,
+    );
+    const answer = wantsOtherCandidates && recommendations.length === 0
+      ? '条件に合うほかの賃貸物件は、現在の登録情報では見つからなかったにゃん。条件を変えて探すか、最新情報は公式LINEで問い合わせてにゃん。'
+      : formatRentalAnswer(recommendations, criteria);
     const chunks = recommendations.map(rentalPropertyChunk);
     const sources = chunks.map(sourceFromChunk);
     const messageId = await recordTurn(
@@ -820,11 +1043,17 @@ app.post('/api/chat/message', async (context) => {
     ? { active: false, response: undefined }
     : evaluatePurchaseConsultation(conversationHistory, redacted);
   if (purchaseConsultation.response) {
-    const answer = purchaseConsultation.response;
+    const criteria = extractSaleCriteria(conversationHistory, redacted);
     const choices = purchaseChoicesForAvailability(
-      answer,
+      purchaseConsultation.response,
       await loadGuidedSearchOptions(context.env),
-      extractSaleCriteria(conversationHistory, redacted),
+      criteria,
+    );
+    const answer = guidedAnswerForAvailability(
+      purchaseConsultation.response,
+      choices,
+      'purchase',
+      criteria,
     );
     const messageId = await recordTurn(
       context.env,
@@ -854,8 +1083,18 @@ app.post('/api/chat/message', async (context) => {
 
   if (purchaseConsultation.active) {
     const criteria = extractSaleCriteria(conversationHistory, redacted);
-    const recommendations = recommendSaleProperties(await loadSaleCatalog(context.env), criteria);
-    const answer = formatSaleAnswer(recommendations, criteria);
+    const wantsOtherCandidates = wantsOtherPropertyCandidates(redacted);
+    const excludedUrls = wantsOtherCandidates
+      ? await previouslyCitedPropertyUrls(context.env.DB, input.conversationId)
+      : new Set<string>();
+    const recommendations = recommendSaleProperties(
+      await loadSaleCatalog(context.env),
+      criteria,
+      { urls: excludedUrls },
+    );
+    const answer = wantsOtherCandidates && recommendations.length === 0
+      ? '条件に合うほかの購入物件は、現在の登録情報では見つからなかったにゃん。条件を変えて探すか、最新情報は公式LINEで問い合わせてにゃん。'
+      : formatSaleAnswer(recommendations, criteria);
     const chunks = recommendations.map(salePropertyChunk);
     const sources = chunks.map(sourceFromChunk);
     const messageId = await recordTurn(
@@ -1130,6 +1369,7 @@ app.post('/api/admin/knowledge/bootstrap', async (context) => {
 });
 
 app.post('/api/admin/knowledge/seed', async (context) => {
+  const input = knowledgeReseedSchema.parse(await context.req.json().catch(() => ({})));
   const baseUrl = new URL(context.req.url);
   const [manifestEntries, exclusions] = await Promise.all([
     readInitialKnowledgeManifest(context.env, baseUrl),
@@ -1139,26 +1379,35 @@ app.post('/api/admin/knowledge/seed', async (context) => {
   const existingItems = await listAllKnowledgeItems(items);
   const exclusionFiltered = excludeRemovedInitialKnowledge(manifestEntries, exclusions);
   const files = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems);
-  const existingKeys = new Set(existingItems.map((item) => item.key));
-  const accepted: Array<{ file: string; key: string; id: string; status: string }> = [];
-  const skipped: string[] = [];
-
-  for (let offset = 0; offset < files.length; offset += 3) {
-    const batch = files.slice(offset, offset + 3);
-    const uploads = batch.filter((entry) => {
-      const key = initialKnowledgeItemKey(entry);
-      if (!existingKeys.has(key)) return true;
-      skipped.push(entry.file);
-      return false;
-    });
-    const results = await Promise.all(uploads.map(async (entry) => {
-      const key = initialKnowledgeItemKey(entry);
-      const file = await fetchInitialKnowledgeAsset(context.env, baseUrl, entry);
-      const result = await items.upload(key, file, { metadata: initialKnowledgeMetadata(entry) });
-      return { file: entry.file, key, id: result.id, status: result.status };
-    }));
-    accepted.push(...results);
-  }
+  const { accepted, skipped: skippedItems } = await syncInitialKnowledgeFiles(
+    context.env,
+    baseUrl,
+    items,
+    files,
+    existingItems,
+  );
+  const syncedItems = [...accepted, ...skippedItems];
+  const incomplete = syncedItems.filter((item) => item.status !== 'completed');
+  const pruneSafety = initialKnowledgePruneSafety(files, existingItems);
+  const refreshedItems = input.prune && incomplete.length === 0 && pruneSafety.safe
+    ? await listAllKnowledgeItems(items)
+    : null;
+  const desiredItemIds = refreshedItems
+    ? completedInitialKnowledgeItemIds(files, refreshedItems)
+    : null;
+  const pruneBlockedReason = !input.prune
+    ? null
+    : incomplete.length > 0
+      ? 'indexing_incomplete'
+      : !pruneSafety.safe
+        ? pruneSafety.reason
+        : !desiredItemIds
+          ? 'completed_items_not_visible'
+          : null;
+  const deleted = input.prune && !pruneBlockedReason && refreshedItems && desiredItemIds
+    ? await pruneManagedInitialKnowledgeItems(items, refreshedItems, desiredItemIds)
+    : [];
+  const skipped = skippedItems.map((item) => item.file);
 
   await appendAudit(context.env, {
     eventType: 'knowledge.initial_seeded',
@@ -1169,17 +1418,26 @@ app.post('/api/admin/knowledge/seed', async (context) => {
     metadata: {
       accepted: accepted.length,
       skipped: skipped.length,
+      incomplete: incomplete.length,
+      deleted: deleted.length,
+      pruneRequested: input.prune,
+      pruneBlockedReason,
       excluded: manifestEntries.length - exclusionFiltered.length,
       coveredByManualItem: exclusionFiltered.length - files.length,
     },
   });
   return context.json({
-    ok: true,
+    ok: incomplete.length === 0 && (!input.prune || !pruneBlockedReason),
     accepted,
     skipped,
+    incomplete,
+    deleted,
+    pruneRequested: input.prune,
+    pruneApplied: input.prune && !pruneBlockedReason,
+    pruneBlockedReason,
     excluded: manifestEntries.length - exclusionFiltered.length,
     coveredByManualItem: exclusionFiltered.length - files.length,
-  }, 202);
+  }, incomplete.length ? 202 : 200);
 });
 
 app.post('/api/internal/knowledge/reseed', async (context) => {
@@ -1199,42 +1457,33 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
   const exclusionFiltered = excludeRemovedInitialKnowledge(manifestEntries, exclusions);
   const files = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems)
     .filter((entry): entry is InitialKnowledgeEntry & { sha256: string } => Boolean(entry.sha256));
-  const existingByKey = new Map(existingItems.map((item) => [item.key, item]));
-  const desiredKeys = new Set(files.map((entry) => initialKnowledgeItemKey(entry)));
-  const accepted: Array<{ file: string; key: string; id: string; status: string }> = [];
-  const skipped: Array<{ file: string; key: string; id: string; status: string }> = [];
-
-  for (let offset = 0; offset < files.length; offset += 3) {
-    const batch = files.slice(offset, offset + 3);
-    const uploads = batch.filter((entry) => {
-      const key = initialKnowledgeItemKey(entry);
-      const existing = existingByKey.get(key);
-      const isCurrent = existing
-        && metadataString(existing.metadata, 'manifest_sha256') === entry.sha256
-        && existing.status !== 'error';
-      if (!isCurrent) return true;
-      skipped.push({ file: entry.file, key, id: existing.id, status: existing.status });
-      return false;
-    });
-    const results = await Promise.all(uploads.map(async (entry) => {
-      const key = initialKnowledgeItemKey(entry);
-      const file = await fetchInitialKnowledgeAsset(context.env, baseUrl, entry);
-      const result = await items.upload(key, file, { metadata: initialKnowledgeMetadata(entry) });
-      return { file: entry.file, key, id: result.id, status: result.status };
-    }));
-    accepted.push(...results);
-  }
-
+  const { accepted, skipped } = await syncInitialKnowledgeFiles(
+    context.env,
+    baseUrl,
+    items,
+    files,
+    existingItems,
+  );
   const incomplete = [...accepted, ...skipped].filter((item) => item.status !== 'completed');
-  const deleted: string[] = [];
-  if (input.prune && incomplete.length === 0) {
-    for (const item of existingItems) {
-      if (desiredKeys.has(item.key)) continue;
-      if (!isManagedInitialKnowledgeItem(item)) continue;
-      await items.delete(item.id);
-      deleted.push(item.key);
-    }
-  }
+  const pruneSafety = initialKnowledgePruneSafety(files, existingItems);
+  const refreshedItems = input.prune && incomplete.length === 0 && pruneSafety.safe
+    ? await listAllKnowledgeItems(items)
+    : null;
+  const desiredItemIds = refreshedItems
+    ? completedInitialKnowledgeItemIds(files, refreshedItems)
+    : null;
+  const pruneBlockedReason = !input.prune
+    ? null
+    : incomplete.length > 0
+      ? 'indexing_incomplete'
+      : !pruneSafety.safe
+        ? pruneSafety.reason
+        : !desiredItemIds
+          ? 'completed_items_not_visible'
+          : null;
+  const deleted = input.prune && !pruneBlockedReason && refreshedItems && desiredItemIds
+    ? await pruneManagedInitialKnowledgeItems(items, refreshedItems, desiredItemIds)
+    : [];
 
   await appendAudit(context.env, {
     eventType: 'knowledge.initial_reseeded',
@@ -1246,16 +1495,21 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
       skipped: skipped.length,
       incomplete: incomplete.length,
       deleted: deleted.length,
+      pruneRequested: input.prune,
+      pruneBlockedReason,
       excluded: manifestEntries.length - exclusionFiltered.length,
       coveredByManualItem: exclusionFiltered.length - files.length,
     },
   });
   return context.json({
-    ok: incomplete.length === 0,
+    ok: incomplete.length === 0 && (!input.prune || !pruneBlockedReason),
     accepted,
     skipped,
     incomplete,
     deleted,
+    pruneRequested: input.prune,
+    pruneApplied: input.prune && !pruneBlockedReason,
+    pruneBlockedReason,
     excluded: manifestEntries.length - exclusionFiltered.length,
     coveredByManualItem: exclusionFiltered.length - files.length,
   }, incomplete.length ? 202 : 200);
@@ -1280,7 +1534,8 @@ app.get('/api/admin/knowledge', async (context) => {
     ? query.status as KnowledgeListStatus
     : undefined;
   const requestedCategory = query.category?.trim().toLowerCase();
-  const category = requestedCategory && /^[a-z0-9_]{1,64}$/u.test(requestedCategory)
+  const otherCategory = requestedCategory === 'other';
+  const category = requestedCategory && !otherCategory && /^[a-z0-9_]{1,64}$/u.test(requestedCategory)
     ? requestedCategory
     : undefined;
   const search = (query.search || query.q || '').trim().slice(0, 250).toLocaleLowerCase('ja-JP');
@@ -1301,6 +1556,7 @@ app.get('/api/admin/knowledge', async (context) => {
 
   const filtered = projected.filter((item) => {
     if (category && item.category !== category) return false;
+    if (otherCategory && isPropertyKnowledgeCategory(item.category)) return false;
     if (!search) return true;
     return [item.title, item.key, item.source_url]
       .some((value) => value.toLocaleLowerCase('ja-JP').includes(search));
@@ -1345,6 +1601,9 @@ app.post('/api/admin/knowledge', async (context) => {
   const category = normalizeKnowledgeCategory(form.get('category'), knowledgeCategoryFromFilename(file.name));
   const itemName = file.name.trim().slice(0, 240);
   if (!itemName) return context.json({ error: 'A file name is required' }, 400);
+  if (!SUPPORTED_KNOWLEDGE_ITEM.test(itemName)) {
+    return context.json({ error: 'Unsupported knowledge file format' }, 415);
+  }
 
   const result = await context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.upload(itemName, file, {
     metadata: {
@@ -1431,7 +1690,26 @@ app.post('/api/admin/knowledge/property', async (context) => {
     category,
     source_url: sourceUrl,
     replacedItemCount: replacedItemIds.length,
+    reindexStarted: true,
   }, 202);
+});
+
+app.get('/api/admin/knowledge/status', async (context) => {
+  const ids = [...new Set((context.req.query('ids') || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => /^[A-Za-z0-9._:-]{1,200}$/u.test(id)))]
+    .slice(0, 25);
+  if (!ids.length) return context.json({ result: [] });
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const result = (await Promise.all(ids.map(async (id) => {
+    try {
+      return projectKnowledgeItem(await items.get(id).info());
+    } catch {
+      return null;
+    }
+  }))).filter((item): item is ReturnType<typeof projectKnowledgeItem> => Boolean(item));
+  return context.json({ result });
 });
 
 app.get('/api/admin/knowledge/:id', async (context) => {
@@ -1573,13 +1851,13 @@ app.post('/api/admin/knowledge/:id/reindex', async (context) => {
     subjectId: id,
     metadata: { itemId: id },
   });
-  return context.json(result, 202);
+  return context.json(projectKnowledgeItem(result), 202);
 });
 
 app.get('/api/admin/conversations', async (context) => {
-  const page = Math.max(1, Number(context.req.query('page') || 1));
-  const perPage = Math.min(100, Number(context.req.query('perPage') || 30));
-  const search = context.req.query('search') || '';
+  const page = boundedPositiveInteger(context.req.query('page'), 1, 10_000);
+  const perPage = boundedPositiveInteger(context.req.query('perPage'), 30, 100);
+  const search = (context.req.query('search') || '').trim().slice(0, 250);
   const result = await context.env.DB.prepare(
     `SELECT c.id, c.source_page, c.status, c.marketing_consent, c.created_at, c.updated_at,
       COUNT(m.id) AS message_count,
@@ -1592,7 +1870,10 @@ app.get('/api/admin/conversations', async (context) => {
         LIMIT 1
       ), '') AS latest_message
      FROM conversations c LEFT JOIN messages m ON m.conversation_id = c.id
-     WHERE (? = '' OR m.content_redacted LIKE '%' || ? || '%')
+     WHERE (? = '' OR EXISTS (
+       SELECT 1 FROM messages ms
+       WHERE ms.conversation_id = c.id AND ms.content_redacted LIKE '%' || ? || '%'
+     ))
      GROUP BY c.id ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
   ).bind(search, search, perPage, (page - 1) * perPage).all();
   return context.json({ result: result.results, page, perPage });

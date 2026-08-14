@@ -1,6 +1,6 @@
 const PREFECTURE_ORDER = [
   '大阪府', '兵庫県', '和歌山県', '京都府', '奈良県', '滋賀県',
-  '茗城県', '千葉県', '広島県', '高知県', '福岡県',
+  '茨城県', '千葉県', '広島県', '高知県', '福岡県',
 ] as const;
 
 const MUNICIPALITY_PREFECTURES: Record<string, string> = {

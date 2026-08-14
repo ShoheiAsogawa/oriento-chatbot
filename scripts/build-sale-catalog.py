@@ -10,13 +10,26 @@ from pathlib import Path
 
 SOURCE_DIRECTORY = Path("knowledge/initial/properties/sale")
 OUTPUT = Path("knowledge/initial/sale_catalog.json")
+PHP_DIAGNOSTIC_RE = re.compile(
+    r"^(?:PHP\s+)?(?:Warning|Notice|Deprecated|Strict Standards|Fatal error|Parse error):"
+    r"\s.*(?:wp-content|\.php\b).*\bon line\s+\d+\s*$",
+    re.I,
+)
 
 
 def field(text: str, *labels: str) -> str | None:
+    lines = text.splitlines()
     for label in labels:
-        match = re.search(rf"(?m)^{re.escape(label)}\n([^\n]+)", text)
-        if match:
-            return match.group(1).strip()
+        for index, line in enumerate(lines):
+            if line.strip() != label:
+                continue
+            for candidate in lines[index + 1:]:
+                candidate = candidate.strip()
+                if PHP_DIAGNOSTIC_RE.match(candidate):
+                    continue
+                if not candidate or candidate.startswith('#'):
+                    return None
+                return candidate
     return None
 
 

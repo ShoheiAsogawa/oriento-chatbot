@@ -109,6 +109,40 @@ describe('isPropertyKnowledgeQuestion', () => {
   ])('keeps searches and general consultation in the normal flow: %s', (question) => {
     expect(isPropertyKnowledgeQuestion(question, ['購入物件を検討しています'])).toBe(false);
   });
+
+  it.each([
+    '物件種別はこだわりなし',
+    '間取りはこだわりなし',
+    '間取りはこだわりなしでいい？',
+    '指定はありません',
+    '間取りは2LDK',
+    'ペット可',
+    '駐車場あり',
+    '徒歩10分以内',
+    '間取りは3LDKがいい',
+    '間取りはこだわりなしにしたい',
+    'ペットを条件から外す',
+  ])('keeps guided-search selections in the purchase flow: %s', (selection) => {
+    expect(isPropertyKnowledgeQuestion(selection, [
+      '田辺市で購入物件を探しています',
+      selection.includes('条件から外す')
+        ? '「ペット」は登録物件情報だけでは全件を正確に絞り込めないにゃん。'
+        : '購入物件の希望間取りを選んでにゃん。',
+    ])).toBe(false);
+  });
+
+  it('still treats a property detail question as knowledge lookup after a recommendation', () => {
+    expect(isPropertyKnowledgeQuestion('この物件はペット可？', [
+      '田辺市で条件に合う購入物件が見つかったにゃん。',
+    ])).toBe(true);
+  });
+
+  it.each(['日当たりは？', '周辺環境は？', '何階？'])
+  ('keeps short property-detail follow-ups grounded: %s', (question) => {
+    expect(isPropertyKnowledgeQuestion(question, [
+      '田辺市で条件に合う購入物件が見つかったにゃん。',
+    ])).toBe(true);
+  });
 });
 
 describe('SYSTEM_PROMPT', () => {

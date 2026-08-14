@@ -7,13 +7,13 @@ import {
   Pencil, X,
 } from 'lucide-react';
 import {
+  ADMIN_SESSION_EXPIRED_EVENT,
   api,
   type ConversationMessage,
   type ConversationSummary,
   type KnowledgeItem,
   type MonthlyReport,
   type PropertyKnowledgeInput,
-  mockConversations,
 } from './api';
 import { OverviewPage } from './OverviewPage';
 
@@ -29,21 +29,14 @@ const navItems: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
 const orinyanSpriteStyle = { backgroundImage: "url('/assets/orinyan-states.png')" };
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+  const date = new Date(value);
+  if (!value || !Number.isFinite(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
 function formatBytes(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} MB`;
   return `${Math.round(value / 1000)} KB`;
-}
-
-function parseTags(value: string) {
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
-  } catch {
-    return [];
-  }
 }
 
 function Status({ value }: { value: KnowledgeItem['status'] }) {
@@ -63,6 +56,9 @@ function FileIcon({ name }: { name: string }) {
 }
 
 const KNOWLEDGE_PAGE_SIZE = 50;
+const MAX_KNOWLEDGE_FILE_SIZE = 4 * 1024 * 1024;
+const SUPPORTED_KNOWLEDGE_FILE = /\.(?:pdf|docx?|xlsx?|csv|txt|md|png|jpe?g|webp)$/iu;
+const PROCESSING_STATUS = new Set<KnowledgeItem['status']>(['queued', 'running']);
 const propertyNameCollator = new Intl.Collator('ja-JP', { numeric: true, sensitivity: 'base' });
 
 type KnowledgeFilter = 'all' | 'properties_for_sale' | 'properties_for_rent' | 'other';
@@ -166,7 +162,7 @@ function Sidebar({ page, onPage, collapsed, onToggle }: { page: PageKey; onPage:
   return <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
     <nav aria-label="管理メニュー">
       {navItems.map(({ key, label, icon: Icon }) => (
-        <button key={key} className={page === key ? 'active' : ''} onClick={() => onPage(key)} title={collapsed ? label : undefined}>
+        <button key={key} className={page === key ? 'active' : ''} onClick={() => onPage(key)} title={collapsed ? label : undefined} aria-current={page === key ? 'page' : undefined}>
           <Icon /><span>{label}</span>
         </button>
       ))}
@@ -184,11 +180,34 @@ function PageHeader({ title, description, action }: { title: string; description
 function ReportsPage() {
   const [report, setReport] = useState<MonthlyReport | null>(null);
   const [months, setMonths] = useState<string[]>([]);
-  useEffect(() => { void api.monthlyReport().then((data) => { setReport(data.report); setMonths(data.availableMonths); }); }, []);
-  if (!report) return <><PageHeader title="月次レポート" description="質問傾向、回答判定、会話状況を月ごとに確認します。" /><div className="surface report-empty"><Gauge /><p>最初の月次集計後にレポートが表示されます。</p></div></>;
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const requestSequence = useRef(0);
+  const loadMonth = useCallback(async (month?: string) => {
+    const sequence = requestSequence.current + 1;
+    requestSequence.current = sequence;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.monthlyReport(month);
+      if (requestSequence.current !== sequence) return;
+      setReport(data.report);
+      setMonths(data.availableMonths);
+      setSelectedMonth(data.report?.month || month || '');
+    } catch (reason) {
+      if (requestSequence.current !== sequence) return;
+      setError(reason instanceof Error ? reason.message : '月次レポートを読み込めませんでした。');
+    } finally {
+      if (requestSequence.current === sequence) setLoading(false);
+    }
+  }, []);
+  useEffect(() => { void loadMonth(); }, [loadMonth]);
+  if (!report) return <><PageHeader title="月次レポート" description="質問傾向、回答判定、会話状況を月ごとに確認します。" />{error ? <p className="knowledge-notice" role="alert">{error}</p> : null}<div className="surface report-empty"><Gauge /><p>{loading ? '月次レポートを読み込んでいます…' : '最初の月次集計後にレポートが表示されます。'}</p></div></>;
   const conversations = Number(report.funnel?.conversations || 0);
   const maxQuestionCount = Math.max(1, ...report.questionTrends.map((item) => Number(item.count)));
-  return <><PageHeader title="月次レポート" description="質問傾向、回答判定、会話状況を月ごとに確認します。" action={<button className="select-button">{report.month} <ChevronDown /></button>} />
+  return <><PageHeader title="月次レポート" description="質問傾向、回答判定、会話状況を月ごとに確認します。" action={<label className="report-month-select"><span>対象月</span><select value={selectedMonth} onChange={(event) => void loadMonth(event.target.value)} disabled={loading}>{months.map((month) => <option value={month} key={month}>{month}</option>)}</select><ChevronDown /></label>} />
+    {error ? <p className="knowledge-notice" role="alert">{error}</p> : null}
     <section className="metric-strip report-metrics"><div className="metric"><MessageSquareText /><p>会話</p><strong>{conversations.toLocaleString()}</strong><small>対象月の開始数</small></div><div className="metric"><History /><p>保存月</p><strong>{months.length}</strong><small>R2月次JSON</small></div></section>
     <div className="report-grid"><section className="surface"><div className="section-heading"><div><h2>よくある質問</h2><p>PIIマスク後の質問文を集計</p></div></div><div className="trend-list">{report.questionTrends.slice(0, 10).map((item, index) => <div key={`${item.question}-${index}`}><span>{index + 1}</span><p>{item.question}</p><i style={{ width: `${Math.max(8, (Number(item.count) / maxQuestionCount) * 100)}%` }} /><strong>{Number(item.count).toLocaleString()}件</strong></div>)}</div></section></div>
     <p className="report-generated">生成日時: {formatDate(report.generatedAt)} / 保存先: R2 reports/{report.month}.json</p>
@@ -217,27 +236,91 @@ function KnowledgePage() {
   const [documentSourceUrl, setDocumentSourceUrl] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const operationLock = useRef(false);
+  const busyRef = useRef(false);
+  const editModalRef = useRef<HTMLElement>(null);
+  const editCloseButtonRef = useRef<HTMLButtonElement>(null);
+  const processingStartedAt = useRef<number | null>(null);
+  const seedRetryCount = useRef(0);
+  const [seedCleanupPending, setSeedCleanupPending] = useState(false);
+  const loadRequestSequence = useRef(0);
   const generatedPropertyKnowledge = useMemo(() => propertyKnowledgePreview(propertyForm), [propertyForm]);
 
-  const load = useCallback(async (preferredId?: string) => {
-    setLoading(true);
+  const load = useCallback(async (preferredId?: string, options: { silent?: boolean } = {}) => {
+    const sequence = loadRequestSequence.current + 1;
+    loadRequestSequence.current = sequence;
+    if (!options.silent) {
+      processingStartedAt.current = null;
+      setLoading(true);
+    }
     try {
       const data = await api.knowledge({ perPage: 1000 });
+      if (loadRequestSequence.current !== sequence) return;
       setItems(data.result);
       setTotal(Number(data.result_info.total_count || data.result.length));
       setSelected((current) => {
         const selectedId = preferredId || current?.id;
-        if (!selectedId) return data.result[0] || null;
-        return data.result.find((item) => item.id === selectedId) || data.result[0] || null;
+        if (!selectedId) return null;
+        return data.result.find((item) => item.id === selectedId) || null;
       });
     } catch (error) {
+      if (loadRequestSequence.current !== sequence) return;
       setNotice(error instanceof Error ? `ナレッジを読み込めませんでした: ${error.message}` : 'ナレッジを読み込めませんでした。');
     } finally {
-      setLoading(false);
+      if (!options.silent && loadRequestSequence.current === sequence) setLoading(false);
     }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const pendingKnowledgeIds = useMemo(
+    () => items.filter((item) => PROCESSING_STATUS.has(item.status)).map((item) => item.id),
+    [items],
+  );
+  const pendingKnowledgeKey = pendingKnowledgeIds.join(',');
+
+  useEffect(() => {
+    if (!pendingKnowledgeIds.length) {
+      processingStartedAt.current = null;
+      return;
+    }
+    if (busy || loading) return;
+    processingStartedAt.current ??= Date.now();
+    if (Date.now() - processingStartedAt.current >= 2 * 60 * 1000) {
+      setNotice((current) => current || 'インデックス処理に時間がかかっています。しばらくしてから「再読み込み」で状態を確認してください。');
+      return;
+    }
+
+    let requestInFlight = false;
+    const timer = window.setInterval(() => {
+      if (requestInFlight) return;
+      if (processingStartedAt.current
+        && Date.now() - processingStartedAt.current >= 2 * 60 * 1000) {
+        setNotice((current) => current || 'インデックス処理に時間がかかっています。「再インデックスを再試行」または「再読み込み」で状態を確認してください。');
+        window.clearInterval(timer);
+        return;
+      }
+      requestInFlight = true;
+      void load(undefined, { silent: true }).catch((reason) => {
+        setNotice(reason instanceof Error ? `インデックス状態を確認できませんでした: ${reason.message}` : 'インデックス状態を確認できませんでした。');
+      }).finally(() => { requestInFlight = false; });
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [busy, load, loading, pendingKnowledgeKey]);
+
+  const beginOperation = () => {
+    if (operationLock.current) return false;
+    operationLock.current = true;
+    busyRef.current = true;
+    setBusy(true);
+    return true;
+  };
+
+  const finishOperation = () => {
+    operationLock.current = false;
+    busyRef.current = false;
+    setBusy(false);
+  };
 
   const filteredItems = useMemo(() => {
     const query = deferredSearch.trim().toLocaleLowerCase('ja-JP');
@@ -302,11 +385,59 @@ function KnowledgePage() {
   const closeAddForm = () => {
     setAddOpen(false);
     setDragging(false);
+    if (editingId) setEditingId(null);
   };
+
+  useEffect(() => {
+    if (!addOpen || !editingId) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusFrame = window.requestAnimationFrame(() => editCloseButtonRef.current?.focus());
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (!busyRef.current) {
+          event.preventDefault();
+          closeAddForm();
+        }
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const modal = editModalRef.current;
+      if (!modal) return;
+      const focusable = Array.from(modal.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => element.offsetParent !== null);
+      if (!focusable.length) {
+        event.preventDefault();
+        modal.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      window.requestAnimationFrame(() => previouslyFocused?.focus());
+    };
+  }, [addOpen, editingId]);
 
   const openEditForm = async () => {
     if (!selected || !isPropertyKnowledge(selected)) return;
-    setBusy(true);
+    if (!beginOperation()) return;
     setNotice(null);
     try {
       const data = await api.propertyKnowledge(selected.id);
@@ -319,14 +450,22 @@ function KnowledgePage() {
     } catch (error) {
       setNotice(error instanceof Error ? `編集内容を読み込めませんでした: ${error.message}` : '編集内容を読み込めませんでした');
     } finally {
-      setBusy(false);
+      finishOperation();
     }
   };
 
   const uploadDocument = async (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
-    setBusy(true);
+    if (!SUPPORTED_KNOWLEDGE_FILE.test(file.name)) {
+      setNotice('対応していないファイル形式です。PDF、Word、Excel、CSV、テキスト、画像を選択してください。');
+      return;
+    }
+    if (file.size > MAX_KNOWLEDGE_FILE_SIZE) {
+      setNotice('ファイルサイズが4MBを超えています。4MB以下のファイルを選択してください。');
+      return;
+    }
+    if (!beginOperation()) return;
     setNotice(null);
     try {
       const title = documentTitle.trim() || file.name;
@@ -339,7 +478,7 @@ function KnowledgePage() {
     } catch (error) {
       setNotice(error instanceof Error ? `登録できませんでした: ${error.message}` : '登録できませんでした。');
     } finally {
-      setBusy(false);
+      finishOperation();
     }
   };
 
@@ -354,7 +493,7 @@ function KnowledgePage() {
       setNotice('物件名と公式詳細ページURLを入力してください。');
       return;
     }
-    setBusy(true);
+    if (!beginOperation()) return;
     setNotice(null);
     try {
       const result = editingId
@@ -367,14 +506,14 @@ function KnowledgePage() {
     } catch (error) {
       setNotice(error instanceof Error ? `物件ナレッジを保存できませんでした: ${error.message}` : '物件ナレッジを保存できませんでした。');
     } finally {
-      setBusy(false);
+      finishOperation();
     }
   };
 
   const remove = async () => {
     if (!selected) return;
     if (!window.confirm(`「${knowledgeTitle(selected)}」を削除します。成約済みとしてチャットの候補から外す場合に実行してください。`)) return;
-    setBusy(true);
+    if (!beginOperation()) return;
     setNotice(null);
     try {
       await api.deleteKnowledge(selected.id);
@@ -385,39 +524,63 @@ function KnowledgePage() {
     } catch (error) {
       setNotice(error instanceof Error ? `削除できませんでした: ${error.message}` : '削除できませんでした。');
     } finally {
-      setBusy(false);
+      finishOperation();
     }
   };
 
   const reindex = async () => {
     if (!selected) return;
-    setBusy(true);
+    if (!beginOperation()) return;
     setNotice(null);
     try {
-      await api.reindexKnowledge(selected.id);
+      const updated = await api.reindexKnowledge(selected.id);
+      setItems((current) => current.map((item) => item.id === selected.id ? { ...item, ...updated } : item));
+      setSelected((current) => current?.id === selected.id ? { ...current, ...updated } : current);
       setNotice(`「${knowledgeTitle(selected)}」の再インデックスを開始しました。`);
-      await load();
     } catch (error) {
       setNotice(error instanceof Error ? `再インデックスを開始できませんでした: ${error.message}` : '再インデックスを開始できませんでした。');
     } finally {
-      setBusy(false);
+      finishOperation();
     }
   };
 
   const seed = async () => {
-    setBusy(true);
+    if (!beginOperation()) return;
     setNotice(null);
     try {
-      await api.seedKnowledge();
-      setSeeded(true);
-      setNotice('初期ナレッジの同期を開始しました。');
+      const result = await api.seedKnowledge(true);
+      const stillIndexing = result.incomplete.length > 0;
+      const retryAfterVisibility = result.pruneBlockedReason === 'completed_items_not_visible'
+        && seedRetryCount.current < 3;
+      setSeedCleanupPending(stillIndexing || retryAfterVisibility);
+      if (stillIndexing || retryAfterVisibility) seedRetryCount.current += 1;
+      else seedRetryCount.current = 0;
+      setSeeded(result.ok && result.pruneApplied);
+      if (stillIndexing) {
+        setNotice(`初期ナレッジを同期中です。${result.incomplete.length}件の反映完了後、旧版の整理まで自動で続けます。`);
+      } else if (retryAfterVisibility) {
+        setNotice('新しいナレッジの反映を確認中です。旧版の整理まで自動で続けます。');
+      } else if (result.pruneBlockedReason === 'property_count_dropped_unexpectedly') {
+        setNotice('物件件数の急減を検知したため、旧版の自動削除を停止しました。取得結果を確認してください。');
+      } else if (result.pruneBlockedReason === 'manifest_empty') {
+        setNotice('初期ナレッジが空のため、安全のため同期を停止しました。');
+      } else {
+        setNotice(`初期ナレッジの同期が完了しました。旧版${result.deleted.length}件を整理しました。`);
+      }
       await load();
     } catch (error) {
+      setSeedCleanupPending(false);
       setNotice(error instanceof Error ? `同期を開始できませんでした: ${error.message}` : '同期を開始できませんでした。');
     } finally {
-      setBusy(false);
+      finishOperation();
     }
   };
+
+  useEffect(() => {
+    if (!seedCleanupPending || pendingKnowledgeIds.length > 0 || busy || loading) return;
+    const timer = window.setTimeout(() => { void seed(); }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [busy, loading, pendingKnowledgeIds.length, seedCleanupPending]);
 
   const selectedSourceUrl = selected ? knowledgeSourceUrl(selected) : '';
 
@@ -435,19 +598,31 @@ function KnowledgePage() {
         ref={fileInput}
         type="file"
         hidden
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.webp"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp"
         onChange={(event) => {
           void uploadDocument(event.target.files);
           event.target.value = '';
         }}
       />
 
-      {addOpen ? <section className="knowledge-add surface" aria-label={editingId ? '物件ナレッジを編集' : '物件・資料を1件追加'}>
-        <div className="section-heading"><div><h2>{editingId ? '物件ナレッジを編集' : '物件・資料を1件追加'}</h2><p>{editingId ? '保存すると既存のナレッジを更新し、再インデックスを自動開始します。' : '物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。'}</p></div><button className="square-button" type="button" onClick={closeAddForm} aria-label="フォームを閉じる"><X /></button></div>
-        <div className="knowledge-add-mode" role="tablist" aria-label="登録方法">
-          <button type="button" role="tab" aria-selected={addMode === 'property'} className={addMode === 'property' ? 'active' : ''} onClick={() => setAddMode('property')}><Home />物件を定型登録</button>
-          <button type="button" role="tab" aria-selected={addMode === 'document'} className={addMode === 'document' ? 'active' : ''} onClick={() => setAddMode('document')} disabled={Boolean(editingId)}><UploadCloud />一般資料をアップロード</button>
-        </div>
+      {addOpen ? <div
+        className={editingId ? 'knowledge-edit-modal-backdrop' : undefined}
+        onMouseDown={(event) => {
+          if (editingId && event.target === event.currentTarget && !busyRef.current) closeAddForm();
+        }}
+      ><section
+        ref={editModalRef}
+        className={`knowledge-add surface ${editingId ? 'knowledge-edit-modal' : ''}`}
+        role={editingId ? 'dialog' : undefined}
+        aria-modal={editingId ? true : undefined}
+        aria-label={editingId ? '物件ナレッジを編集' : '物件・資料を1件追加'}
+        tabIndex={editingId ? -1 : undefined}
+      >
+        <div className="section-heading"><div><h2>{editingId ? '物件ナレッジを編集' : '物件・資料を1件追加'}</h2><p>{editingId ? '保存すると既存のナレッジを更新し、再インデックスを自動開始します。' : '物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。'}</p></div><button ref={editingId ? editCloseButtonRef : undefined} className="square-button" type="button" onClick={closeAddForm} aria-label={editingId ? '編集画面を閉じる' : 'フォームを閉じる'} disabled={busy}><X /></button></div>
+        {!editingId ? <div className="knowledge-add-mode" role="tablist" aria-label="登録方法">
+          <button type="button" role="tab" aria-selected={addMode === 'property'} className={addMode === 'property' ? 'active' : ''} onClick={() => setAddMode('property')} disabled={busy}><Home />物件を定型登録</button>
+          <button type="button" role="tab" aria-selected={addMode === 'document'} className={addMode === 'document' ? 'active' : ''} onClick={() => setAddMode('document')} disabled={busy || Boolean(editingId)}><UploadCloud />一般資料をアップロード</button>
+        </div> : null}
         {addMode === 'property' ? <form className="knowledge-add-body property-knowledge-form" onSubmit={(event) => { event.preventDefault(); void saveProperty(); }}>
           <div className="property-form-fields">
             <label className="knowledge-field"><span>取引種別 <em>必須</em></span><select value={propertyForm.category} onChange={(event) => setPropertyForm((current) => ({ ...current, category: event.target.value as PropertyKnowledgeInput['category'] }))} required><option value="properties_for_sale">売買</option><option value="properties_for_rent">賃貸</option></select></label>
@@ -486,7 +661,7 @@ function KnowledgePage() {
             <UploadCloud /><span><strong>{busy ? '処理しています…' : 'ファイルを選択して登録'}</strong><small>PDF、DOCX、XLSX、CSV、画像（最大4MB / 1ファイル）</small></span>
           </button>
         </div>}
-      </section> : null}
+      </section></div> : null}
 
       {notice ? <p className="knowledge-notice" role="status">{notice}</p> : null}
 
@@ -497,14 +672,15 @@ function KnowledgePage() {
         <button className="square-button" onClick={() => void load()} aria-label="再読み込み" disabled={loading || busy}><RefreshCw /></button>
       </div>
 
-      <div className="knowledge-result-summary"><strong>{filteredItems.length.toLocaleString()}件</strong><span>全{total.toLocaleString()}件のナレッジから表示</span></div>
-      <div className="data-table knowledge-table" role="table" aria-label="物件ナレッジ一覧">
+      <div className="knowledge-result-summary"><strong>{filteredItems.length.toLocaleString()}件</strong><span>全{total.toLocaleString()}件のナレッジから表示{pendingKnowledgeIds.length ? ` ／ ${pendingKnowledgeIds.length}件を反映処理中（自動更新）` : ''}</span></div>
+      <div className="data-table knowledge-table" role="table" aria-label="物件ナレッジ一覧" aria-busy={loading || pendingKnowledgeIds.length > 0}>
         <div className="table-head" role="row"><span>物件名・資料名</span><span>分類</span><span>状態</span><span>更新日</span><span>チャンク</span><span>操作</span></div>
-        {pageItems.map((item) => <button className={`table-row ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} onClick={() => setSelected(item)} role="row">
+        {pageItems.map((item) => <button className={`table-row ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} onClick={() => setSelected(item)} role="row" aria-label={`${knowledgeTitle(item)}の詳細を表示`}>
           <span className="file-cell"><FileIcon name={item.key} /><span><strong>{knowledgeTitle(item)}</strong><small>{formatBytes(item.file_size)}</small></span></span>
           <span><i className={`knowledge-category ${knowledgeCategory(item)}`}>{knowledgeCategoryLabel(item)}</i></span>
           <span><Status value={item.status} /></span><time>{formatDate(item.last_seen_at)}</time><span>{item.chunks_count ? item.chunks_count.toLocaleString() : '—'}</span><span className="row-action"><EllipsisVertical /></span>
         </button>)}
+        {loading && pageItems.length === 0 ? <div className="knowledge-empty" role="row"><RefreshCw className="spin" /><p>ナレッジを読み込んでいます…</p></div> : null}
         {!loading && pageItems.length === 0 ? <div className="knowledge-empty" role="row"><FileCheck2 /><p>条件に一致する物件・資料はありません。</p></div> : null}
       </div>
       <footer className="pagination"><span>{filteredItems.length ? `${firstItem}–${lastItem}` : '0'} / {filteredItems.length.toLocaleString()}件</span><div><button aria-label="前へ" disabled={currentPage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft /></button><button className="current">{currentPage}</button><button aria-label="次へ" disabled={currentPage >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}><ChevronRight /></button></div></footer>
@@ -518,8 +694,9 @@ function KnowledgePage() {
           <div><dt>公式詳細ページ</dt><dd className="source-url">{selectedSourceUrl ? <><Link2 /><a href={selectedSourceUrl} target="_blank" rel="noreferrer">{selectedSourceUrl}</a></> : '未登録'}</dd></div>
           <div><dt>登録日</dt><dd>{formatDate(selected.created_at)}</dd></div>
           <div><dt>インデックス状態</dt><dd><Status value={selected.status} /><small>{selected.chunks_count.toLocaleString()} チャンク</small></dd></div>
+          {selected.status === 'error' && selected.error ? <div><dt>エラー内容</dt><dd className="knowledge-error-detail">{selected.error}</dd></div> : null}
         </dl>
-        <div className="drawer-actions"><h3>アクション</h3>{isPropertyKnowledge(selected) ? <button onClick={() => void openEditForm()} disabled={busy}><Pencil />編集</button> : null}<button onClick={() => void reindex()} disabled={busy}><RefreshCw />再インデックス</button><button className="danger" onClick={() => void remove()} disabled={busy}><Trash2 />この物件・資料を削除</button><p>保存時は再インデックスを自動開始します。成約済みの物件は削除してください。</p></div>
+        <div className="drawer-actions"><h3>アクション</h3>{isPropertyKnowledge(selected) ? <button onClick={() => void openEditForm()} disabled={busy}><Pencil />編集</button> : null}<button onClick={() => void reindex()} disabled={busy}><RefreshCw />{PROCESSING_STATUS.has(selected.status) ? '再インデックスを再試行' : '再インデックス'}</button><button className="danger" onClick={() => void remove()} disabled={busy}><Trash2 />この物件・資料を削除</button><p>保存時は再インデックスを自動開始します。成約済みの物件は削除してください。</p></div>
         <WidgetPreview />
       </> : <div className="empty-detail"><FileCheck2 /><p>物件・資料を選択すると詳細が表示されます。</p></div>}
     </aside>
@@ -531,16 +708,65 @@ function WidgetPreview() {
 }
 
 function ConversationsPage() {
-  const [rows, setRows] = useState<ConversationSummary[]>(mockConversations);
+  const [rows, setRows] = useState<ConversationSummary[]>([]);
   const [selected, setSelected] = useState<ConversationSummary | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
-  useEffect(() => { void api.conversations().then((data) => { setRows(data.result); setSelected((current) => data.result.find((row) => row.id === current?.id) || data.result[0] || null); }); }, []);
-  useEffect(() => { if (selected) void api.conversation(selected.id).then((data) => setMessages(data.messages)); }, [selected]);
+  const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const rowsRequestSequence = useRef(0);
+  const loadRows = useCallback(async (query: string) => {
+    const sequence = rowsRequestSequence.current + 1;
+    rowsRequestSequence.current = sequence;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.conversations(query);
+      if (rowsRequestSequence.current !== sequence) return;
+      setRows(data.result);
+      setSelected((current) => data.result.find((row) => row.id === current?.id) || data.result[0] || null);
+    } catch (reason) {
+      if (rowsRequestSequence.current !== sequence) return;
+      setError(reason instanceof Error ? reason.message : '会話ログを読み込めませんでした。');
+    } finally {
+      if (rowsRequestSequence.current === sequence) setLoading(false);
+    }
+  }, []);
+  useEffect(() => { void loadRows(deferredSearch); }, [deferredSearch, loadRows]);
+  useEffect(() => {
+    if (!selected) {
+      setMessages([]);
+      return;
+    }
+    let active = true;
+    setMessages([]);
+    void api.conversation(selected.id).then((data) => {
+      if (active) setMessages(data.messages);
+    }).catch((reason) => {
+      if (active) setError(reason instanceof Error ? reason.message : '会話の詳細を読み込めませんでした。');
+    });
+    return () => { active = false; };
+  }, [selected]);
+  const download = async () => {
+    if (exporting) return;
+    setExporting(true);
+    setError(null);
+    try {
+      await api.downloadConversations();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'CSVを出力できませんでした。');
+    } finally {
+      setExporting(false);
+    }
+  };
   const lastAssistant = [...messages].reverse().find((message) => message.role === 'assistant');
-  return <div className="split-page logs-page"><main className="split-main"><PageHeader title="会話ログ" description="記録された質問と回答、参照資料、ポリシー判定を確認します。" action={<button className="secondary-button" onClick={() => void api.downloadConversations()}><Archive />CSV出力</button>} />
-    <div className="table-tools"><label className="search-field"><Search /><input placeholder="会話内容で検索" /></label><button className="select-button">過去30日 <ChevronDown /></button><button className="select-button">すべての判定 <ChevronDown /></button></div>
-    <div className="conversation-list"><div className="conversation-head"><span>日時</span><span>最新の質問</span><span>ページ</span><span>回答状況</span></div>{rows.map((row) => <button key={row.id} className={selected?.id === row.id ? 'selected' : ''} onClick={() => setSelected(row)}><time>{formatDate(row.updated_at)}</time><span><strong>{row.latest_message}</strong><small>{row.message_count}メッセージ</small></span><code>{row.source_page}</code><span>{row.has_refusal ? <span className="status warning">案内対象外</span> : <span className="status success">回答</span>}</span></button>)}</div>
-  </main><aside className="detail-drawer open conversation-detail"><div className="drawer-heading"><div><h2>会話の詳細</h2><p>{selected?.id}</p></div><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>{selected ? <><div className="conversation-meta"><span><History />{formatDate(selected.updated_at)}</span><span><Link2 />{selected.source_page}</span></div><div className="transcript">{messages.map((message) => <div key={message.id} className={message.role === 'user' ? 'transcript-user' : 'transcript-bot'}>{message.content_redacted}{message.role === 'assistant' && message.policy_action === 'allow' ? <small>出典は保存済みのナレッジ資料を参照</small> : null}</div>)}</div><div className="policy-result"><ShieldCheck /><div><strong>ポリシー判定</strong><p>{lastAssistant?.policy_action || '確認中'} {lastAssistant?.policy_action === 'allow' ? '— 根拠資料あり' : '— 回答を拒否または担当者へ案内'}</p></div></div></> : <div className="empty-detail"><MessageSquareText /><p>会話を選択してください。</p></div>}</aside></div>;
+  return <div className="split-page logs-page"><main className="split-main"><PageHeader title="会話ログ" description="記録された質問と回答、参照資料、ポリシー判定を確認します。" action={<button className="secondary-button" onClick={() => void download()} disabled={exporting}><Archive />{exporting ? '出力中…' : 'CSV出力'}</button>} />
+    {error ? <p className="knowledge-notice" role="alert">{error}</p> : null}
+    <div className="table-tools"><label className="search-field"><Search /><input placeholder="会話内容で検索" value={search} onChange={(event) => setSearch(event.target.value)} /></label><button className="square-button" type="button" aria-label="会話ログを再読み込み" onClick={() => void loadRows(deferredSearch)} disabled={loading}><RefreshCw className={loading ? 'spin' : ''} /></button></div>
+    <div className="conversation-list" aria-busy={loading}><div className="conversation-head"><span>日時</span><span>最新の質問</span><span>ページ</span><span>回答状況</span></div>{rows.map((row) => <button key={row.id} className={selected?.id === row.id ? 'selected' : ''} onClick={() => setSelected(row)}><time>{formatDate(row.updated_at)}</time><span><strong>{row.latest_message || '（質問なし）'}</strong><small>{row.message_count}メッセージ</small></span><code>{row.source_page || '/'}</code><span>{row.has_refusal ? <span className="status warning">案内対象外</span> : <span className="status success">回答</span>}</span></button>)}{!loading && rows.length === 0 ? <div className="knowledge-empty"><MessageSquareText /><p>条件に一致する会話はありません。</p></div> : null}</div>
+  </main><aside className={`detail-drawer conversation-detail ${selected ? 'open' : ''}`}><div className="drawer-heading"><div><h2>会話の詳細</h2><p>{selected?.id}</p></div><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>{selected ? <><div className="conversation-meta"><span><History />{formatDate(selected.updated_at)}</span><span><Link2 />{selected.source_page}</span></div><div className="transcript">{messages.map((message) => <div key={message.id} className={message.role === 'user' ? 'transcript-user' : 'transcript-bot'}>{message.content_redacted}{message.role === 'assistant' && message.policy_action === 'allow' ? <small>出典は保存済みのナレッジ資料を参照</small> : null}</div>)}</div><div className="policy-result"><ShieldCheck /><div><strong>ポリシー判定</strong><p>{lastAssistant?.policy_action || '確認中'} {lastAssistant?.policy_action === 'allow' ? '— 根拠資料あり' : '— 回答を拒否または担当者へ案内'}</p></div></div></> : <div className="empty-detail"><MessageSquareText /><p>会話を選択してください。</p></div>}</aside></div>;
 }
 
 function AuthScreen({ onAuthenticated }: { onAuthenticated: (identity: string) => void }) {
@@ -548,27 +774,36 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (identity: string) =
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const submitLock = useRef(false);
   const submit = async (event: React.FormEvent) => {
-    event.preventDefault(); setError(''); setBusy(true);
+    event.preventDefault();
+    if (submitLock.current) return;
+    submitLock.current = true;
+    setError(''); setBusy(true);
     try {
       const session = await api.login(loginId, password); onAuthenticated(session.user.loginId || session.user.subject);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : '処理に失敗しました。'); } finally { setBusy(false); }
+    } catch (reason) { setError(reason instanceof Error ? reason.message : '処理に失敗しました。'); } finally { submitLock.current = false; setBusy(false); }
   };
-  return <main className="auth-page"><section className="auth-card"><div className="auth-brand"><span className="brand-mark"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><h1>管理画面にログイン</h1><p>事前に配布された管理者IDとパスワードを入力してください。</p><form onSubmit={(event) => void submit(event)}><label>管理者ID<input type="text" autoComplete="username" value={loginId} onChange={(event) => setLoginId(event.target.value)} required placeholder="管理者IDを入力" /></label><label>パスワード<input type="password" autoComplete="current-password" maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} required /></label>{error ? <p className="auth-error">{error}</p> : null}<button className="primary-button full" disabled={busy}>{busy ? '処理中…' : 'ログイン'}</button></form></section></main>;
+  return <main className="auth-page"><section className="auth-card"><div className="auth-brand"><span className="brand-mark"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><h1>管理画面にログイン</h1><p>事前に配布された管理者IDとパスワードを入力してください。</p><form onSubmit={(event) => void submit(event)}><label>管理者ID<input type="text" autoComplete="username" value={loginId} onChange={(event) => setLoginId(event.target.value)} required placeholder="管理者IDを入力" disabled={busy} /></label><label>パスワード<input type="password" autoComplete="current-password" maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} required disabled={busy} /></label>{error ? <p className="auth-error" role="alert">{error}</p> : null}<button className="primary-button full" disabled={busy}>{busy ? '処理中…' : 'ログイン'}</button></form></section></main>;
 }
 
 export function App() {
-  const [page, setPage] = useState<PageKey>('knowledge');
+  const [page, setPage] = useState<PageKey>('overview');
   const [collapsed, setCollapsed] = useState(false);
   const [session, setSession] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   useEffect(() => { void api.authSession().then((value) => setSession(value.authenticated ? value.user?.loginId || null : null)).catch(() => setSession(null)).finally(() => setCheckingSession(false)); }, []);
+  useEffect(() => {
+    const expireSession = () => setSession(null);
+    window.addEventListener(ADMIN_SESSION_EXPIRED_EVENT, expireSession);
+    return () => window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, expireSession);
+  }, []);
   const logout = async () => { try { await api.logout(); } finally { setSession(null); } };
   const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : null;
   if (checkingSession) return <main className="auth-page"><p>ログイン状態を確認しています…</p></main>;
   if (!session) return <AuthScreen onAuthenticated={setSession} />;
   return <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
-    <header className="topbar"><button className="menu-button" onClick={() => setCollapsed((value) => !value)}><Menu /></button><div className="brand"><span className="brand-mark" aria-hidden="true"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><div className="topbar-right"><span className="environment"><Activity />本番 <ChevronDown /></span><span className="account-email">{session}</span><button className="secondary-button logout-button" onClick={() => void logout()}>ログアウト</button></div></header>
+    <header className="topbar"><button className="menu-button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? 'メニューを開く' : 'メニューを折りたたむ'} aria-expanded={!collapsed}><Menu /></button><div className="brand"><span className="brand-mark" aria-hidden="true"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><div className="topbar-right"><span className="environment"><Activity />本番</span><span className="account-email">{session}</span><button className="secondary-button logout-button" onClick={() => void logout()}>ログアウト</button></div></header>
     <Sidebar page={page} onPage={setPage} collapsed={collapsed} onToggle={() => setCollapsed((value) => !value)} />
     <section className="content">{page === 'overview' ? <OverviewPage onOpenConversations={() => setPage('conversations')} /> : ActivePage ? <ActivePage /> : null}</section>
   </div>;
