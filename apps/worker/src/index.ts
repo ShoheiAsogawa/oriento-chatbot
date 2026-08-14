@@ -19,7 +19,7 @@ import { loadOverview, normalizeTrackedPropertyUrl, type PropertyCatalogItem } f
 import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
-import { directConversationAnswer, ensureOrinyanEnding, evaluatePolicy, SYSTEM_PROMPT } from './policy';
+import { directConversationAnswer, ensureOrinyanEnding, evaluatePolicy, isPropertyKnowledgeQuestion, noGroundingDecision, SYSTEM_PROMPT } from './policy';
 import { deleteManagedProperty, upsertManagedProperty } from './property-inventory';
 import { evaluatePurchaseConsultation } from './purchase-consultation';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
@@ -749,7 +749,13 @@ app.post('/api/chat/message', async (context) => {
   }
 
   const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);
-  const rentalConsultation = evaluateRentalConsultation(conversationHistory, redacted);
+  const propertyKnowledgeQuestion = isPropertyKnowledgeQuestion(
+    redacted,
+    conversationHistory.map((message) => message.content),
+  );
+  const rentalConsultation = propertyKnowledgeQuestion
+    ? { active: false, response: undefined }
+    : evaluateRentalConsultation(conversationHistory, redacted);
   if (rentalConsultation.response) {
     const choices = rentalConsultation.active
       ? rentalChoicesForAvailability(
@@ -810,7 +816,9 @@ app.post('/api/chat/message', async (context) => {
     return context.json({ answer, sources, choices: choicesForChatAnswer(answer), action: 'none', policy: 'allow', messageId });
   }
 
-  const purchaseConsultation = evaluatePurchaseConsultation(conversationHistory, redacted);
+  const purchaseConsultation = propertyKnowledgeQuestion
+    ? { active: false, response: undefined }
+    : evaluatePurchaseConsultation(conversationHistory, redacted);
   if (purchaseConsultation.response) {
     const answer = purchaseConsultation.response;
     const choices = purchaseChoicesForAvailability(
@@ -910,6 +918,33 @@ app.post('/api/chat/message', async (context) => {
     rentalOnly: rentalConsultation.active,
   });
   const bestScore = Math.max(0, ...chunks.map((chunk) => chunk.score));
+  if (propertyKnowledgeQuestion && (chunks.length === 0 || bestScore < 0.48)) {
+    const decision = noGroundingDecision();
+    const messageId = await recordTurn(
+      context.env,
+      input.conversationId,
+      redacted,
+      decision.response || '',
+      decision.code,
+      null,
+      Date.now() - startedAt,
+    );
+    await appendAudit(context.env, {
+      eventType: 'chat.refused',
+      actorType: 'visitor',
+      subjectType: 'message',
+      subjectId: messageId,
+      metadata: { code: decision.code, bestScore, mode: 'property_knowledge_fallback' },
+    });
+    return context.json({
+      answer: decision.response,
+      sources: [],
+      choices: [],
+      action: 'escalate',
+      policy: decision.code,
+      messageId,
+    });
+  }
   if (chunks.length === 0 || bestScore < 0.48) {
     let completion: { answer: string; model: string };
     try {

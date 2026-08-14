@@ -115,8 +115,21 @@ export function noGroundingDecision(): PolicyDecision {
   return {
     allowed: false,
     code: 'no_grounding',
-    response: 'ごめんね、その情報はオリにゃんでは確認できないにゃん。公式LINEから担当者に確認してにゃん。',
+    response: 'ごめんね、そのことは登録されている物件情報では分からないにゃん。公式LINEから担当者に聞いてみてにゃん。',
   };
+}
+
+const PROPERTY_CONTEXT = /(?:物件|部屋|住戸|住宅|マンション|アパート|戸建|一戸建て|土地|テナント|店舗|事務所)/u;
+const PROPERTY_SEARCH_REQUEST = /(?:物件を探す|物件探し|ほかの物件|他の物件|別の物件|もっと物件|条件を広げ)/u;
+const PROPERTY_FACT_QUESTION = /(?:この|その|あの)(?:物件|部屋|住戸|家|住宅|マンション|アパート|戸建|一戸建て|土地|テナント|店舗|事務所)|(?:価格|販売価格|家賃|管理費|共益費|敷金|礼金|保証金|間取り|面積|広さ|所在地|住所|最寄り|交通|徒歩|築年|築年月|完成|構造|階数|所在階|方角|設備|仕様|駐車|駐輪|ペット|楽器|ネット|インターネット|オートロック|エレベーター|バルコニー|リフォーム|リノベーション|用途地域|建ぺい率|容積率|接道|権利|所有権|入居|引渡|空室|内見|見学|申込|契約|学区|小学校|中学校|耐震|断熱|保証|修繕|管理状態|売主|境界|雨漏り|欠陥|告知事項|事故物件|詳細|詳しく).*(?:は|が|を|について|教えて|知りたい|ありますか|ある|ない|できますか|できる|いつ|どこ|いくら|何|可(?:能)?|[？?])/u;
+
+export function isPropertyKnowledgeQuestion(input: string, recentContext: readonly string[] = []) {
+  const normalized = input.normalize('NFKC').trim();
+  if (!normalized || PROPERTY_SEARCH_REQUEST.test(normalized)) return false;
+
+  const context = recentContext.slice(-6).join('\n').normalize('NFKC');
+  const hasPropertyContext = PROPERTY_CONTEXT.test(normalized) || PROPERTY_CONTEXT.test(context);
+  return hasPropertyContext && PROPERTY_FACT_QUESTION.test(normalized);
 }
 
 export function directConversationAnswer(input: string) {
@@ -176,6 +189,7 @@ ${conversationRules}
 
 【事実と物件情報】
 物件価格、間取り、所在地、設備、空室、営業時間、会社情報などの事実は、今回取得した参考資料で確認できる範囲だけを回答し、推測や創作をしません。
+物件について質問された内容が今回の参考資料に記載されていない場合は、一般知識や似た物件の情報で補いません。そのことは登録されている物件情報では分からないと伝え、公式LINEから担当者に聞いてみるよう短く案内します。
 市場相場、将来価格、ローン審査、税額、法的効果を確実であるかのように断定しません。
 物件は、日本語の公式物件詳細ページが参考資料内に明記されているものだけを紹介します。日本語の詳細ページがない物件、中国語版ページしかない物件、中国語サイト由来の情報、中国語表記、「万日元」表記は使用しません。
 回答中で根拠となる出典番号を [1] の形式で示します。複数物件では、各物件の情報の最後に対応する出典番号を一度だけ置き、回答末尾にまとめません。出典番号は画面上で物件詳細リンクに置き換えられます。

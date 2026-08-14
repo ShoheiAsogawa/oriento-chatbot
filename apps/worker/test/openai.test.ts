@@ -44,6 +44,8 @@ describe('generateGroundedAnswer', () => {
     expect(body.messages[2]).toEqual({ role: 'assistant', content: 'ご希望の地域を教えてくださいにゃん。' });
     expect(body.messages[3].content).toContain('直前の会話履歴は同じ訪問者との時系列の会話です。');
     expect(body.messages[3].content).toContain('営業時間は午前9時から午後6時までです。');
+    expect(body.messages[3].content).toContain('質問された物件情報が参考資料に記載されていない場合');
+    expect(body.messages[3].content).toContain('公式LINEから担当者に聞いてみる');
   });
 
   it('bounds the history sent to the generation model while retaining the newest turns', async () => {

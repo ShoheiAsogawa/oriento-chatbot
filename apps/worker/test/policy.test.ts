@@ -3,6 +3,7 @@ import {
   ensureOrinyanEnding,
   directConversationAnswer,
   evaluatePolicy,
+  isPropertyKnowledgeQuestion,
   noGroundingDecision,
   REAL_ESTATE_AGENT_RULES,
   SYSTEM_PROMPT,
@@ -66,7 +67,7 @@ describe('evaluatePolicy', () => {
 
   it('uses a concise, in-character message when knowledge is unavailable', () => {
     expect(noGroundingDecision().response).toBe(
-      'ごめんね、その情報はオリにゃんでは確認できないにゃん。公式LINEから担当者に確認してにゃん。',
+      'ごめんね、そのことは登録されている物件情報では分からないにゃん。公式LINEから担当者に聞いてみてにゃん。',
     );
   });
 
@@ -85,6 +86,31 @@ describe('evaluatePolicy', () => {
   });
 });
 
+describe('isPropertyKnowledgeQuestion', () => {
+  it.each([
+    'この物件に駐車場はありますか？',
+    'このマンションはペット可？',
+    '物件の耐震性能について教えて',
+  ])('detects property facts that require registered knowledge: %s', (question) => {
+    expect(isPropertyKnowledgeQuestion(question)).toBe(true);
+  });
+
+  it('uses recent property context for a short follow-up', () => {
+    expect(isPropertyKnowledgeQuestion('駐輪場はある？', [
+      '大阪市の物件を探しています',
+      '条件に合う購入物件が見つかったにゃん。',
+    ])).toBe(true);
+  });
+
+  it.each([
+    '物件を探す',
+    'ほかの物件も見たい',
+    '賃貸と購入のどちらが向いていますか？',
+  ])('keeps searches and general consultation in the normal flow: %s', (question) => {
+    expect(isPropertyKnowledgeQuestion(question, ['購入物件を検討しています'])).toBe(false);
+  });
+});
+
 describe('SYSTEM_PROMPT', () => {
   it('uses the natural greeting guidance', () => {
     expect(SYSTEM_PROMPT).toContain('こんにちは、オリにゃんだよ。お部屋探しや住まいのこと、気軽に聞いてにゃん。');
@@ -98,6 +124,8 @@ describe('SYSTEM_PROMPT', () => {
     expect(SYSTEM_PROMPT).toContain('質問を原則一度に一つ');
     expect(SYSTEM_PROMPT).toContain('利用者が話した事情を根拠に判断軸を整理');
     expect(SYSTEM_PROMPT).toContain('物件価格、間取り、所在地、設備、空室');
+    expect(SYSTEM_PROMPT).toContain('登録されている物件情報では分からない');
+    expect(SYSTEM_PROMPT).toContain('公式LINEから担当者に聞いてみる');
     expect(SYSTEM_PROMPT).toContain('日本語の公式物件詳細ページ');
     expect(SYSTEM_PROMPT).toContain('公式LINEを主要な案内先');
     expect(SYSTEM_PROMPT).toContain('条件を一つ尋ねるだけの検索途中では繰り返し案内しません');
