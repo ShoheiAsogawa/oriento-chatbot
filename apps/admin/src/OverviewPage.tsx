@@ -168,12 +168,12 @@ function HourChart({ hours }: { hours: OverviewHourCount[] }) {
 }
 
 function PrefectureBars({ items }: { items: OverviewPrefectureCount[] }) {
-  const visible = items.slice(0, 8);
-  const max = Math.max(1, ...visible.map((item) => item.total));
-  if (!visible.length) return <p className="chart-empty">物件の所在地を集計中です。</p>;
+  const available = items.filter((item) => item.total > 0);
+  const max = Math.max(1, ...available.map((item) => item.total));
+  if (!available.length) return <p className="chart-empty">物件の所在地を集計中です。</p>;
   return <div className="prefecture-bars">
     <div className="property-legend"><span className="sale">売買</span><span className="rent">賃貸</span></div>
-    {visible.map((item) => <div key={item.prefecture}>
+    {available.map((item) => <div key={item.prefecture}>
       <span>{item.prefecture}</span>
       <b title={`売買 ${item.sale}件・賃貸 ${item.rent}件`}>
         <i className="sale" style={{ width: `${(item.sale / max) * 100}%` }} />
@@ -303,7 +303,7 @@ export function OverviewPage({ onOpenConversations }: { onOpenConversations: () 
 
     <div className="overview-property-grid">
       <section className="surface">
-        <div className="section-heading"><div><h2>物件数が多い都道府県</h2><p>登録中の売買・賃貸物件を所在地別に集計</p></div><MapPinned /></div>
+        <div className="section-heading"><div><h2>都道府県別の物件数</h2><p>物件が1件以上ある都道府県をすべて表示</p></div><MapPinned /></div>
         <PrefectureBars items={data.propertyPrefectures} />
       </section>
       <section className="surface">
