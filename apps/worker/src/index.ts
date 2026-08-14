@@ -14,8 +14,8 @@ import {
   purchaseChoicesForAvailability,
   rentalChoicesForAvailability,
 } from './guided-search-options';
-import { consumeDailyAllowance } from './cost-controls';
-import { loadOverview } from './overview';
+import { consumeDailyAllowance, japanDay } from './cost-controls';
+import { loadOverview, normalizeTrackedPropertyUrl, type PropertyCatalogItem } from './overview';
 import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
@@ -46,6 +46,10 @@ const sessionSchema = z.object({
   sourcePage: z.string().url().max(1000).optional(),
   turnstileToken: z.string().max(2048).optional(),
 });
+
+const propertyViewSchema = z.object({
+  sourcePage: z.string().url().max(1000),
+}).strict();
 
 const messageSchema = z.object({
   conversationId: z.string().uuid(),
@@ -243,6 +247,21 @@ app.notFound(async (context) => {
   return context.json({ error: 'Not found' }, 404);
 });
 
+app.post('/api/property-view', async (context) => {
+  const input = propertyViewSchema.parse(await context.req.json());
+  const sourceUrl = normalizeTrackedPropertyUrl(input.sourcePage);
+  if (!sourceUrl) return context.json({ recorded: false });
+  const ip = context.req.header('CF-Connecting-IP') || 'local';
+  const visitorHash = await sha256(`${context.env.HASH_SALT}:${ip}:${context.req.header('User-Agent') || ''}`);
+  const rate = await context.env.RATE_LIMITER.limit({ key: `property-view:${visitorHash}` });
+  if (!rate.success) return context.json({ recorded: false }, 202);
+  await context.env.DB.prepare(
+    `INSERT OR IGNORE INTO property_page_views (day, source_url, visitor_hash)
+     VALUES (?, ?, ?)`,
+  ).bind(japanDay(new Date()), sourceUrl, visitorHash).run();
+  return context.json({ recorded: true }, 202);
+});
+
 app.post('/api/chat/session', async (context) => {
   const input = sessionSchema.parse(await context.req.json());
   if (!(await verifyTurnstile(input.turnstileToken, context.req.raw, context.env))) {
@@ -308,6 +327,14 @@ const initialKnowledgeEntrySchema = z.object({
 const initialKnowledgeManifestSchema = z.object({
   files: z.array(initialKnowledgeEntrySchema).default([]),
 });
+
+const propertyDashboardIndexSchema = z.array(z.object({
+  sourceUrl: z.string().url().max(1000),
+  title: z.string().trim().min(1).max(500),
+  address: z.string().max(500).default(''),
+  prefecture: z.string().trim().min(1).max(20).default('その他'),
+  category: propertyCategorySchema,
+}));
 
 type InitialKnowledgeEntry = z.infer<typeof initialKnowledgeEntrySchema>;
 type KnowledgeListStatus = (typeof KNOWLEDGE_LIST_STATUS)[number];
@@ -543,6 +570,14 @@ async function readInitialKnowledgeManifest(env: Env, baseUrl: URL) {
   });
   if (invalidPropertySource) throw new Error(`Property knowledge is missing an official source URL: ${invalidPropertySource.file}`);
   return parsed.data.files;
+}
+
+async function readPropertyDashboardIndex(env: Env, baseUrl: URL): Promise<PropertyCatalogItem[]> {
+  const response = await env.STATIC_ASSETS.fetch(new Request(new URL('/knowledge/property-dashboard-index.json', baseUrl)));
+  if (!response.ok) return [];
+  const parsed = propertyDashboardIndexSchema.safeParse(await response.json<unknown>());
+  if (!parsed.success) throw new Error('Property dashboard index has an invalid format');
+  return parsed.data;
 }
 
 async function readKnowledgeSourceExclusions(env: Env) {
@@ -1192,9 +1227,13 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
 });
 
 app.get('/api/admin/overview', async (context) => {
-  const knowledge = await context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.list({ page: 1, per_page: 1 });
+  const [knowledge, propertyCatalog] = await Promise.all([
+    context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items.list({ page: 1, per_page: 1 }),
+    readPropertyDashboardIndex(context.env, new URL(context.req.url)),
+  ]);
   return context.json(await loadOverview(context.env.DB, {
     knowledgeItems: knowledge.result_info?.total_count || 0,
+    propertyCatalog,
     sessionLimit: context.env.DAILY_SESSION_LIMIT,
     aiRequestLimit: context.env.DAILY_AI_REQUEST_LIMIT,
   }));

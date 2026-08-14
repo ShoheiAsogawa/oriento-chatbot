@@ -11,6 +11,28 @@ export interface OverviewPageCount {
   count: number;
 }
 
+export interface PropertyCatalogItem {
+  sourceUrl: string;
+  title: string;
+  address: string;
+  prefecture: string;
+  category: 'properties_for_sale' | 'properties_for_rent';
+}
+
+export interface OverviewPrefectureCount {
+  prefecture: string;
+  total: number;
+  sale: number;
+  rent: number;
+}
+
+export interface OverviewPropertyView {
+  title: string;
+  address: string;
+  sourceUrl: string;
+  count: number;
+}
+
 export interface OverviewPolicyCount {
   action: string;
   count: number;
@@ -43,6 +65,8 @@ export interface OverviewData {
   knowledgeItems: number;
   daily: OverviewDailyPoint[];
   topPages: OverviewPageCount[];
+  propertyPrefectures: OverviewPrefectureCount[];
+  topProperties: OverviewPropertyView[];
   policy: OverviewPolicyCount[];
   intents: OverviewIntentCount[];
   hours: OverviewHourCount[];
@@ -57,6 +81,82 @@ export interface OverviewData {
 }
 
 const SERIES_DAYS = 30;
+const PREFECTURE_PATTERN = /^(北海道|東京都|京都府|大阪府|.{2,3}県)/u;
+const PREFECTURE_CITIES: Array<[string, RegExp]> = [
+  ['大阪府', /^(?:大阪市|堺市|岸和田市|豊中市|池田市|吹田市|泉大津市|高槻市|貝塚市|守口市|枚方市|茨木市|八尾市|泉佐野市|富田林市|寝屋川市|河内長野市|松原市|大東市|和泉市|箕面市|柏原市|羽曳野市|門真市|摂津市|高石市|藤井寺市|東大阪市|泉南市|四條畷市|交野市|大阪狭山市|阪南市|三島郡|豊能郡|泉北郡|泉南郡|南河内郡|日置荘)/u],
+  ['兵庫県', /^(?:神戸市|姫路市|尼崎市|明石市|西宮市|洲本市|芦屋市|伊丹市|相生市|豊岡市|加古川市|赤穂市|西脇市|宝塚市|三木市|高砂市|川西市|小野市|三田市|加西市|丹波篠山市|養父市|丹波市|南あわじ市|朝来市|淡路市|宍粟市|加東市|たつの市|川辺郡|多可郡|加古郡|神崎郡|揖保郡|赤穂郡|佐用郡|美方郡)/u],
+  ['和歌山県', /^(?:和歌山市|海南市|橋本市|有田市|御坊市|田辺市|新宮市|紀の川市|岩出市|海草郡|伊都郡|有田郡|日高郡|西牟婁郡|東牟婁郡)/u],
+  ['奈良県', /^(?:奈良市|大和高田市|大和郡山市|天理市|橿原市|桜井市|五條市|御所市|生駒市|香芝市|葛城市|宇陀市|山辺郡|生駒郡|磯城郡|宇陀郡|高市郡|北葛城郡|吉野郡)/u],
+  ['京都府', /^(?:京都市|福知山市|舞鶴市|綾部市|宇治市|宮津市|亀岡市|城陽市|向日市|長岡京市|八幡市|京田辺市|京丹後市|南丹市|木津川市|乙訓郡|久世郡|綴喜郡|相楽郡|船井郡|与謝郡)/u],
+];
+
+export function inferPropertyPrefecture(address: string) {
+  const normalized = address.replace(/\s+/gu, '');
+  const explicit = normalized.match(PREFECTURE_PATTERN)?.[1];
+  if (explicit) return explicit;
+  return PREFECTURE_CITIES.find(([, pattern]) => pattern.test(normalized))?.[0] || 'その他';
+}
+
+export function normalizeTrackedPropertyUrl(value: string) {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase().replace(/^www\./u, '');
+    if (url.protocol !== 'https:' || hostname !== 'orijyu.com') return undefined;
+    if (!/^\/(?:[^/]+\/)?post-\d+(?:-\d+)?\.html$/u.test(url.pathname)) return undefined;
+    url.hostname = 'orijyu.com';
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+export function buildPropertyAnalytics(
+  initialCatalog: PropertyCatalogItem[],
+  managedRows: Array<{ source_url: string; title: string; address: string; category: PropertyCatalogItem['category'] }>,
+  excludedUrls: string[],
+  viewRows: Array<{ source_url: string; count: number | string | null }>,
+) {
+  const excluded = new Set(excludedUrls.map(normalizeTrackedPropertyUrl).filter((url): url is string => Boolean(url)));
+  const catalog = new Map<string, PropertyCatalogItem>();
+  for (const item of initialCatalog) {
+    const sourceUrl = normalizeTrackedPropertyUrl(item.sourceUrl);
+    if (!sourceUrl || excluded.has(sourceUrl)) continue;
+    catalog.set(sourceUrl, { ...item, sourceUrl, prefecture: item.prefecture || inferPropertyPrefecture(item.address) });
+  }
+  for (const row of managedRows) {
+    const sourceUrl = normalizeTrackedPropertyUrl(row.source_url);
+    if (!sourceUrl || excluded.has(sourceUrl)) continue;
+    catalog.set(sourceUrl, {
+      sourceUrl,
+      title: row.title,
+      address: row.address,
+      prefecture: inferPropertyPrefecture(row.address),
+      category: row.category,
+    });
+  }
+
+  const prefectures = new Map<string, OverviewPrefectureCount>();
+  for (const item of catalog.values()) {
+    const prefecture = item.prefecture || 'その他';
+    const current = prefectures.get(prefecture) || { prefecture, total: 0, sale: 0, rent: 0 };
+    current.total += 1;
+    if (item.category === 'properties_for_rent') current.rent += 1;
+    else current.sale += 1;
+    prefectures.set(prefecture, current);
+  }
+
+  const topProperties = viewRows.flatMap((row) => {
+    const sourceUrl = normalizeTrackedPropertyUrl(row.source_url);
+    const item = sourceUrl ? catalog.get(sourceUrl) : undefined;
+    return item ? [{ title: item.title, address: item.address, sourceUrl: item.sourceUrl, count: asCount(row.count) }] : [];
+  });
+  return {
+    propertyPrefectures: [...prefectures.values()].sort((left, right) => right.total - left.total || left.prefecture.localeCompare(right.prefecture, 'ja')),
+    topProperties,
+  };
+}
 
 export function addCalendarDays(isoDate: string, delta: number) {
   const [year, month, day] = isoDate.split('-').map(Number);
@@ -120,6 +220,7 @@ export async function loadOverview(
     knowledgeItems: number;
     sessionLimit?: string;
     aiRequestLimit?: string;
+    propertyCatalog?: PropertyCatalogItem[];
     now?: Date;
   },
 ): Promise<OverviewData> {
@@ -136,6 +237,9 @@ export async function loadOverview(
     intentRows,
     hourRows,
     usageRows,
+    propertyViewRows,
+    managedPropertyRows,
+    excludedPropertyRows,
     dailyUsage,
   ] = await Promise.all([
     db.prepare(
@@ -225,8 +329,30 @@ export async function loadOverview(
        WHERE day >= ? -- overview.usage
        ORDER BY day`,
     ).bind(usageFrom).all<{ day: string; metric: string; count: number }>(),
+    db.prepare(
+      `SELECT source_url, COUNT(*) AS count
+       FROM property_page_views
+       WHERE day >= ? -- overview.property_views
+       GROUP BY source_url
+       ORDER BY count DESC
+       LIMIT 8`,
+    ).bind(usageFrom).all<{ source_url: string; count: number }>(),
+    db.prepare(
+      `SELECT source_url, title, address, category
+       FROM managed_property_inventory -- overview.managed_properties`,
+    ).all<{ source_url: string; title: string; address: string; category: PropertyCatalogItem['category'] }>(),
+    db.prepare(
+      `SELECT source_url FROM knowledge_source_exclusions -- overview.property_exclusions`,
+    ).all<{ source_url: string }>(),
     readDailyUsage(db, now),
   ]);
+
+  const propertyAnalytics = buildPropertyAnalytics(
+    options.propertyCatalog || [],
+    managedPropertyRows.results || [],
+    (excludedPropertyRows.results || []).map((row) => row.source_url),
+    propertyViewRows.results || [],
+  );
 
   return {
     conversations30d: asCount(summary?.conversations30d),
@@ -242,6 +368,7 @@ export async function loadOverview(
       page: row.page || '/',
       count: asCount(row.count),
     })),
+    ...propertyAnalytics,
     policy: (policyRows.results || []).map((row) => ({
       action: row.action || 'allow',
       count: asCount(row.count),

@@ -72,6 +72,7 @@ async function runDailyRetention(env: Env) {
     });
   }
   await env.DB.prepare(`DELETE FROM usage_counters WHERE day < date('now', '+9 hours', '-90 days')`).run();
+  await env.DB.prepare(`DELETE FROM property_page_views WHERE day < date('now', '+9 hours', '-180 days')`).run();
 }
 
 type MaintenanceStatus = {

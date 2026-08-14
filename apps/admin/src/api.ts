@@ -100,6 +100,20 @@ export interface OverviewPageCount {
   count: number;
 }
 
+export interface OverviewPrefectureCount {
+  prefecture: string;
+  total: number;
+  sale: number;
+  rent: number;
+}
+
+export interface OverviewPropertyView {
+  title: string;
+  address: string;
+  sourceUrl: string;
+  count: number;
+}
+
 export interface OverviewPolicyCount {
   action: string;
   count: number;
@@ -132,6 +146,8 @@ export interface OverviewData {
   knowledgeItems: number;
   daily: OverviewDailyPoint[];
   topPages: OverviewPageCount[];
+  propertyPrefectures: OverviewPrefectureCount[];
+  topProperties: OverviewPropertyView[];
   policy: OverviewPolicyCount[];
   intents: OverviewIntentCount[];
   hours: OverviewHourCount[];
@@ -219,6 +235,20 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
       { page: 'https://orijyu.com/property/hyogo/', count: 121 },
       { page: 'https://orijyu.com/reception.html', count: 74 },
       { page: 'https://orijyu.com/company/', count: 41 },
+    ],
+    propertyPrefectures: [
+      { prefecture: '大阪府', total: 391, sale: 370, rent: 21 },
+      { prefecture: '和歌山県', total: 76, sale: 74, rent: 2 },
+      { prefecture: '兵庫県', total: 58, sale: 57, rent: 1 },
+      { prefecture: '奈良県', total: 23, sale: 22, rent: 1 },
+      { prefecture: '京都府', total: 14, sale: 14, rent: 0 },
+    ],
+    topProperties: [
+      { title: 'OrientCity 七道', address: '堺市堺区北旅籠町西1丁', sourceUrl: 'https://orijyu.com/buy/post-128562.html', count: 86 },
+      { title: 'OrientCity みさき公園', address: '泉南郡岬町淡輪', sourceUrl: 'https://orijyu.com/buy/post-112045.html', count: 71 },
+      { title: 'プリッ2 少林寺町西 201号室', address: '堺市堺区少林寺町西4丁', sourceUrl: 'https://orijyu.com/rent/post-126095.html', count: 48 },
+      { title: 'OrientCity 仁川町', address: '西宮市仁川町6丁目', sourceUrl: 'https://orijyu.com/buy/post-90580.html', count: 37 },
+      { title: 'OrientCity 下松', address: '岸和田市尾生町2丁目', sourceUrl: 'https://orijyu.com/buy/post-115485.html', count: 29 },
     ],
     policy: [
       { action: 'allow', count: 1180 },

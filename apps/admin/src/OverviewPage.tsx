@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  BellRing, Building2, CalendarDays, CheckCircle2, ChevronRight, CircleAlert, Clock3,
-  Globe, MessageSquareText, TrendingUp, UsersRound,
+  Building2, CalendarDays, CheckCircle2, ChevronRight, Clock3,
+  Eye, MapPinned, MessageSquareText, TrendingUp, UsersRound,
 } from 'lucide-react';
 import {
   api,
@@ -10,7 +10,8 @@ import {
   type OverviewData,
   type OverviewHourCount,
   type OverviewIntentCount,
-  type OverviewPageCount,
+  type OverviewPrefectureCount,
+  type OverviewPropertyView,
 } from './api';
 
 const emptyOverview: OverviewData = {
@@ -24,6 +25,8 @@ const emptyOverview: OverviewData = {
   knowledgeItems: 0,
   daily: [],
   topPages: [],
+  propertyPrefectures: [],
+  topProperties: [],
   policy: [],
   intents: [],
   hours: Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 })),
@@ -164,19 +167,40 @@ function HourChart({ hours }: { hours: OverviewHourCount[] }) {
   </div>;
 }
 
-function PageBars({ pages }: { pages: OverviewPageCount[] }) {
-  const max = Math.max(1, ...pages.map((item) => item.count));
-  if (!pages.length) return <p className="chart-empty">まだ訪問元ページの集計がありません。</p>;
-  return <div className="page-bars">
-    {pages.map((item) => {
-      const path = shortenPage(item.page);
-      return <div key={item.page}>
-        <span title={item.page}>{path}</span>
-        <b><i style={{ width: `${Math.max(8, (item.count / max) * 100)}%` }} /></b>
-        <strong>{item.count.toLocaleString()}</strong>
-      </div>;
-    })}
+function PrefectureBars({ items }: { items: OverviewPrefectureCount[] }) {
+  const visible = items.slice(0, 8);
+  const max = Math.max(1, ...visible.map((item) => item.total));
+  if (!visible.length) return <p className="chart-empty">物件の所在地を集計中です。</p>;
+  return <div className="prefecture-bars">
+    <div className="property-legend"><span className="sale">売買</span><span className="rent">賃貸</span></div>
+    {visible.map((item) => <div key={item.prefecture}>
+      <span>{item.prefecture}</span>
+      <b title={`売買 ${item.sale}件・賃貸 ${item.rent}件`}>
+        <i className="sale" style={{ width: `${(item.sale / max) * 100}%` }} />
+        <i className="rent" style={{ width: `${(item.rent / max) * 100}%` }} />
+      </b>
+      <strong>{item.total.toLocaleString()}件</strong>
+      <small>売{item.sale}・賃{item.rent}</small>
+    </div>)}
   </div>;
+}
+
+function PropertyRanking({ items }: { items: OverviewPropertyView[] }) {
+  if (!items.length) return <div className="property-ranking-empty">
+    <Eye />
+    <div><strong>閲覧データはこれから蓄積されます</strong><p>チャットを設置した物件詳細ページが閲覧されると、物件名でランキング表示します。</p></div>
+  </div>;
+  return <ol className="property-ranking">
+    {items.map((item, index) => <li key={item.sourceUrl}>
+      <span>{index + 1}</span>
+      <a href={item.sourceUrl} target="_blank" rel="noreferrer">
+        <strong>{item.title}</strong>
+        <small>{item.address || '所在地未登録'}</small>
+      </a>
+      <b>{item.count.toLocaleString()}人</b>
+      <ChevronRight />
+    </li>)}
+  </ol>;
 }
 
 function IntentBars({ intents }: { intents: OverviewIntentCount[] }) {
@@ -235,18 +259,17 @@ export function OverviewPage({ onOpenConversations }: { onOpenConversations: () 
 
   const todayDelta = dayDelta(data.conversationsToday, data.conversationsYesterday);
   const questionsPerConversation = data.conversations30d ? (data.questions30d / data.conversations30d) : 0;
-  const flagged = useMemo(() => recent.filter((item) => item.has_refusal).slice(0, 5), [recent]);
 
   const metrics = [
     { label: '今日の相談', value: data.conversationsToday, note: todayDelta.label, tone: todayDelta.tone, icon: TrendingUp },
     { label: '30日間の相談', value: data.conversations30d, note: '相談受付数', tone: 'flat' as const, icon: CalendarDays },
     { label: '相談者', value: data.visitors30d, note: '過去30日のユニーク数', tone: 'flat' as const, icon: UsersRound },
-    { label: '対応確認', value: data.refused30d, note: '会話ログで要確認', tone: data.refused30d ? 'down' as const : 'flat' as const, icon: BellRing },
+    { label: '30日間の質問', value: data.questions30d, note: '相談内容の入力数', tone: 'flat' as const, icon: MessageSquareText },
     { label: '登録物件・資料', value: data.knowledgeItems, note: '案内に使える情報', tone: 'flat' as const, icon: Building2 },
   ] as const;
 
   return <>
-    <PageHeader title="概要" description="反響の動きと対応が必要な相談をまとめて確認します。" />
+    <PageHeader title="概要" description="反響の動きと物件の閲覧傾向をまとめて確認します。" />
     {error ? <p className="knowledge-notice" role="alert">{error}</p> : null}
     <section className="metric-strip overview-metrics">
       {metrics.map((item) => {
@@ -273,19 +296,26 @@ export function OverviewPage({ onOpenConversations }: { onOpenConversations: () 
           </div>
         </div>
         <TrendChart series={data.daily} metric={metric} />
-        <p className="chart-caption">相談あたりの質問 {questionsPerConversation.toFixed(1)}件 ／ 対応確認 {data.refused30d.toLocaleString()}件</p>
+        <p className="chart-caption">相談あたりの質問 {questionsPerConversation.toFixed(1)}件 ／ 30日間の質問 {data.questions30d.toLocaleString()}件</p>
       </section>
       <ReceptionSummary data={data} />
     </div>
 
-    <div className="overview-charts">
+    <div className="overview-property-grid">
+      <section className="surface">
+        <div className="section-heading"><div><h2>物件数が多い都道府県</h2><p>登録中の売買・賃貸物件を所在地別に集計</p></div><MapPinned /></div>
+        <PrefectureBars items={data.propertyPrefectures} />
+      </section>
+      <section className="surface">
+        <div className="section-heading"><div><h2>閲覧が多い物件</h2><p>過去30日の物件ページ閲覧者数（1日1人1回）</p></div><Eye /></div>
+        <PropertyRanking items={data.topProperties} />
+      </section>
+    </div>
+
+    <div className="overview-charts overview-secondary-charts">
       <section className="surface">
         <div className="section-heading"><div><h2>相談ニーズ</h2><p>相談内容から集計した検討傾向（過去30日）</p></div><Building2 /></div>
         <IntentBars intents={data.intents} />
-      </section>
-      <section className="surface">
-        <div className="section-heading"><div><h2>よく見られているページ</h2><p>相談が始まった掲載ページ（過去30日）</p></div><Globe /></div>
-        <PageBars pages={data.topPages} />
       </section>
       <section className="surface">
         <div className="section-heading"><div><h2>相談が多い時間帯</h2><p>相談が始まった時間（日本時間・過去30日）</p></div><Clock3 /></div>
@@ -296,25 +326,14 @@ export function OverviewPage({ onOpenConversations }: { onOpenConversations: () 
     <div className="overview-grid">
       <section className="surface activity-list">
         <div className="section-heading">
-          <div><h2>最近の相談</h2><p>直近の相談内容と対応状況</p></div>
+          <div><h2>最近の相談</h2><p>直近に寄せられた相談内容</p></div>
           <button className="text-button" type="button" onClick={onOpenConversations}>すべて見る <ChevronRight /></button>
         </div>
         {recent.length ? recent.map((item) => <button className="activity-row" key={item.id} type="button" onClick={onOpenConversations}>
-          <span className={`activity-icon ${item.has_refusal ? 'warn' : ''}`}>{item.has_refusal ? <CircleAlert /> : <MessageSquareText />}</span>
+          <span className="activity-icon"><MessageSquareText /></span>
           <span><strong>{item.latest_message}</strong><small>{shortenPage(item.source_page)}</small></span>
           <time>{formatDate(item.updated_at)}</time><ChevronRight />
         </button>) : <p className="chart-empty">まだ相談はありません。</p>}
-      </section>
-      <section className="surface attention-list">
-        <div className="section-heading"><div><h2>対応が必要</h2><p>担当者が確認したい相談</p></div></div>
-        {flagged.length ? flagged.map((item) => <button className="attention" key={item.id} type="button" onClick={onOpenConversations}>
-          <span className="warning-dot" />
-          <div><strong>{item.latest_message}</strong><p>{shortenPage(item.source_page)} ・ {formatDate(item.updated_at)}</p></div>
-          <ChevronRight />
-        </button>) : <div className="attention-empty">
-          <CheckCircle2 />
-          <div><strong>対応確認はありません</strong><p>現在、確認が必要な相談はありません。</p></div>
-        </div>}
       </section>
     </div>
   </>;

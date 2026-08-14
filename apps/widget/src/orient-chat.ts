@@ -268,6 +268,7 @@ class OrientChat extends HTMLElement {
   connectedCallback() {
     this.applyConfiguration();
     this.bindEvents();
+    void this.recordPropertyPageView();
     this.messages = [{
       id: crypto.randomUUID(),
       role: 'assistant',
@@ -285,6 +286,30 @@ class OrientChat extends HTMLElement {
   private get apiUrl() { return (this.getAttribute('api-url') || '').replace(/\/$/, ''); }
   private get demoMode() { return this.getAttribute('demo-mode') === 'true' || !this.apiUrl; }
   private get lineUrl() { return this.getAttribute('line-url') || 'https://page.line.me/089wmudt'; }
+
+  private async recordPropertyPageView() {
+    if (this.demoMode) return;
+    const page = new URL(location.href);
+    const hostname = page.hostname.toLowerCase().replace(/^www\./u, '');
+    if (page.protocol !== 'https:' || hostname !== 'orijyu.com') return;
+    if (!/^\/(?:[^/]+\/)?post-\d+(?:-\d+)?\.html$/u.test(page.pathname)) return;
+    page.search = '';
+    page.hash = '';
+    const day = new Date(Date.now() + 9 * 60 * 60 * 1_000).toISOString().slice(0, 10);
+    const storageKey = `orient-chat.property-view.v1:${day}:${page.pathname}`;
+    try {
+      if (window.localStorage.getItem(storageKey)) return;
+      const response = await this.fetchWithTimeout(`${this.apiUrl}/api/property-view`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sourcePage: page.toString() }),
+        keepalive: true,
+      }, 5_000);
+      if (response.ok) window.localStorage.setItem(storageKey, '1');
+    } catch {
+      // Analytics must never block the chat widget.
+    }
+  }
 
   private get sessionStorageKey() {
     try {
