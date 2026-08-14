@@ -1,8 +1,8 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity, Archive, BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight,
+  Activity, Archive, BookOpen, ChevronDown, ChevronLeft, ChevronRight,
   Database, EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
-  FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Paintbrush, Plus,
+  FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Plus,
   RefreshCw, Search, ShieldCheck, Trash2, UploadCloud,
   Pencil, X,
 } from 'lucide-react';
@@ -17,14 +17,13 @@ import {
 } from './api';
 import { OverviewPage } from './OverviewPage';
 
-type PageKey = 'overview' | 'reports' | 'knowledge' | 'conversations' | 'appearance';
+type PageKey = 'overview' | 'reports' | 'knowledge' | 'conversations';
 
 const navItems: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
   { key: 'overview', label: '概要', icon: Home },
   { key: 'reports', label: '月次レポート', icon: Gauge },
   { key: 'knowledge', label: 'ナレッジ', icon: BookOpen },
   { key: 'conversations', label: '会話ログ', icon: MessageSquareText },
-  { key: 'appearance', label: '外観', icon: Paintbrush },
 ];
 
 const orinyanSpriteStyle = { backgroundImage: "url('/assets/orinyan-states.png')" };
@@ -544,11 +543,6 @@ function ConversationsPage() {
   </main><aside className="detail-drawer open conversation-detail"><div className="drawer-heading"><div><h2>会話の詳細</h2><p>{selected?.id}</p></div><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>{selected ? <><div className="conversation-meta"><span><History />{formatDate(selected.updated_at)}</span><span><Link2 />{selected.source_page}</span></div><div className="transcript">{messages.map((message) => <div key={message.id} className={message.role === 'user' ? 'transcript-user' : 'transcript-bot'}>{message.content_redacted}{message.role === 'assistant' && message.policy_action === 'allow' ? <small>出典は保存済みのナレッジ資料を参照</small> : null}</div>)}</div><div className="policy-result"><ShieldCheck /><div><strong>ポリシー判定</strong><p>{lastAssistant?.policy_action || '確認中'} {lastAssistant?.policy_action === 'allow' ? '— 根拠資料あり' : '— 回答を拒否または担当者へ案内'}</p></div></div></> : <div className="empty-detail"><MessageSquareText /><p>会話を選択してください。</p></div>}</aside></div>;
 }
 
-function AppearancePage() {
-  const [primary, setPrimary] = useState('#ff680b');
-  return <><PageHeader title="外観" description="公式サイトに合わせた色、表示位置、キャラクターの動きを確認します。" action={<button className="primary-button"><Check />変更を保存</button>} /><div className="appearance-layout"><section className="settings-section"><h2>ブランドカラー</h2><label className="color-field"><span>メインカラー</span><input type="color" value={primary} onChange={(event) => setPrimary(event.target.value)} /><code>{primary}</code></label><label className="color-field"><span>文字色</span><input type="color" defaultValue="#29293a" /><code>#29293a</code></label><label className="color-field"><span>補助テキスト</span><input type="color" defaultValue="#74757f" /><code>#74757f</code></label><h2>表示</h2><label className="field-label">位置<select defaultValue="right"><option value="right">右下</option><option value="left">左下</option></select></label><label className="check-row"><input type="checkbox" defaultChecked /><span><strong>キャラクターアニメーション</strong><small>待機・聞く・考える・話すを会話状態に合わせます。</small></span></label><label className="check-row"><input type="checkbox" defaultChecked /><span><strong>OSの動きを減らす設定に従う</strong><small>アクセシビリティ設定時は連続アニメーションを停止します。</small></span></label></section><section className="live-preview" style={{ '--preview-primary': primary } as React.CSSProperties}><div className="fake-site"><header>オリエントホールディングス</header><div className="fake-hero">住まい探しの情報</div><div className="preview-chat"><div className="preview-chat-head"><span className="mini-cat" style={orinyanSpriteStyle} /><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div><X /></div><div className="preview-chat-body"><span className="mini-cat" style={orinyanSpriteStyle} /><p>住まい探しのご質問をどうぞ。<br />サイトの情報をもとにご案内します。</p></div><div className="preview-suggestions"><button>物件を探す</button><button>家づくりについて</button></div><div className="preview-composer">メッセージを入力 <span>➤</span></div></div></div></section></div></>;
-}
-
 function AuthScreen({ onAuthenticated }: { onAuthenticated: (identity: string) => void }) {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
@@ -570,7 +564,7 @@ export function App() {
   const [checkingSession, setCheckingSession] = useState(true);
   useEffect(() => { void api.authSession().then((value) => setSession(value.authenticated ? value.user?.loginId || null : null)).catch(() => setSession(null)).finally(() => setCheckingSession(false)); }, []);
   const logout = async () => { try { await api.logout(); } finally { setSession(null); } };
-  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : page === 'appearance' ? AppearancePage : null;
+  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : null;
   if (checkingSession) return <main className="auth-page"><p>ログイン状態を確認しています…</p></main>;
   if (!session) return <AuthScreen onAuthenticated={setSession} />;
   return <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
