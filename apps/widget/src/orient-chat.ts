@@ -215,10 +215,12 @@ const styles = `
   .cat[data-cat-state="thinking"] { background-position: 100% 100%; }
   .cat-avatar { width: 52px; height: 52px; border: 3px solid rgba(255,255,255,.88); border-radius: 50%; background-color: #fff; }
   .launcher { display: grid; justify-items: center; border: 0; background: transparent; cursor: pointer; filter: drop-shadow(0 8px 13px rgba(41,41,58,.2)); }
-  .launcher-ring { width: 102px; height: 102px; display: block; overflow: hidden; border: 4px solid #fff; border-radius: 50%; background: var(--orient-primary); }
-  .cat-launcher { width: 122px; height: 122px; margin: 8px 0 0 -10px; animation: breathe 3.2s ease-in-out infinite; }
+  .launcher-ring { width: 102px; height: 102px; display: block; overflow: hidden; border: 4px solid #fff; border-radius: 50%; background: var(--orient-primary); transition: transform 160ms ease, box-shadow 160ms ease; }
+  .cat-launcher { width: 122px; height: 122px; display: block; margin: 8px 0 0 -10px; transform-origin: 50% 82%; animation: launcher-idle 2.8s ease-in-out infinite; will-change: transform; }
   .launcher-label { margin-top: -6px; padding: 5px 11px; color: #fff; border-radius: 7px; background: var(--orient-ink); font-size: 11px; font-weight: 800; }
-  .launcher:hover .cat-launcher { transform: translateY(-5px) rotate(-2deg); }
+  .launcher:hover .launcher-ring { transform: translateY(-3px); }
+  .launcher:focus-visible { outline: none; }
+  .launcher:focus-visible .launcher-ring { transform: translateY(-3px); box-shadow: 0 0 0 4px rgba(255,104,11,.24); }
   .launcher[aria-expanded="true"] { display: none; }
   .cat[data-cat-state="listening"] { animation: listen 1.4s ease-in-out infinite; }
   .cat[data-cat-state="speaking"] { animation: speak .42s ease-in-out infinite alternate; }
@@ -226,7 +228,7 @@ const styles = `
   @keyframes panel-in { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
   @keyframes message-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes choices-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-  @keyframes breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.012); } }
+  @keyframes launcher-idle { 0%,100% { transform: translateY(1px) rotate(-.6deg); } 45% { transform: translateY(-4px) rotate(.7deg); } 70% { transform: translateY(-2px) rotate(-.3deg); } }
   @keyframes listen { 0%,100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
