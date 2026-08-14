@@ -16,6 +16,12 @@ describe('directConversationAnswer', () => {
     );
   });
 
+  it.each(['オリエントホームのこだわり', 'オリエントホームの特徴を教えて', 'オリエントホームの家づくりのこだわりは？'])('answers Orient Home\'s strengths concisely: %s', (question) => {
+    expect(directConversationAnswer(question)).toBe(
+      'オリエントホームのこだわりは、暮らしに合う「世界に一軒だけの家」を一緒につくることにゃん。一級建築士と相談しながら、間取り・デザイン・仕様まで細かく選べるオールオーダーの家づくりが特徴にゃん。新築だけでなく、中古住宅・リフォーム・土地活用までまとめて相談できるにゃん。',
+    );
+  });
+
   it('leaves ordinary consultation messages to the real-estate agent', () => {
     expect(directConversationAnswer('家族4人で住む家を探したい')).toBeUndefined();
   });

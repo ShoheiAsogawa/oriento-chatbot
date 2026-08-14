@@ -62,6 +62,22 @@ export interface PropertyKnowledgeSaveResult {
   reindexStarted: boolean;
 }
 
+export interface GeneralKnowledgeSaveResult {
+  id: string;
+  key: string;
+  title: string;
+  category: string;
+  source_url: string;
+  replacedItemCount: number;
+  reindexStarted: boolean;
+}
+
+export interface GeneralKnowledgeUpdateInput {
+  title: string;
+  sourceUrl?: string;
+  file?: File | null;
+}
+
 export interface ConversationSummary {
   id: string;
   updated_at: string;
@@ -409,6 +425,25 @@ export const api = {
     },
     { id, key: '', title: input.title, category: input.category, source_url: input.sourceUrl, replacedItemCount: 0, reindexStarted: true },
   ),
+  updateGeneralKnowledge: (id: string, input: GeneralKnowledgeUpdateInput) => {
+    const form = new FormData();
+    form.set('title', input.title);
+    form.set('sourceUrl', input.sourceUrl?.trim() || '');
+    if (input.file) form.set('file', input.file);
+    return request<GeneralKnowledgeSaveResult>(
+      `/api/admin/knowledge/${id}`,
+      { method: 'PUT', body: form },
+      {
+        id,
+        key: '',
+        title: input.title,
+        category: 'general',
+        source_url: input.sourceUrl || '',
+        replacedItemCount: 0,
+        reindexStarted: true,
+      },
+    );
+  },
   deleteKnowledge: (id: string) => request(`/api/admin/knowledge/${id}`, { method: 'DELETE' }, { ok: true }),
   reindexKnowledge: (id: string) => request<KnowledgeItem>(`/api/admin/knowledge/${id}/reindex`, { method: 'POST' }),
   conversations: (search = '') => {

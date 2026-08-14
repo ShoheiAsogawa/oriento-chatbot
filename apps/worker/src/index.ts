@@ -380,7 +380,13 @@ function isPropertyKnowledgeCategory(category: string | undefined) {
 }
 
 function isManagedInitialKnowledgeItem(item: AiSearchItemInfo) {
-  return Boolean(metadataString(item.metadata, 'manifest_sha256'));
+  return Boolean(metadataString(item.metadata, 'manifest_sha256')?.match(/^[a-f0-9]{64}$/iu));
+}
+
+function initialKnowledgeManualOverrideFile(item: AiSearchItemInfo) {
+  const marker = metadataString(item.metadata, 'manifest_sha256');
+  const filename = marker?.startsWith('manual:') ? marker.slice('manual:'.length) : '';
+  return filename && isSafeInitialKnowledgePath(filename) ? filename : undefined;
 }
 
 function knowledgeItemSourceUrl(item: AiSearchItemInfo) {
@@ -393,6 +399,73 @@ function propertyKnowledgeCategory(type: PropertyKnowledgeInput) {
 
 async function propertyKnowledgeItemKey(sourceUrl: string) {
   return `property-${await sha256(sourceUrl)}.md`;
+}
+
+type GeneralKnowledgeUpdateInput = {
+  title: string;
+  sourceUrl: string;
+};
+
+function knowledgeFileExtension(value: string) {
+  return value.trim().toLocaleLowerCase('en-US').match(/\.[a-z0-9]{1,10}$/u)?.[0] || '';
+}
+
+/**
+ * Keep the existing object key whenever the replacement keeps the same file
+ * extension. AI Search uses the key to choose the document converter. A
+ * different extension therefore gets a new, item-scoped key; the old item is
+ * only removed after that upload succeeds.
+ */
+function generalKnowledgeReplacementItemKey(item: AiSearchItemInfo, filename: string) {
+  const existingKey = item.key.trim();
+  const replacementExtension = knowledgeFileExtension(filename);
+  if (replacementExtension && replacementExtension === knowledgeFileExtension(existingKey)) return existingKey;
+
+  const itemId = item.id.replace(/[^A-Za-z0-9_-]/gu, '').slice(0, 40) || 'item';
+  const rawStem = filename.trim()
+    .replace(/\.[^.]+$/u, '')
+    .replace(/[\\/:*?"<>|]+/gu, '-')
+    .replace(/[^A-Za-z0-9_-]+/gu, '-')
+    .replace(/-+/gu, '-')
+    .replace(/^-|-$/gu, '') || 'replacement';
+  const extension = replacementExtension || '.txt';
+  const prefix = `general-${itemId}-`;
+  const maximumStemLength = Math.max(8, 240 - prefix.length - extension.length);
+  return `${prefix}${rawStem.slice(0, maximumStemLength)}${extension}`;
+}
+
+function generalKnowledgeMetadata(
+  existing: AiSearchItemInfo,
+  input: GeneralKnowledgeUpdateInput,
+  initialKnowledgeOverrideFile?: string,
+) {
+  return {
+    category: normalizeKnowledgeCategory(metadataString(existing.metadata, 'category')),
+    language: metadataString(existing.metadata, 'language') || 'ja',
+    source_url: input.sourceUrl,
+    title: input.title,
+    ...(initialKnowledgeOverrideFile ? { manifest_sha256: `manual:${initialKnowledgeOverrideFile}` } : {}),
+  };
+}
+
+async function upsertGeneralKnowledgeItem(
+  items: AiSearchItems,
+  existing: AiSearchItemInfo,
+  input: GeneralKnowledgeUpdateInput,
+  replacement?: File,
+  initialKnowledgeOverrideFile?: string,
+) {
+  const itemKey = replacement
+    ? generalKnowledgeReplacementItemKey(existing, replacement.name)
+    : existing.key;
+  const content = replacement || (await items.get(existing.id).download()).body;
+  const metadata = generalKnowledgeMetadata(existing, input, initialKnowledgeOverrideFile);
+  const result = await items.upload(itemKey, content, { metadata });
+  const replacedItemIds = itemKey !== existing.key && result.id !== existing.id
+    ? [existing.id]
+    : [];
+  await Promise.all(replacedItemIds.map((obsoleteId) => items.delete(obsoleteId)));
+  return { result, itemKey, metadata, replacedItemCount: replacedItemIds.length };
 }
 
 function propertyKnowledgeMarkdown(input: PropertyKnowledgeInput, category: string, sourceUrl: string) {
@@ -559,9 +632,22 @@ function excludeInitialPropertiesCoveredByManualItems(entries: InitialKnowledgeE
   });
 }
 
+function excludeInitialGeneralKnowledgeOverriddenByManualItems(entries: InitialKnowledgeEntry[], existingItems: AiSearchItemInfo[]) {
+  const overriddenFiles = new Set(existingItems
+    .filter((item) => !isPropertyKnowledgeCategory(normalizeKnowledgeCategory(metadataString(item.metadata, 'category'))))
+    .map(initialKnowledgeManualOverrideFile)
+    .filter((file): file is string => Boolean(file)));
+  return entries.filter((entry) => (
+    isPropertyKnowledgeCategory(initialKnowledgeCategory(entry)) || !overriddenFiles.has(entry.file)
+  ));
+}
+
 export {
   canonicalInitialKnowledgeItem,
+  excludeInitialGeneralKnowledgeOverriddenByManualItems,
   excludeInitialPropertiesCoveredByManualItems,
+  generalKnowledgeMetadata,
+  generalKnowledgeReplacementItemKey,
   initialKnowledgeItemKey,
   initialKnowledgePruneSafety,
   isFreshPendingInitialItem,
@@ -572,6 +658,7 @@ export {
   propertyKnowledgeFromMarkdown,
   propertyKnowledgeSchema,
   syncInitialKnowledgeFiles,
+  upsertGeneralKnowledgeItem,
 };
 
 async function readInitialKnowledgeManifest(env: Env, baseUrl: URL) {
@@ -1378,7 +1465,9 @@ app.post('/api/admin/knowledge/seed', async (context) => {
   const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
   const existingItems = await listAllKnowledgeItems(items);
   const exclusionFiltered = excludeRemovedInitialKnowledge(manifestEntries, exclusions);
-  const files = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems);
+  const propertyFiltered = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems);
+  const files = excludeInitialGeneralKnowledgeOverriddenByManualItems(propertyFiltered, existingItems);
+  const generalOverrides = propertyFiltered.length - files.length;
   const { accepted, skipped: skippedItems } = await syncInitialKnowledgeFiles(
     context.env,
     baseUrl,
@@ -1424,6 +1513,7 @@ app.post('/api/admin/knowledge/seed', async (context) => {
       pruneBlockedReason,
       excluded: manifestEntries.length - exclusionFiltered.length,
       coveredByManualItem: exclusionFiltered.length - files.length,
+      generalOverrides,
     },
   });
   return context.json({
@@ -1437,6 +1527,7 @@ app.post('/api/admin/knowledge/seed', async (context) => {
     pruneBlockedReason,
     excluded: manifestEntries.length - exclusionFiltered.length,
     coveredByManualItem: exclusionFiltered.length - files.length,
+    generalOverrides,
   }, incomplete.length ? 202 : 200);
 });
 
@@ -1455,7 +1546,10 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
   const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
   const existingItems = await listAllKnowledgeItems(items);
   const exclusionFiltered = excludeRemovedInitialKnowledge(manifestEntries, exclusions);
-  const files = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems)
+  const propertyFiltered = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems);
+  const generalOverrideFiltered = excludeInitialGeneralKnowledgeOverriddenByManualItems(propertyFiltered, existingItems);
+  const generalOverrides = propertyFiltered.length - generalOverrideFiltered.length;
+  const files = generalOverrideFiltered
     .filter((entry): entry is InitialKnowledgeEntry & { sha256: string } => Boolean(entry.sha256));
   const { accepted, skipped } = await syncInitialKnowledgeFiles(
     context.env,
@@ -1499,6 +1593,7 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
       pruneBlockedReason,
       excluded: manifestEntries.length - exclusionFiltered.length,
       coveredByManualItem: exclusionFiltered.length - files.length,
+      generalOverrides,
     },
   });
   return context.json({
@@ -1512,6 +1607,7 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
     pruneBlockedReason,
     excluded: manifestEntries.length - exclusionFiltered.length,
     coveredByManualItem: exclusionFiltered.length - files.length,
+    generalOverrides,
   }, incomplete.length ? 202 : 200);
 });
 
@@ -1736,6 +1832,97 @@ app.get('/api/admin/knowledge/:id', async (context) => {
     // Metadata still provides a safe minimal edit form when an older item cannot be downloaded.
   }
   return context.json({ item: projected, property });
+});
+
+app.put('/api/admin/knowledge/:id', async (context) => {
+  const form = await context.req.formData();
+  const titleValue = form.get('title');
+  const title = typeof titleValue === 'string'
+    ? titleValue.trim().replace(/\s+/gu, ' ').slice(0, 500)
+    : '';
+  if (!title) return context.json({ error: '資料名を入力してください' }, 400);
+
+  const sourceValue = form.get('sourceUrl');
+  const sourceUrl = safeSourceUrl(sourceValue);
+  if (typeof sourceValue === 'string' && sourceValue.trim() && !sourceUrl) {
+    return context.json({ error: '関連ページURLには公式サイトのHTTPS URLを入力してください' }, 400);
+  }
+
+  const replacementValue = form.get('file');
+  if (replacementValue !== null && !(replacementValue instanceof File)) {
+    return context.json({ error: '置き換えるファイルを確認できませんでした' }, 400);
+  }
+  const replacement = replacementValue instanceof File ? replacementValue : undefined;
+  if (replacement) {
+    const replacementName = replacement.name.trim();
+    if (!replacementName || !SUPPORTED_KNOWLEDGE_ITEM.test(replacementName)) {
+      return context.json({ error: 'Unsupported knowledge file format' }, 415);
+    }
+    if (replacement.size > MAX_KNOWLEDGE_ITEM_SIZE) {
+      return context.json({ error: 'AI Search accepts files up to 4 MB' }, 413);
+    }
+  }
+
+  const id = context.req.param('id');
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const existing = await items.get(id).info();
+  const category = normalizeKnowledgeCategory(metadataString(existing.metadata, 'category'));
+  if (isPropertyKnowledgeCategory(category)) {
+    return context.json({ error: '物件ナレッジは専用フォームから編集してください' }, 400);
+  }
+
+  let initialKnowledgeOverrideFile: string | undefined;
+  if (isManagedInitialKnowledgeItem(existing)) {
+    const manifestEntries = await readInitialKnowledgeManifest(context.env, new URL(context.req.url));
+    const initialEntry = manifestEntries.find((entry) => (
+      !isPropertyKnowledgeCategory(initialKnowledgeCategory(entry))
+      && matchingInitialKnowledgeItems(entry, [existing]).some((item) => item.id === existing.id)
+    ));
+    if (!initialEntry) {
+      return context.json({ error: '初期資料との紐付けを確認できませんでした。同期完了後にもう一度お試しください' }, 409);
+    }
+    initialKnowledgeOverrideFile = initialEntry.file;
+  }
+
+  const input = { title, sourceUrl: sourceUrl || '' };
+  const updated = await upsertGeneralKnowledgeItem(
+    items,
+    existing,
+    input,
+    replacement,
+    initialKnowledgeOverrideFile,
+  );
+  const admin = context.get('admin');
+  await appendAudit(context.env, {
+    eventType: 'knowledge.general_updated',
+    actorType: 'admin',
+    actorId: admin.loginId,
+    subjectType: 'knowledge_item',
+    subjectId: updated.result.id,
+    metadata: {
+      oldItemId: id,
+      oldKey: existing.key,
+      itemKey: updated.itemKey,
+      title,
+      category: updated.metadata.category,
+      sourceUrl: sourceUrl || null,
+      fileReplaced: Boolean(replacement),
+      initialKnowledgeOverrideFile: initialKnowledgeOverrideFile || null,
+      replacedItemCount: updated.replacedItemCount,
+      previousFileSize: existing.file_size || null,
+      replacementFileName: replacement?.name || null,
+      replacementFileSize: replacement?.size || null,
+    },
+  });
+  return context.json({
+    ...updated.result,
+    key: updated.result.key || updated.itemKey,
+    title,
+    category: updated.metadata.category,
+    source_url: sourceUrl || '',
+    replacedItemCount: updated.replacedItemCount,
+    reindexStarted: true,
+  }, 202);
 });
 
 app.put('/api/admin/knowledge/:id/property', async (context) => {

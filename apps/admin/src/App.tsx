@@ -1,7 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity, Archive, BookOpen, ChevronDown, ChevronLeft, ChevronRight,
-  Database, EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
+  EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
   FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Plus,
   RefreshCw, Search, ShieldCheck, Trash2, UploadCloud,
   Pencil, X,
@@ -226,7 +226,6 @@ function KnowledgePage() {
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [seeded, setSeeded] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<KnowledgeAddMode>('property');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -234,6 +233,7 @@ function KnowledgePage() {
   const [featureText, setFeatureText] = useState('');
   const [documentTitle, setDocumentTitle] = useState('');
   const [documentSourceUrl, setDocumentSourceUrl] = useState('');
+  const [documentReplacement, setDocumentReplacement] = useState<File | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const operationLock = useRef(false);
@@ -241,8 +241,6 @@ function KnowledgePage() {
   const editModalRef = useRef<HTMLElement>(null);
   const editCloseButtonRef = useRef<HTMLButtonElement>(null);
   const processingStartedAt = useRef<number | null>(null);
-  const seedRetryCount = useRef(0);
-  const [seedCleanupPending, setSeedCleanupPending] = useState(false);
   const loadRequestSequence = useRef(0);
   const generatedPropertyKnowledge = useMemo(() => propertyKnowledgePreview(propertyForm), [propertyForm]);
 
@@ -373,6 +371,7 @@ function KnowledgePage() {
     setFeatureText('');
     setDocumentTitle('');
     setDocumentSourceUrl('');
+    setDocumentReplacement(null);
     setDragging(false);
   };
 
@@ -385,6 +384,7 @@ function KnowledgePage() {
   const closeAddForm = () => {
     setAddOpen(false);
     setDragging(false);
+    setDocumentReplacement(null);
     if (editingId) setEditingId(null);
   };
 
@@ -436,7 +436,17 @@ function KnowledgePage() {
   }, [addOpen, editingId]);
 
   const openEditForm = async () => {
-    if (!selected || !isPropertyKnowledge(selected)) return;
+    if (!selected) return;
+    if (!isPropertyKnowledge(selected)) {
+      setNotice(null);
+      setDocumentTitle(knowledgeTitle(selected));
+      setDocumentSourceUrl(knowledgeSourceUrl(selected));
+      setDocumentReplacement(null);
+      setAddMode('document');
+      setEditingId(selected.id);
+      setAddOpen(true);
+      return;
+    }
     if (!beginOperation()) return;
     setNotice(null);
     try {
@@ -454,15 +464,34 @@ function KnowledgePage() {
     }
   };
 
+  const documentFileError = (file: File) => {
+    if (!SUPPORTED_KNOWLEDGE_FILE.test(file.name)) {
+      return '対応していないファイル形式です。PDF、Word、Excel、CSV、テキスト、画像を選択してください。';
+    }
+    if (file.size > MAX_KNOWLEDGE_FILE_SIZE) {
+      return 'ファイルサイズが4MBを超えています。4MB以下のファイルを選択してください。';
+    }
+    return null;
+  };
+
+  const selectDocumentReplacement = (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    const validationError = documentFileError(file);
+    if (validationError) {
+      setNotice(validationError);
+      return;
+    }
+    setDocumentReplacement(file);
+    setNotice(null);
+  };
+
   const uploadDocument = async (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
-    if (!SUPPORTED_KNOWLEDGE_FILE.test(file.name)) {
-      setNotice('対応していないファイル形式です。PDF、Word、Excel、CSV、テキスト、画像を選択してください。');
-      return;
-    }
-    if (file.size > MAX_KNOWLEDGE_FILE_SIZE) {
-      setNotice('ファイルサイズが4MBを超えています。4MB以下のファイルを選択してください。');
+    const validationError = documentFileError(file);
+    if (validationError) {
+      setNotice(validationError);
       return;
     }
     if (!beginOperation()) return;
@@ -477,6 +506,39 @@ function KnowledgePage() {
       await load();
     } catch (error) {
       setNotice(error instanceof Error ? `登録できませんでした: ${error.message}` : '登録できませんでした。');
+    } finally {
+      finishOperation();
+    }
+  };
+
+  const saveDocumentEdit = async () => {
+    if (!editingId || addMode !== 'document') return;
+    const title = documentTitle.trim();
+    if (!title) {
+      setNotice('資料名を入力してください。');
+      return;
+    }
+    if (documentReplacement) {
+      const validationError = documentFileError(documentReplacement);
+      if (validationError) {
+        setNotice(validationError);
+        return;
+      }
+    }
+    if (!beginOperation()) return;
+    setNotice(null);
+    try {
+      const result = await api.updateGeneralKnowledge(editingId, {
+        title,
+        sourceUrl: documentSourceUrl.trim(),
+        file: documentReplacement,
+      });
+      closeAddForm();
+      resetAddForm();
+      setNotice(`「${title}」を保存しました。再インデックスを自動開始し、完了後に回答へ反映します。`);
+      await load(result.id || undefined);
+    } catch (error) {
+      setNotice(error instanceof Error ? `一般資料を保存できませんでした: ${error.message}` : '一般資料を保存できませんでした。');
     } finally {
       finishOperation();
     }
@@ -544,44 +606,7 @@ function KnowledgePage() {
     }
   };
 
-  const seed = async () => {
-    if (!beginOperation()) return;
-    setNotice(null);
-    try {
-      const result = await api.seedKnowledge(true);
-      const stillIndexing = result.incomplete.length > 0;
-      const retryAfterVisibility = result.pruneBlockedReason === 'completed_items_not_visible'
-        && seedRetryCount.current < 3;
-      setSeedCleanupPending(stillIndexing || retryAfterVisibility);
-      if (stillIndexing || retryAfterVisibility) seedRetryCount.current += 1;
-      else seedRetryCount.current = 0;
-      setSeeded(result.ok && result.pruneApplied);
-      if (stillIndexing) {
-        setNotice(`初期ナレッジを同期中です。${result.incomplete.length}件の反映完了後、旧版の整理まで自動で続けます。`);
-      } else if (retryAfterVisibility) {
-        setNotice('新しいナレッジの反映を確認中です。旧版の整理まで自動で続けます。');
-      } else if (result.pruneBlockedReason === 'property_count_dropped_unexpectedly') {
-        setNotice('物件件数の急減を検知したため、旧版の自動削除を停止しました。取得結果を確認してください。');
-      } else if (result.pruneBlockedReason === 'manifest_empty') {
-        setNotice('初期ナレッジが空のため、安全のため同期を停止しました。');
-      } else {
-        setNotice(`初期ナレッジの同期が完了しました。旧版${result.deleted.length}件を整理しました。`);
-      }
-      await load();
-    } catch (error) {
-      setSeedCleanupPending(false);
-      setNotice(error instanceof Error ? `同期を開始できませんでした: ${error.message}` : '同期を開始できませんでした。');
-    } finally {
-      finishOperation();
-    }
-  };
-
-  useEffect(() => {
-    if (!seedCleanupPending || pendingKnowledgeIds.length > 0 || busy || loading) return;
-    const timer = window.setTimeout(() => { void seed(); }, 1500);
-    return () => window.clearTimeout(timer);
-  }, [busy, loading, pendingKnowledgeIds.length, seedCleanupPending]);
-
+  const isEditingDocument = Boolean(editingId && addMode === 'document');
   const selectedSourceUrl = selected ? knowledgeSourceUrl(selected) : '';
 
   return <div className="split-page knowledge-page">
@@ -590,7 +615,6 @@ function KnowledgePage() {
         title="物件ナレッジ"
         description="物件は1件ごとに管理します。成約済みになった物件だけを削除し、必要な物件だけを追加できます。"
         action={<div className="page-actions">
-          <button className="secondary-button" onClick={() => void seed()} disabled={busy}><Database />{seeded ? '初期ナレッジ同期済み' : '初期ナレッジを同期'}</button>
           <button className="primary-button" onClick={openAddForm} disabled={busy}><Plus />物件・資料を追加</button>
         </div>}
       />
@@ -600,7 +624,8 @@ function KnowledgePage() {
         hidden
         accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp"
         onChange={(event) => {
-          void uploadDocument(event.target.files);
+          if (editingId && addMode === 'document') selectDocumentReplacement(event.target.files);
+          else void uploadDocument(event.target.files);
           event.target.value = '';
         }}
       />
@@ -615,10 +640,10 @@ function KnowledgePage() {
         className={`knowledge-add surface ${editingId ? 'knowledge-edit-modal' : ''}`}
         role={editingId ? 'dialog' : undefined}
         aria-modal={editingId ? true : undefined}
-        aria-label={editingId ? '物件ナレッジを編集' : '物件・資料を1件追加'}
+        aria-label={editingId ? (isEditingDocument ? '一般資料を編集' : '物件ナレッジを編集') : '物件・資料を1件追加'}
         tabIndex={editingId ? -1 : undefined}
       >
-        <div className="section-heading"><div><h2>{editingId ? '物件ナレッジを編集' : '物件・資料を1件追加'}</h2><p>{editingId ? '保存すると既存のナレッジを更新し、再インデックスを自動開始します。' : '物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。'}</p></div><button ref={editingId ? editCloseButtonRef : undefined} className="square-button" type="button" onClick={closeAddForm} aria-label={editingId ? '編集画面を閉じる' : 'フォームを閉じる'} disabled={busy}><X /></button></div>
+        <div className="section-heading"><div><h2>{editingId ? (isEditingDocument ? '一般資料を編集' : '物件ナレッジを編集') : '物件・資料を1件追加'}</h2><p>{editingId ? (isEditingDocument ? '資料名・関連ページURLを更新できます。ファイルを選ばなければ、登録済みの資料内容をそのまま使います。' : '保存すると既存のナレッジを更新し、再インデックスを自動開始します。') : '物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。'}</p></div><button ref={editingId ? editCloseButtonRef : undefined} className="square-button" type="button" onClick={closeAddForm} aria-label={editingId ? '編集画面を閉じる' : 'フォームを閉じる'} disabled={busy}><X /></button></div>
         {!editingId ? <div className="knowledge-add-mode" role="tablist" aria-label="登録方法">
           <button type="button" role="tab" aria-selected={addMode === 'property'} className={addMode === 'property' ? 'active' : ''} onClick={() => setAddMode('property')} disabled={busy}><Home />物件を定型登録</button>
           <button type="button" role="tab" aria-selected={addMode === 'document'} className={addMode === 'document' ? 'active' : ''} onClick={() => setAddMode('document')} disabled={busy || Boolean(editingId)}><UploadCloud />一般資料をアップロード</button>
@@ -646,6 +671,24 @@ function KnowledgePage() {
             <pre aria-live="polite">{generatedPropertyKnowledge}</pre>
           </section>
           <div className="property-form-actions"><p><em>必須</em> の項目を入力すると{editingId ? '保存できます。保存後は再インデックスされます。' : '登録できます。'}</p><button type="submit" className="primary-button" disabled={busy}>{busy ? '保存しています…' : editingId ? '変更を保存' : '物件ナレッジを登録'}</button></div>
+        </form> : isEditingDocument ? <form className="knowledge-add-body document-knowledge-form" onSubmit={(event) => { event.preventDefault(); void saveDocumentEdit(); }}>
+          <label className="knowledge-field"><span>資料名 <em>必須</em></span><input value={documentTitle} onChange={(event) => setDocumentTitle(event.target.value)} placeholder="例：オリエントホーム会社案内" autoComplete="off" required /></label>
+          <label className="knowledge-field"><span>関連ページURL（任意）</span><input value={documentSourceUrl} onChange={(event) => setDocumentSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /><small>公式サイトのURLを登録すると、回答時の案内リンクに使えます。</small></label>
+          <div className="knowledge-field-wide document-replacement">
+            <button
+              type="button"
+              className={`dropzone knowledge-dropzone ${dragging ? 'dragging' : ''}`}
+              onClick={() => fileInput.current?.click()}
+              onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(event) => { event.preventDefault(); setDragging(false); selectDocumentReplacement(event.dataTransfer.files); }}
+              disabled={busy}
+            >
+              <UploadCloud /><span><strong>{documentReplacement ? '差し替えファイルを変更' : 'ファイルを差し替える（任意）'}</strong><small>選ばなければ現在の資料内容を維持します。PDF、DOCX、XLSX、CSV、画像（最大4MB / 1ファイル）</small></span>
+            </button>
+            {documentReplacement ? <p className="document-replacement-state"><span>差し替え予定: <strong>{documentReplacement.name}</strong>（{formatBytes(documentReplacement.size)}）</span><button type="button" onClick={() => setDocumentReplacement(null)} disabled={busy}>取り消し</button></p> : <p className="document-replacement-state">ファイルを選択しない場合は、現在登録されている資料内容をそのまま再インデックスします。</p>}
+          </div>
+          <div className="property-form-actions knowledge-field-wide"><p>保存すると資料名・関連ページURLを更新し、再インデックスを自動開始します。</p><button type="submit" className="primary-button" disabled={busy}>{busy ? '保存しています…' : '変更を保存'}</button></div>
         </form> : <div className="knowledge-add-body document-knowledge-form">
           <label className="knowledge-field"><span>資料名（任意）</span><input value={documentTitle} onChange={(event) => setDocumentTitle(event.target.value)} placeholder="未入力の場合はファイル名を使います" autoComplete="off" /></label>
           <label className="knowledge-field"><span>関連ページURL（任意）</span><input value={documentSourceUrl} onChange={(event) => setDocumentSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /></label>
@@ -696,7 +739,7 @@ function KnowledgePage() {
           <div><dt>インデックス状態</dt><dd><Status value={selected.status} /><small>{selected.chunks_count.toLocaleString()} チャンク</small></dd></div>
           {selected.status === 'error' && selected.error ? <div><dt>エラー内容</dt><dd className="knowledge-error-detail">{selected.error}</dd></div> : null}
         </dl>
-        <div className="drawer-actions"><h3>アクション</h3>{isPropertyKnowledge(selected) ? <button onClick={() => void openEditForm()} disabled={busy}><Pencil />編集</button> : null}<button onClick={() => void reindex()} disabled={busy}><RefreshCw />{PROCESSING_STATUS.has(selected.status) ? '再インデックスを再試行' : '再インデックス'}</button><button className="danger" onClick={() => void remove()} disabled={busy}><Trash2 />この物件・資料を削除</button><p>保存時は再インデックスを自動開始します。成約済みの物件は削除してください。</p></div>
+        <div className="drawer-actions"><h3>アクション</h3><button onClick={() => void openEditForm()} disabled={busy}><Pencil />編集</button><button onClick={() => void reindex()} disabled={busy}><RefreshCw />{PROCESSING_STATUS.has(selected.status) ? '再インデックスを再試行' : '再インデックス'}</button><button className="danger" onClick={() => void remove()} disabled={busy}><Trash2 />この物件・資料を削除</button><p>{isPropertyKnowledge(selected) ? '保存時は再インデックスを自動開始します。成約済みの物件は削除してください。' : '一般資料は、編集時に資料名・関連ページURL・差し替えファイルを更新できます。'}</p></div>
         <WidgetPreview />
       </> : <div className="empty-detail"><FileCheck2 /><p>物件・資料を選択すると詳細が表示されます。</p></div>}
     </aside>

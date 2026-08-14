@@ -6,7 +6,10 @@ vi.mock('cloudflare:workers', () => ({
 
 import {
   canonicalInitialKnowledgeItem,
+  excludeInitialGeneralKnowledgeOverriddenByManualItems,
   excludeInitialPropertiesCoveredByManualItems,
+  generalKnowledgeMetadata,
+  generalKnowledgeReplacementItemKey,
   initialKnowledgeItemKey,
   initialKnowledgePruneSafety,
   isFreshPendingInitialItem,
@@ -17,6 +20,7 @@ import {
   propertyKnowledgeMarkdown,
   propertyKnowledgeSchema,
   syncInitialKnowledgeFiles,
+  upsertGeneralKnowledgeItem,
 } from '../src/index';
 
 const sourceUrl = 'https://orijyu.com/rent/post-123456.html';
@@ -327,5 +331,108 @@ JR大阪環状線「弁天町」徒歩6分
     expect(upload.mock.calls[0]?.[0]).toBe(initialKnowledgeItemKey(entry));
     expect(upload.mock.calls[0]?.[0]).not.toBe(oldItem.key);
     expect(result.accepted[0]).toMatchObject({ id: 'new', status: 'queued' });
+  });
+
+  it('updates a seeded general document without a replacement, preserving its stored content and excluding its manual override from later reseeds', async () => {
+    const existing: AiSearchItemInfo = {
+      id: 'general-item-123',
+      key: 'company-guide.pdf',
+      status: 'completed',
+      metadata: {
+        category: 'general',
+        language: 'ja',
+        source_url: 'https://orijyu.com/company/',
+        title: '旧会社案内',
+        manifest_sha256: 'a'.repeat(64),
+      },
+    };
+    const originalContent = new Response('以前の資料内容').body!;
+    const download = vi.fn().mockResolvedValue({ body: originalContent });
+    const upload = vi.fn().mockResolvedValue({ ...existing, status: 'queued' });
+    const remove = vi.fn();
+    const items = {
+      get: vi.fn(() => ({ download })),
+      upload,
+      delete: remove,
+    } as unknown as AiSearchItems;
+
+    const metadata = generalKnowledgeMetadata(existing, {
+      title: '最新の会社案内',
+      sourceUrl: 'https://orijyu.com/company/',
+    }, 'general/company-guide.md');
+    const result = await upsertGeneralKnowledgeItem(items, existing, {
+      title: '最新の会社案内',
+      sourceUrl: 'https://orijyu.com/company/',
+    }, undefined, 'general/company-guide.md');
+
+    expect(metadata).toEqual({
+      category: 'general',
+      language: 'ja',
+      source_url: 'https://orijyu.com/company/',
+      title: '最新の会社案内',
+      manifest_sha256: 'manual:general/company-guide.md',
+    });
+    expect(download).toHaveBeenCalledOnce();
+    expect(upload).toHaveBeenCalledWith('company-guide.pdf', originalContent, { metadata });
+    expect(remove).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ itemKey: 'company-guide.pdf', replacedItemCount: 0 });
+    const initialEntry = { file: 'general/company-guide.md', category: 'general', sha256: 'a'.repeat(64) };
+    const manualOverride = { ...existing, metadata };
+    const remainingInitialEntries = excludeInitialGeneralKnowledgeOverriddenByManualItems(
+      [initialEntry],
+      [manualOverride],
+    );
+    expect(matchingInitialKnowledgeItems(initialEntry, [manualOverride])).toEqual([]);
+    expect(remainingInitialEntries).toEqual([]);
+    upload.mockClear();
+    await expect(syncInitialKnowledgeFiles(
+      {} as Env,
+      new URL('https://example.test'),
+      items,
+      remainingInitialEntries,
+      [manualOverride],
+    )).resolves.toEqual({ accepted: [], skipped: [] });
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it('uses a new item key for a general-document replacement with a different extension, then removes the old item', async () => {
+    const existing: AiSearchItemInfo = {
+      id: 'general-item-123',
+      key: 'company-guide.pdf',
+      status: 'completed',
+      metadata: { category: 'general', language: 'ja', title: '会社案内' },
+    };
+    const replacement = new File(['最新版'], 'company-guide.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    const replacementKey = generalKnowledgeReplacementItemKey(existing, replacement.name);
+    const upload = vi.fn().mockResolvedValue({
+      id: 'general-item-456',
+      key: replacementKey,
+      status: 'queued',
+    });
+    const remove = vi.fn();
+    const items = {
+      get: vi.fn(),
+      upload,
+      delete: remove,
+    } as unknown as AiSearchItems;
+
+    const result = await upsertGeneralKnowledgeItem(items, existing, {
+      title: '会社案内（最新版）',
+      sourceUrl: '',
+    }, replacement);
+
+    expect(replacementKey).toMatch(/^general-general-item-123-company-guide\.docx$/u);
+    expect(upload).toHaveBeenCalledWith(replacementKey, replacement, {
+      metadata: {
+        category: 'general',
+        language: 'ja',
+        source_url: '',
+        title: '会社案内（最新版）',
+      },
+    });
+    expect(remove).toHaveBeenCalledWith('general-item-123');
+    expect(result).toMatchObject({ itemKey: replacementKey, replacedItemCount: 1 });
   });
 });
