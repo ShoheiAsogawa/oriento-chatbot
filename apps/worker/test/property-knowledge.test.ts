@@ -13,6 +13,8 @@ import {
   initialKnowledgeItemKey,
   initialKnowledgePruneSafety,
   isFreshPendingInitialItem,
+  isPlainTextKnowledgeItem,
+  knowledgeContentRevision,
   matchingInitialKnowledgeItems,
   propertyKnowledgeCategory,
   propertyKnowledgeFromMarkdown,
@@ -434,5 +436,43 @@ JR大阪環状線「弁天町」徒歩6分
     });
     expect(remove).toHaveBeenCalledWith('general-item-123');
     expect(result).toMatchObject({ itemKey: replacementKey, replacedItemCount: 1 });
+  });
+
+  it('updates markdown content in place and preserves a manual initial-document marker', async () => {
+    const existing: AiSearchItemInfo = {
+      id: 'general-md-1',
+      key: 'initial-guide.md',
+      status: 'completed',
+      metadata: { category: 'general', manifest_sha256: 'manual:general/guide.md' },
+    };
+    const upload = vi.fn().mockResolvedValue({ ...existing, status: 'queued' });
+    const items = { upload, get: vi.fn(), delete: vi.fn() } as unknown as AiSearchItems;
+
+    expect(isPlainTextKnowledgeItem(existing)).toBe(true);
+    await upsertGeneralKnowledgeItem(items, existing, { title: 'Guide', sourceUrl: '' }, undefined, undefined, '# Updated\n');
+
+    expect(upload).toHaveBeenCalledWith('initial-guide.md', '# Updated\n', {
+      metadata: {
+        category: 'general',
+        language: 'ja',
+        source_url: '',
+        title: 'Guide',
+        manifest_sha256: 'manual:general/guide.md',
+      },
+    });
+  });
+
+  it('only identifies markdown and plain-text keys as editable content', () => {
+    const item = (key: string) => ({ id: key, key, status: 'completed', metadata: { category: 'general' } } as AiSearchItemInfo);
+    expect(isPlainTextKnowledgeItem(item('guide.md'))).toBe(true);
+    expect(isPlainTextKnowledgeItem(item('guide.TXT'))).toBe(true);
+    expect(isPlainTextKnowledgeItem(item('guide.pdf'))).toBe(false);
+    expect(isPlainTextKnowledgeItem(item('guide.docx'))).toBe(false);
+  });
+
+  it('computes a stable revision from the exact UTF-8 text', async () => {
+    const revision = await knowledgeContentRevision('見出し\n本文');
+    expect(revision).toBe(await knowledgeContentRevision('見出し\n本文'));
+    expect(revision).not.toBe(await knowledgeContentRevision('見出し\r\n本文'));
   });
 });

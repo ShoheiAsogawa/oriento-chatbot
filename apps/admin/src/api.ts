@@ -76,6 +76,9 @@ export interface GeneralKnowledgeUpdateInput {
   title: string;
   sourceUrl?: string;
   file?: File | null;
+  /** Direct source replacement for Markdown/text general knowledge documents. */
+  content?: string;
+  contentRevision?: string;
 }
 
 export interface ConversationSummary {
@@ -430,6 +433,8 @@ export const api = {
     form.set('title', input.title);
     form.set('sourceUrl', input.sourceUrl?.trim() || '');
     if (input.file) form.set('file', input.file);
+    if (input.content !== undefined) form.set('content', input.content);
+    if (input.contentRevision) form.set('contentRevision', input.contentRevision);
     return request<GeneralKnowledgeSaveResult>(
       `/api/admin/knowledge/${id}`,
       { method: 'PUT', body: form },
@@ -444,6 +449,11 @@ export const api = {
       },
     );
   },
+  generalKnowledgeContent: (id: string) => request<{ content: string; revision: string }>(
+    `/api/admin/knowledge/${id}/content`,
+    undefined,
+    { content: '# 編集可能な資料\n\nここに Markdown / テキスト本文を入力してください。', revision: 'local-demo' },
+  ),
   deleteKnowledge: (id: string) => request(`/api/admin/knowledge/${id}`, { method: 'DELETE' }, { ok: true }),
   reindexKnowledge: (id: string) => request<KnowledgeItem>(`/api/admin/knowledge/${id}/reindex`, { method: 'POST' }),
   conversations: (search = '') => {

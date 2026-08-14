@@ -410,6 +410,30 @@ function knowledgeFileExtension(value: string) {
   return value.trim().toLocaleLowerCase('en-US').match(/\.[a-z0-9]{1,10}$/u)?.[0] || '';
 }
 
+function isPlainTextKnowledgeItem(item: AiSearchItemInfo) {
+  return /\.(?:md|txt)$/iu.test(item.key.trim());
+}
+
+async function knowledgeContentRevision(content: string) {
+  return sha256(content);
+}
+
+async function downloadPlainTextKnowledgeContent(items: AiSearchItems, item: AiSearchItemInfo) {
+  if (typeof item.file_size === 'number' && item.file_size > MAX_KNOWLEDGE_ITEM_SIZE) {
+    throw new Error('KNOWLEDGE_CONTENT_TOO_LARGE');
+  }
+  const downloaded = await items.get(item.id).download();
+  const bytes = await new Response(downloaded.body).arrayBuffer();
+  if (bytes.byteLength > MAX_KNOWLEDGE_ITEM_SIZE) throw new Error('KNOWLEDGE_CONTENT_TOO_LARGE');
+  let content: string;
+  try {
+    content = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error('KNOWLEDGE_CONTENT_NOT_UTF8');
+  }
+  return { content, revision: await knowledgeContentRevision(content) };
+}
+
 /**
  * Keep the existing object key whenever the replacement keeps the same file
  * extension. AI Search uses the key to choose the document converter. A
@@ -439,12 +463,16 @@ function generalKnowledgeMetadata(
   input: GeneralKnowledgeUpdateInput,
   initialKnowledgeOverrideFile?: string,
 ) {
+  const existingManifestMarker = metadataString(existing.metadata, 'manifest_sha256');
+  const manualMarker = existingManifestMarker?.startsWith('manual:') ? existingManifestMarker : undefined;
   return {
     category: normalizeKnowledgeCategory(metadataString(existing.metadata, 'category')),
     language: metadataString(existing.metadata, 'language') || 'ja',
     source_url: input.sourceUrl,
     title: input.title,
-    ...(initialKnowledgeOverrideFile ? { manifest_sha256: `manual:${initialKnowledgeOverrideFile}` } : {}),
+    ...(initialKnowledgeOverrideFile
+      ? { manifest_sha256: `manual:${initialKnowledgeOverrideFile}` }
+      : manualMarker ? { manifest_sha256: manualMarker } : {}),
   };
 }
 
@@ -454,11 +482,14 @@ async function upsertGeneralKnowledgeItem(
   input: GeneralKnowledgeUpdateInput,
   replacement?: File,
   initialKnowledgeOverrideFile?: string,
+  textContent?: string,
 ) {
   const itemKey = replacement
     ? generalKnowledgeReplacementItemKey(existing, replacement.name)
     : existing.key;
-  const content = replacement || (await items.get(existing.id).download()).body;
+  const content = textContent !== undefined
+    ? textContent
+    : replacement || (await items.get(existing.id).download()).body;
   const metadata = generalKnowledgeMetadata(existing, input, initialKnowledgeOverrideFile);
   const result = await items.upload(itemKey, content, { metadata });
   const replacedItemIds = itemKey !== existing.key && result.id !== existing.id
@@ -648,6 +679,8 @@ export {
   excludeInitialPropertiesCoveredByManualItems,
   generalKnowledgeMetadata,
   generalKnowledgeReplacementItemKey,
+  isPlainTextKnowledgeItem,
+  knowledgeContentRevision,
   initialKnowledgeItemKey,
   initialKnowledgePruneSafety,
   isFreshPendingInitialItem,
@@ -1808,6 +1841,31 @@ app.get('/api/admin/knowledge/status', async (context) => {
   return context.json({ result });
 });
 
+app.get('/api/admin/knowledge/:id/content', async (context) => {
+  const id = context.req.param('id');
+  const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
+  const existing = await items.get(id).info();
+  const category = normalizeKnowledgeCategory(metadataString(existing.metadata, 'category'));
+  if (isPropertyKnowledgeCategory(category)) {
+    return context.json({ error: '物件ナレッジの本文は専用フォームから編集してください' }, 400);
+  }
+  if (!isPlainTextKnowledgeItem(existing)) {
+    return context.json({ error: '本文編集に対応しているのはMarkdownまたはプレーンテキスト資料のみです' }, 415);
+  }
+  try {
+    const downloaded = await downloadPlainTextKnowledgeContent(items, existing);
+    return context.json(downloaded);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'KNOWLEDGE_CONTENT_TOO_LARGE') {
+      return context.json({ error: 'AI Search accepts files up to 4 MB' }, 413);
+    }
+    if (error instanceof Error && error.message === 'KNOWLEDGE_CONTENT_NOT_UTF8') {
+      return context.json({ error: '資料本文はUTF-8テキストである必要があります' }, 415);
+    }
+    throw error;
+  }
+});
+
 app.get('/api/admin/knowledge/:id', async (context) => {
   const id = context.req.param('id');
   const items = context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items;
@@ -1853,6 +1911,25 @@ app.put('/api/admin/knowledge/:id', async (context) => {
     return context.json({ error: '置き換えるファイルを確認できませんでした' }, 400);
   }
   const replacement = replacementValue instanceof File ? replacementValue : undefined;
+  const contentValue = form.get('content');
+  if (contentValue !== null && typeof contentValue !== 'string') {
+    return context.json({ error: '本文を確認できませんでした' }, 400);
+  }
+  const textContent = typeof contentValue === 'string' ? contentValue : undefined;
+  const revisionValue = form.get('contentRevision');
+  if (revisionValue !== null && typeof revisionValue !== 'string') {
+    return context.json({ error: '本文の版情報を確認できませんでした' }, 400);
+  }
+  const contentRevision = typeof revisionValue === 'string' ? revisionValue.trim() : undefined;
+  if (textContent !== undefined && !contentRevision) {
+    return context.json({ error: '本文を更新するにはcontentRevisionが必要です' }, 400);
+  }
+  if (replacement && textContent !== undefined) {
+    return context.json({ error: 'ファイルと本文は同時に指定できません' }, 400);
+  }
+  if (textContent !== undefined && new TextEncoder().encode(textContent).byteLength > MAX_KNOWLEDGE_ITEM_SIZE) {
+    return context.json({ error: 'AI Search accepts files up to 4 MB' }, 413);
+  }
   if (replacement) {
     const replacementName = replacement.name.trim();
     if (!replacementName || !SUPPORTED_KNOWLEDGE_ITEM.test(replacementName)) {
@@ -1868,7 +1945,29 @@ app.put('/api/admin/knowledge/:id', async (context) => {
   const existing = await items.get(id).info();
   const category = normalizeKnowledgeCategory(metadataString(existing.metadata, 'category'));
   if (isPropertyKnowledgeCategory(category)) {
+    if (textContent !== undefined) {
+      return context.json({ error: '物件ナレッジの本文は専用フォームから編集してください' }, 400);
+    }
     return context.json({ error: '物件ナレッジは専用フォームから編集してください' }, 400);
+  }
+  if (textContent !== undefined && !isPlainTextKnowledgeItem(existing)) {
+    return context.json({ error: '本文編集に対応しているのはMarkdownまたはプレーンテキスト資料のみです' }, 415);
+  }
+  if (textContent !== undefined) {
+    try {
+      const current = await downloadPlainTextKnowledgeContent(items, existing);
+      if (current.revision !== contentRevision) {
+        return context.json({ error: '資料本文が他の管理者によって更新されています。再読み込みしてから保存してください' }, 409);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'KNOWLEDGE_CONTENT_TOO_LARGE') {
+        return context.json({ error: 'AI Search accepts files up to 4 MB' }, 413);
+      }
+      if (error instanceof Error && error.message === 'KNOWLEDGE_CONTENT_NOT_UTF8') {
+        return context.json({ error: '資料本文はUTF-8テキストである必要があります' }, 415);
+      }
+      throw error;
+    }
   }
 
   let initialKnowledgeOverrideFile: string | undefined;
@@ -1891,6 +1990,7 @@ app.put('/api/admin/knowledge/:id', async (context) => {
     input,
     replacement,
     initialKnowledgeOverrideFile,
+    textContent,
   );
   const admin = context.get('admin');
   await appendAudit(context.env, {
@@ -1907,6 +2007,7 @@ app.put('/api/admin/knowledge/:id', async (context) => {
       category: updated.metadata.category,
       sourceUrl: sourceUrl || null,
       fileReplaced: Boolean(replacement),
+      contentUpdated: textContent !== undefined,
       initialKnowledgeOverrideFile: initialKnowledgeOverrideFile || null,
       replacedItemCount: updated.replacedItemCount,
       previousFileSize: existing.file_size || null,

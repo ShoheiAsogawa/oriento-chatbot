@@ -55,6 +55,10 @@ function FileIcon({ name }: { name: string }) {
   return <File className="file-icon" />;
 }
 
+function supportsDirectDocumentEditing(item: KnowledgeItem) {
+  return !isPropertyKnowledge(item) && /\.(?:md|txt)$/iu.test(item.key);
+}
+
 const KNOWLEDGE_PAGE_SIZE = 50;
 const MAX_KNOWLEDGE_FILE_SIZE = 4 * 1024 * 1024;
 const SUPPORTED_KNOWLEDGE_FILE = /\.(?:pdf|docx?|xlsx?|csv|txt|md|png|jpe?g|webp)$/iu;
@@ -64,6 +68,7 @@ const propertyNameCollator = new Intl.Collator('ja-JP', { numeric: true, sensiti
 type KnowledgeFilter = 'all' | 'properties_for_sale' | 'properties_for_rent' | 'other';
 type KnowledgeSortOrder = 'title_asc' | 'title_desc' | 'recent';
 type KnowledgeAddMode = 'property' | 'document';
+type DocumentEditMode = 'metadata' | 'content';
 type PropertyTextField = Exclude<keyof PropertyKnowledgeInput, 'category' | 'features'>;
 
 function createEmptyPropertyKnowledge(): PropertyKnowledgeInput {
@@ -234,6 +239,11 @@ function KnowledgePage() {
   const [documentTitle, setDocumentTitle] = useState('');
   const [documentSourceUrl, setDocumentSourceUrl] = useState('');
   const [documentReplacement, setDocumentReplacement] = useState<File | null>(null);
+  const [documentEditMode, setDocumentEditMode] = useState<DocumentEditMode>('metadata');
+  const [documentContent, setDocumentContent] = useState('');
+  const [documentContentRevision, setDocumentContentRevision] = useState<string | undefined>();
+  const [documentContentLoading, setDocumentContentLoading] = useState(false);
+  const [documentContentError, setDocumentContentError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const operationLock = useRef(false);
@@ -242,7 +252,9 @@ function KnowledgePage() {
   const editCloseButtonRef = useRef<HTMLButtonElement>(null);
   const processingStartedAt = useRef<number | null>(null);
   const loadRequestSequence = useRef(0);
+  const documentContentRequestSequence = useRef(0);
   const generatedPropertyKnowledge = useMemo(() => propertyKnowledgePreview(propertyForm), [propertyForm]);
+  const documentContentBytes = useMemo(() => new TextEncoder().encode(documentContent).byteLength, [documentContent]);
 
   const load = useCallback(async (preferredId?: string, options: { silent?: boolean } = {}) => {
     const sequence = loadRequestSequence.current + 1;
@@ -365,6 +377,7 @@ function KnowledgePage() {
   };
 
   const resetAddForm = () => {
+    documentContentRequestSequence.current += 1;
     setAddMode('property');
     setEditingId(null);
     setPropertyForm(createEmptyPropertyKnowledge());
@@ -372,6 +385,11 @@ function KnowledgePage() {
     setDocumentTitle('');
     setDocumentSourceUrl('');
     setDocumentReplacement(null);
+    setDocumentEditMode('metadata');
+    setDocumentContent('');
+    setDocumentContentRevision(undefined);
+    setDocumentContentLoading(false);
+    setDocumentContentError(null);
     setDragging(false);
   };
 
@@ -382,6 +400,7 @@ function KnowledgePage() {
   };
 
   const closeAddForm = () => {
+    documentContentRequestSequence.current += 1;
     setAddOpen(false);
     setDragging(false);
     setDocumentReplacement(null);
@@ -442,9 +461,29 @@ function KnowledgePage() {
       setDocumentTitle(knowledgeTitle(selected));
       setDocumentSourceUrl(knowledgeSourceUrl(selected));
       setDocumentReplacement(null);
+      setDocumentEditMode('metadata');
+      setDocumentContent('');
+      setDocumentContentRevision(undefined);
+      setDocumentContentError(null);
       setAddMode('document');
       setEditingId(selected.id);
       setAddOpen(true);
+      if (supportsDirectDocumentEditing(selected)) {
+        const requestSequence = documentContentRequestSequence.current + 1;
+        documentContentRequestSequence.current = requestSequence;
+        setDocumentContentLoading(true);
+        try {
+          const data = await api.generalKnowledgeContent(selected.id);
+          if (documentContentRequestSequence.current !== requestSequence) return;
+          setDocumentContent(data.content);
+          setDocumentContentRevision(data.revision);
+        } catch (error) {
+          if (documentContentRequestSequence.current !== requestSequence) return;
+          setDocumentContentError(error instanceof Error ? error.message : '本文を読み込めませんでした。');
+        } finally {
+          if (documentContentRequestSequence.current === requestSequence) setDocumentContentLoading(false);
+        }
+      }
       return;
     }
     if (!beginOperation()) return;
@@ -518,7 +557,7 @@ function KnowledgePage() {
       setNotice('資料名を入力してください。');
       return;
     }
-    if (documentReplacement) {
+    if (documentEditMode === 'metadata' && documentReplacement) {
       const validationError = documentFileError(documentReplacement);
       if (validationError) {
         setNotice(validationError);
@@ -531,7 +570,9 @@ function KnowledgePage() {
       const result = await api.updateGeneralKnowledge(editingId, {
         title,
         sourceUrl: documentSourceUrl.trim(),
-        file: documentReplacement,
+        ...(documentEditMode === 'content'
+          ? { content: documentContent, contentRevision: documentContentRevision }
+          : { file: documentReplacement }),
       });
       closeAddForm();
       resetAddForm();
@@ -607,6 +648,9 @@ function KnowledgePage() {
   };
 
   const isEditingDocument = Boolean(editingId && addMode === 'document');
+  const isEditingDirectDocument = Boolean(selected && supportsDirectDocumentEditing(selected));
+  const documentContentSaveUnavailable = documentEditMode === 'content'
+    && (documentContentLoading || Boolean(documentContentError) || !documentContentRevision);
   const selectedSourceUrl = selected ? knowledgeSourceUrl(selected) : '';
 
   return <div className="split-page knowledge-page">
@@ -643,7 +687,7 @@ function KnowledgePage() {
         aria-label={editingId ? (isEditingDocument ? '一般資料を編集' : '物件ナレッジを編集') : '物件・資料を1件追加'}
         tabIndex={editingId ? -1 : undefined}
       >
-        <div className="section-heading"><div><h2>{editingId ? (isEditingDocument ? '一般資料を編集' : '物件ナレッジを編集') : '物件・資料を1件追加'}</h2><p>{editingId ? (isEditingDocument ? '資料名・関連ページURLを更新できます。ファイルを選ばなければ、登録済みの資料内容をそのまま使います。' : '保存すると既存のナレッジを更新し、再インデックスを自動開始します。') : '物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。'}</p></div><button ref={editingId ? editCloseButtonRef : undefined} className="square-button" type="button" onClick={closeAddForm} aria-label={editingId ? '編集画面を閉じる' : 'フォームを閉じる'} disabled={busy}><X /></button></div>
+        <div className="section-heading"><div><h2>{editingId ? (isEditingDocument ? '一般資料を編集' : '物件ナレッジを編集') : '物件・資料を1件追加'}</h2><p>{editingId ? (isEditingDocument ? (documentEditMode === 'content' ? 'Markdown本文を直接編集できます。保存すると既存の本文を置き換えます。' : '資料名・関連ページURLを更新できます。ファイルを選ばなければ、登録済みの資料内容をそのまま使います。') : '保存すると既存のナレッジを更新し、再インデックスを自動開始します。') : '物件は定型フォームだけで登録できます。資料は従来どおりファイルをアップロードします。'}</p></div><button ref={editingId ? editCloseButtonRef : undefined} className="square-button" type="button" onClick={closeAddForm} aria-label={editingId ? '編集画面を閉じる' : 'フォームを閉じる'} disabled={busy}><X /></button></div>
         {!editingId ? <div className="knowledge-add-mode" role="tablist" aria-label="登録方法">
           <button type="button" role="tab" aria-selected={addMode === 'property'} className={addMode === 'property' ? 'active' : ''} onClick={() => setAddMode('property')} disabled={busy}><Home />物件を定型登録</button>
           <button type="button" role="tab" aria-selected={addMode === 'document'} className={addMode === 'document' ? 'active' : ''} onClick={() => setAddMode('document')} disabled={busy || Boolean(editingId)}><UploadCloud />一般資料をアップロード</button>
@@ -672,9 +716,12 @@ function KnowledgePage() {
           </section>
           <div className="property-form-actions"><p><em>必須</em> の項目を入力すると{editingId ? '保存できます。保存後は再インデックスされます。' : '登録できます。'}</p><button type="submit" className="primary-button" disabled={busy}>{busy ? '保存しています…' : editingId ? '変更を保存' : '物件ナレッジを登録'}</button></div>
         </form> : isEditingDocument ? <form className="knowledge-add-body document-knowledge-form" onSubmit={(event) => { event.preventDefault(); void saveDocumentEdit(); }}>
-          <label className="knowledge-field"><span>資料名 <em>必須</em></span><input value={documentTitle} onChange={(event) => setDocumentTitle(event.target.value)} placeholder="例：オリエントホーム会社案内" autoComplete="off" required /></label>
-          <label className="knowledge-field"><span>関連ページURL（任意）</span><input value={documentSourceUrl} onChange={(event) => setDocumentSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /><small>公式サイトのURLを登録すると、回答時の案内リンクに使えます。</small></label>
-          <div className="knowledge-field-wide document-replacement">
+          {isEditingDirectDocument ? <div className="knowledge-add-mode document-edit-mode" role="tablist" aria-label="編集対象"><button type="button" role="tab" aria-selected={documentEditMode === 'metadata'} className={documentEditMode === 'metadata' ? 'active' : ''} onClick={() => setDocumentEditMode('metadata')} disabled={busy}>資料情報・ファイル</button><button type="button" role="tab" aria-selected={documentEditMode === 'content'} className={documentEditMode === 'content' ? 'active' : ''} onClick={() => setDocumentEditMode('content')} disabled={busy}>Markdown本文</button></div> : null}
+          {documentEditMode === 'metadata' || !isEditingDirectDocument ? <>
+            <label className="knowledge-field"><span>資料名 <em>必須</em></span><input value={documentTitle} onChange={(event) => setDocumentTitle(event.target.value)} placeholder="例：オリエントホーム会社案内" autoComplete="off" required /></label>
+            <label className="knowledge-field"><span>関連ページURL（任意）</span><input value={documentSourceUrl} onChange={(event) => setDocumentSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /><small>公式サイトのURLを登録すると、回答時の案内リンクに使えます。</small></label>
+          </> : null}
+          {documentEditMode === 'content' && selected && supportsDirectDocumentEditing(selected) ? <div className="knowledge-field-wide markdown-editor-field"><label className="knowledge-field" htmlFor="knowledge-markdown-content"><span>Markdown / テキスト本文</span></label>{documentContentLoading ? <p className="document-content-state" role="status"><RefreshCw className="spin" />本文を読み込んでいます…</p> : documentContentError ? <p className="document-content-state error" role="alert">本文を読み込めませんでした: {documentContentError}</p> : <><textarea id="knowledge-markdown-content" value={documentContent} onChange={(event) => setDocumentContent(event.target.value)} rows={18} spellCheck={false} aria-describedby="knowledge-markdown-help" /><div className="markdown-editor-meta" id="knowledge-markdown-help"><span>{documentContent.length.toLocaleString()} 文字</span><span>{formatBytes(documentContentBytes)}</span><small>保存すると本文を置き換え、再インデックスを自動開始します。</small></div></>}</div> : <div className="knowledge-field-wide document-replacement">
             <button
               type="button"
               className={`dropzone knowledge-dropzone ${dragging ? 'dragging' : ''}`}
@@ -687,8 +734,8 @@ function KnowledgePage() {
               <UploadCloud /><span><strong>{documentReplacement ? '差し替えファイルを変更' : 'ファイルを差し替える（任意）'}</strong><small>選ばなければ現在の資料内容を維持します。PDF、DOCX、XLSX、CSV、画像（最大4MB / 1ファイル）</small></span>
             </button>
             {documentReplacement ? <p className="document-replacement-state"><span>差し替え予定: <strong>{documentReplacement.name}</strong>（{formatBytes(documentReplacement.size)}）</span><button type="button" onClick={() => setDocumentReplacement(null)} disabled={busy}>取り消し</button></p> : <p className="document-replacement-state">ファイルを選択しない場合は、現在登録されている資料内容をそのまま再インデックスします。</p>}
-          </div>
-          <div className="property-form-actions knowledge-field-wide"><p>保存すると資料名・関連ページURLを更新し、再インデックスを自動開始します。</p><button type="submit" className="primary-button" disabled={busy}>{busy ? '保存しています…' : '変更を保存'}</button></div>
+          </div>}
+          <div className="property-form-actions knowledge-field-wide"><p>{documentEditMode === 'content' ? 'Markdown本文を保存すると、既存の本文を置き換えて再インデックスします。' : '保存すると資料名・関連ページURLを更新し、再インデックスを自動開始します。'}</p><button type="submit" className="primary-button" disabled={busy || documentContentSaveUnavailable}>{busy ? '保存しています…' : documentEditMode === 'content' ? '本文を保存して再インデックス' : '変更を保存'}</button></div>
         </form> : <div className="knowledge-add-body document-knowledge-form">
           <label className="knowledge-field"><span>資料名（任意）</span><input value={documentTitle} onChange={(event) => setDocumentTitle(event.target.value)} placeholder="未入力の場合はファイル名を使います" autoComplete="off" /></label>
           <label className="knowledge-field"><span>関連ページURL（任意）</span><input value={documentSourceUrl} onChange={(event) => setDocumentSourceUrl(event.target.value)} type="url" placeholder="https://orijyu.com/..." inputMode="url" autoComplete="url" /></label>

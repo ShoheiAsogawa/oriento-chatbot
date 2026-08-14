@@ -188,6 +188,16 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .knowledge-dropzone { grid-column: 1 / -1; min-height: 90px; }
 .document-replacement { display: grid; gap: 8px; }
 .document-replacement-state { min-height: 28px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding: 8px 10px; color: var(--muted); border-radius: 7px; background: #f5f6f8; font-size: 10px; line-height: 1.45; }
+.document-edit-mode { grid-column: 1 / -1; margin: -4px -18px 2px; padding-left: 0; padding-right: 0; }
+.markdown-editor-field { display: grid; gap: 8px; }
+.markdown-editor-field textarea { min-height: 340px; padding: 14px; resize: vertical; color: #30313d; border: 1px solid #cfd2dc; border-radius: 8px; background: #fbfcfe; font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 2; }
+.markdown-editor-field textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,104,11,.1); outline: 0; }
+.markdown-editor-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--muted); font-size: 10px; }
+.markdown-editor-meta span { padding: 3px 7px; border-radius: 5px; background: #f1f2f5; font-variant-numeric: tabular-nums; }
+.markdown-editor-meta small { flex-basis: 100%; font-size: 9px; }
+.document-content-state { display: flex; align-items: center; gap: 8px; min-height: 120px; margin: 0; padding: 18px; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; background: #fafafa; font-size: 11px; }
+.document-content-state.error { color: #a52828; border-color: #f1caca; background: #fff6f6; }
+.document-content-state svg { width: 16px; }
 .document-replacement-state strong { color: var(--ink); overflow-wrap: anywhere; }
 .document-replacement-state button { flex: 0 0 auto; padding: 0; color: var(--orange); border: 0; background: transparent; font: inherit; font-weight: 800; text-decoration: underline; }
 .property-knowledge-form { grid-template-columns: 1fr; }
