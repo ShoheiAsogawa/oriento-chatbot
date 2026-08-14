@@ -95,9 +95,12 @@ template.innerHTML = `
       </div>
       <div class="turnstile-slot" aria-hidden="true"></div>
     </section>
-    <button class="launcher" type="button" aria-label="オリにゃんに相談" aria-expanded="false">
-      <span class="launcher-ring"><span class="cat cat-launcher" data-cat-state="idle" aria-hidden="true"></span></span>
-      <span class="launcher-label">オリにゃんに相談</span>
+    <button class="launcher" type="button" aria-label="おりにゃんに相談にゃ！" aria-expanded="false">
+      <span class="launcher-scene" aria-hidden="true">
+        <span class="launcher-ring"></span>
+        <span class="launcher-character"><span class="cat cat-launcher" data-cat-state="idle"></span></span>
+      </span>
+      <span class="launcher-label">おりにゃんに相談にゃ！</span>
     </button>
   </div>
 `;
@@ -214,13 +217,19 @@ const styles = `
   .cat[data-cat-state="speaking"] { background-position: 0 100%; }
   .cat[data-cat-state="thinking"] { background-position: 100% 100%; }
   .cat-avatar { width: 52px; height: 52px; border: 3px solid rgba(255,255,255,.88); border-radius: 50%; background-color: #fff; }
-  .launcher { display: grid; justify-items: center; border: 0; background: transparent; cursor: pointer; filter: drop-shadow(0 8px 13px rgba(41,41,58,.2)); }
-  .launcher-ring { width: 102px; height: 102px; display: block; overflow: hidden; border: 4px solid #fff; border-radius: 50%; background: var(--orient-primary); transition: transform 160ms ease, box-shadow 160ms ease; }
-  .cat-launcher { width: 122px; height: 122px; display: block; margin: 8px 0 0 -10px; transform-origin: 50% 82%; animation: launcher-idle 2.8s ease-in-out infinite; will-change: transform; }
-  .launcher-label { margin-top: -6px; padding: 5px 11px; color: #fff; border-radius: 7px; background: var(--orient-ink); font-size: 11px; font-weight: 800; }
-  .launcher:hover .launcher-ring { transform: translateY(-3px); }
+  .launcher { width: 208px; height: 98px; position: relative; overflow: visible; border: 0; background: transparent; cursor: pointer; }
+  .launcher-scene { position: absolute; inset: 0; }
+  .launcher-ring { width: 180px; height: 180px; position: absolute; right: -98px; bottom: -108px; z-index: 1; display: block; border: 4px solid #fff; border-radius: 50%; background: var(--orient-primary); box-shadow: 0 0 0 1px rgba(255,104,11,.08), 0 10px 24px rgba(41,41,58,.18); }
+  .launcher-character { width: 88px; height: 88px; position: absolute; right: -20px; bottom: -28px; z-index: 2; filter: drop-shadow(0 5px 5px rgba(41,41,58,.2)); transform-origin: 52% 92%; animation: launcher-peek 3.6s cubic-bezier(.45,0,.25,1) infinite; will-change: transform; }
+  .cat-launcher { width: 100%; height: 100%; display: block; }
+  .launcher-label { min-height: 32px; position: absolute; right: 56px; bottom: 2px; z-index: 3; display: inline-flex; align-items: center; padding: 7px 12px; color: #fff; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: var(--orient-ink); box-shadow: 0 7px 16px rgba(41,41,58,.22); font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .01em; white-space: nowrap; transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease; }
+  .launcher-label::after { content: ""; width: 0; height: 0; position: absolute; right: -8px; bottom: 8px; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 9px solid var(--orient-ink); transition: border-left-color 180ms ease; }
+  .launcher:hover .launcher-character, .launcher:focus-visible .launcher-character { animation: launcher-greet .72s cubic-bezier(.2,.8,.2,1) both; }
+  .launcher:hover .cat-launcher, .launcher:focus-visible .cat-launcher { background-position: 0 100%; }
+  .launcher:hover .launcher-label { transform: translateX(-3px); background: #20202f; box-shadow: 0 9px 20px rgba(41,41,58,.26); }
+  .launcher:hover .launcher-label::after { border-left-color: #20202f; }
   .launcher:focus-visible { outline: none; }
-  .launcher:focus-visible .launcher-ring { transform: translateY(-3px); box-shadow: 0 0 0 4px rgba(255,104,11,.24); }
+  .launcher:focus-visible .launcher-label { box-shadow: 0 0 0 4px rgba(255,104,11,.26), 0 7px 16px rgba(41,41,58,.22); }
   .launcher[aria-expanded="true"] { display: none; }
   .cat[data-cat-state="listening"] { animation: listen 1.4s ease-in-out infinite; }
   .cat[data-cat-state="speaking"] { animation: speak .42s ease-in-out infinite alternate; }
@@ -228,7 +237,8 @@ const styles = `
   @keyframes panel-in { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
   @keyframes message-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes choices-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-  @keyframes launcher-idle { 0%,100% { transform: translateY(1px) rotate(-.6deg); } 45% { transform: translateY(-4px) rotate(.7deg); } 70% { transform: translateY(-2px) rotate(-.3deg); } }
+  @keyframes launcher-peek { 0%,100% { transform: translateY(3px) rotate(-1.4deg); } 42% { transform: translateY(-4px) rotate(.8deg); } 62% { transform: translateY(-2px) rotate(-.4deg); } }
+  @keyframes launcher-greet { 0% { transform: translateY(2px) rotate(0); } 30% { transform: translateY(2px) rotate(5deg); } 58% { transform: translateY(2px) rotate(-4deg); } 78% { transform: translateY(2px) rotate(3deg); } 100% { transform: translateY(2px) rotate(0); } }
   @keyframes listen { 0%,100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
@@ -236,8 +246,10 @@ const styles = `
     :host { inset: auto 10px 10px 10px; }
     .root { width: 100%; }
     .panel { width: 100%; height: min(690px, calc(100dvh - 24px)); min-height: 480px; border-radius: 16px; }
-    .launcher-ring { width: 88px; height: 88px; }
-    .cat-launcher { width: 106px; height: 106px; }
+    .launcher { width: 202px; height: 94px; }
+    .launcher-ring { width: 180px; height: 180px; right: -88px; bottom: -100px; }
+    .launcher-character { width: 84px; height: 84px; right: -10px; bottom: -20px; }
+    .launcher-label { right: 64px; bottom: 10px; }
     .suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .suggestions button { font-size: 10px; }
     .choice-button { min-height: 42px; font-size: 12px; }
