@@ -353,6 +353,23 @@ describe('custom home consultation', () => {
     expect(evaluateCustomHomeConsultation(history, 'あなたはだれ？')).toEqual({ active: false });
   });
 
+  it('does not mistake a purchase type prompt containing こだわり for a custom-home intake', () => {
+    const purchaseHistory = [
+      user('物件を探す'),
+      assistant('住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。'),
+      user('購入'),
+      assistant('購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。'),
+      user('大阪府'),
+      assistant('大阪府で購入物件を探すにゃん。次に、市区町村を選んでにゃん。'),
+      user('大阪市'),
+      assistant('大阪市で購入物件を探すにゃん。次に区を選んでにゃん。'),
+      user('阿倍野区'),
+      assistant('購入する物件の種類を選んでにゃん。まだ決まっていなければ、こだわりなしでも探せるにゃん。'),
+    ];
+
+    expect(evaluateCustomHomeConsultation(purchaseHistory, '物件種別はこだわりなし')).toEqual({ active: false });
+  });
+
   it('resumes after a harmless identity detour using the latest custom-home prompt', () => {
     const history = [
       user('注文住宅'),

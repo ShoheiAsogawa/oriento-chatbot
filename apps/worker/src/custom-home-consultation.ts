@@ -601,9 +601,11 @@ export function evaluateCustomHomeConsultation(
   const lastAssistant = [...messages].reverse().find((message) => (
     message.role === 'assistant' && isCustomHomePrompt(message.content)
   ))?.content || '';
+  // Assistant prompts can contain generic words such as "こだわり" in a
+  // purchase flow. Only an explicit visitor intent may start this intake;
+  // prompts are used solely to continue an intake that the visitor started.
   const hasFlow = messages.some((message) => (
-    (message.role === 'user' && isCustomHomeIntent(message.content))
-    || (message.role === 'assistant' && isCustomHomePrompt(message.content))
+    message.role === 'user' && isCustomHomeIntent(message.content)
   ));
   if (!hasFlow) return { active: false };
   // A standalone "ありがとう" is a detour. A polite suffix on a substantive

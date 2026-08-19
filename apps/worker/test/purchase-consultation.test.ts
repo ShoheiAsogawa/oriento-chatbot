@@ -34,6 +34,26 @@ describe('purchase consultation', () => {
     ], '堺市')).toMatchObject({ response: expect.stringContaining('購入する物件の種類') });
   });
 
+  it('continues from a no-preference property-type choice to the purchase budget', () => {
+    const history = [
+      { role: 'user' as const, content: '物件を探す' },
+      { role: 'assistant' as const, content: '住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。' },
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '大阪府で購入物件を探すにゃん。次に、市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '大阪市で購入物件を探すにゃん。次に区を選んでにゃん。' },
+      { role: 'user' as const, content: '阿倍野区' },
+      { role: 'assistant' as const, content: '購入する物件の種類を選んでにゃん。まだ決まっていなければ、こだわりなしでも探せるにゃん。' },
+    ];
+
+    expect(evaluatePurchaseConsultation(history, '物件種別はこだわりなし')).toMatchObject({
+      active: true,
+      response: expect.stringContaining('購入予算の上限'),
+    });
+  });
+
   it('skips layout when the visitor chooses land', () => {
     expect(evaluatePurchaseConsultation([
       { role: 'user', content: '購入' },
