@@ -80,6 +80,23 @@ describe('processCustomHomeNotification', () => {
     expect(JSON.stringify({ leadId })).not.toContain('山田');
   });
 
+  it('labels unknown land and free-form notes clearly in the notification', async () => {
+    const store = await seededDb();
+    store.state.intakeEnc = await encryptPII(JSON.stringify({
+      landOwnership: 'unknown',
+      landSizeNote: '何坪ぐらいか相談したい',
+      budgetNote: 'まだわからない',
+    }), env() as Env) as string;
+    let sentText = '';
+    await processCustomHomeNotification(store.db, env(), { leadId }, {
+      sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com',
+      send: async (email) => { sentText = email.text; },
+    });
+    expect(sentText).toContain('土地: 未定');
+    expect(sentText).toContain('土地面積メモ: 何坪ぐらいか相談したい');
+    expect(sentText).toContain('予算メモ: まだわからない');
+  });
+
   it('retries a transient send failure without persisting the exception message', async () => {
     const store = await seededDb();
     const result = await processCustomHomeNotification(store.db, env(), { leadId }, {

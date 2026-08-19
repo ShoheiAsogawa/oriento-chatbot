@@ -18,11 +18,13 @@ export function customHomeIntakeFromState(state: CustomHomeConsultationState): C
     ...(state.landOwnership ? { landOwnership: state.landOwnership } : {}),
     ...(state.landLocation ? { landLocation: state.landLocation } : {}),
     ...(state.landSizeSqm != null ? { landSizeSqm: state.landSizeSqm } : {}),
+    ...(state.landSizeNote ? { landSizeNote: state.landSizeNote } : {}),
     ...(state.desiredArea ? { desiredArea: state.desiredArea } : {}),
     ...(state.householdSize != null ? { householdSize: state.householdSize } : {}),
     ...(state.householdDescription ? { householdDescription: state.householdDescription } : {}),
     ...(state.layout ? { layout: state.layout } : {}),
     ...(state.budgetYen != null ? { budgetYen: state.budgetYen } : {}),
+    ...(state.budgetNote ? { budgetNote: state.budgetNote } : {}),
     ...(state.timing ? { timing: state.timing } : {}),
     ...(state.priorities ? { priorities: state.priorities } : {}),
   };

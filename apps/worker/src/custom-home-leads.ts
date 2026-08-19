@@ -6,14 +6,16 @@ import { decryptPII, encryptPII, sha256 } from './security';
  * through `contact` only.
  */
 export type CustomHomeLeadIntake = {
-  landOwnership?: 'owned' | 'not_owned';
+  landOwnership?: 'owned' | 'not_owned' | 'unknown';
   landLocation?: string;
   landSizeSqm?: number;
+  landSizeNote?: string;
   desiredArea?: string;
   householdSize?: number;
   householdDescription?: string;
   layout?: string;
   budgetYen?: number;
+  budgetNote?: string;
   timing?: string;
   priorities?: string;
 };
@@ -44,11 +46,13 @@ const INTAKE_KEYS: (keyof CustomHomeLeadIntake)[] = [
   'landOwnership',
   'landLocation',
   'landSizeSqm',
+  'landSizeNote',
   'desiredArea',
   'householdSize',
   'householdDescription',
   'layout',
   'budgetYen',
+  'budgetNote',
   'timing',
   'priorities',
 ];

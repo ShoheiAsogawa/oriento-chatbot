@@ -159,6 +159,92 @@ describe('custom home consultation', () => {
     expect(state).not.toHaveProperty('budgetYen');
   });
 
+  it('accepts unknown answers for every non-contact intake question and keeps the uncertainty explicit', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('わからない'), assistant('建てたいエリアを教えてにゃん。'),
+      user('未定'), assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('わからない'), assistant('希望する間取りや住まい方を教えてにゃん。'),
+      user('相談したい'), assistant('土地と建物を含めた総予算の目安を教えてにゃん。'),
+      user('未定'), assistant('いつ頃の完成・入居を希望しているか教えてにゃん。'),
+      user('まだわからない'), assistant('住まいで重視したいことを教えてにゃん。'),
+      user('相談したい'), assistant('お名前を教えてにゃん。'),
+    ];
+    const state = extractCustomHomeConsultationState(history, '山田太郎');
+    expect(state).toMatchObject({
+      landOwnership: 'unknown',
+      landOwnershipSet: true,
+      desiredArea: '未定（相談希望）',
+      desiredAreaSet: true,
+      householdDescription: '未定（相談希望）',
+      householdSet: true,
+      layout: '未定（相談希望）',
+      layoutSet: true,
+      budgetNote: '未定（相談希望）',
+      budgetSet: true,
+      timing: '未定（相談希望）',
+      timingSet: true,
+      priorities: '相談したい',
+      prioritiesSet: true,
+      contactNameSet: true,
+    });
+    expect(evaluateCustomHomeConsultation(history, '山田太郎')).toMatchObject({
+      active: true,
+      step: 'contact_phone',
+    });
+  });
+
+  it('answers a tsubo clarification helpfully without recording it as land size', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('土地を持っている'), assistant('土地の所在地を教えてにゃん。'),
+      user('大阪市'), assistant('土地の広さを教えてにゃん。㎡または坪で大丈夫にゃん。'),
+    ];
+    const decision = evaluateCustomHomeConsultation(history, '何坪ぐらい？');
+    expect(decision).toMatchObject({ active: true, step: 'land_size' });
+    expect(decision.response).toContain('30〜40坪前後');
+    expect(extractCustomHomeConsultationState(history, '何坪ぐらい？')).toMatchObject({
+      landOwnership: 'owned',
+      landSizeSet: false,
+    });
+  });
+
+  it('advances on useful free-text answers even when they do not match a preset pattern', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('家族と相談中'), assistant('建てたいエリアを教えてにゃん。'),
+      user('実家の近く'), assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('夫婦と子ども'), assistant('希望する間取りや住まい方を教えてにゃん。'),
+    ];
+    expect(extractCustomHomeConsultationState(history, '暮らしやすければ大丈夫')).toMatchObject({
+      landOwnership: 'unknown',
+      desiredArea: '実家の近く',
+      householdDescription: '夫婦と子ども',
+      layout: '暮らしやすければ大丈夫',
+      landOwnershipSet: true,
+      desiredAreaSet: true,
+      householdSet: true,
+      layoutSet: true,
+    });
+    expect(evaluateCustomHomeConsultation(history, '暮らしやすければ大丈夫')).toMatchObject({
+      active: true,
+      step: 'budget',
+    });
+  });
+
+  it('does not treat a land-size question as an answer to land ownership', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+    ];
+    expect(extractCustomHomeConsultationState(history, '何坪ぐらいが目安？')).toMatchObject({
+      landOwnershipSet: false,
+    });
+    expect(evaluateCustomHomeConsultation(history, '何坪ぐらいが目安？')).toMatchObject({
+      active: true,
+      step: 'land_ownership',
+    });
+  });
+
   it('normalizes and validates Japanese phone numbers without putting raw phone in state', () => {
     expect(normalizeCustomHomePhone('090-1234-5678')).toBe('09012345678');
     expect(normalizeCustomHomePhone('+81 90 1234 5678')).toBe('09012345678');

@@ -60,15 +60,15 @@ function displayIntake(value: string) {
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>;
     const labels: Record<string, string> = {
-      landOwnership: '土地', landLocation: '土地の場所', landSizeSqm: '土地面積',
+      landOwnership: '土地', landLocation: '土地の場所', landSizeSqm: '土地面積', landSizeNote: '土地面積メモ',
       desiredArea: '希望エリア', householdSize: '世帯人数', householdDescription: '家族構成',
-      layout: '希望間取り', budgetYen: '予算', timing: '入居時期', priorities: 'こだわり',
+      layout: '希望間取り', budgetYen: '予算', budgetNote: '予算メモ', timing: '入居時期', priorities: 'こだわり',
     };
     const lines: string[] = [];
     for (const [key, label] of Object.entries(labels)) {
       const raw = parsed[key];
       if (typeof raw === 'string' || typeof raw === 'number') {
-        const shown = safeDisplay(String(raw));
+        const shown = safeDisplay(key === 'landOwnership' && raw === 'unknown' ? '未定' : String(raw));
         if (shown) lines.push(`${label}: ${shown}`);
       }
     }

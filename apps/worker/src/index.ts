@@ -2407,9 +2407,9 @@ app.get('/api/admin/inquiries', async (context) => {
       try {
         const parsed = JSON.parse(intakeText) as Record<string, unknown>;
         const allowedKeys = [
-          'landOwnership', 'landLocation', 'landSizeSqm', 'desiredArea',
+          'landOwnership', 'landLocation', 'landSizeSqm', 'landSizeNote', 'desiredArea',
           'householdSize', 'householdDescription', 'layout', 'budgetYen',
-          'timing', 'priorities',
+          'budgetNote', 'timing', 'priorities',
         ] as const;
         for (const key of allowedKeys) {
           const value = parsed[key];

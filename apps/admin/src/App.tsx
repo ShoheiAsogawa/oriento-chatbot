@@ -873,9 +873,15 @@ function inquiryBudget(value: unknown) {
   return Number.isFinite(numeric) && numeric > 0 ? `${numeric.toLocaleString('ja-JP')}円` : String(value);
 }
 
+function inquiryUndecidedNote(value: unknown) {
+  const note = inquiryValue(value);
+  return note === '未定' || note.startsWith('未定（') ? note : `未定（${note}）`;
+}
+
 function inquiryLandOwnership(value: unknown) {
   if (value === 'owned' || value === 'あり') return '土地あり';
   if (value === 'not_owned' || value === 'なし') return '土地なし';
+  if (value === 'unknown' || value === '未定') return '未定';
   return inquiryValue(value);
 }
 
@@ -884,7 +890,7 @@ function InquirySummary({ intake }: { intake: CustomHomeInquiryIntake }) {
     intake.desiredArea,
     intake.landOwnership ? inquiryLandOwnership(intake.landOwnership) : undefined,
     intake.layout,
-    intake.budgetYen ? `予算 ${inquiryBudget(intake.budgetYen)}` : undefined,
+    intake.budgetYen ? `予算 ${inquiryBudget(intake.budgetYen)}` : intake.budgetNote ? `予算 ${inquiryUndecidedNote(intake.budgetNote)}` : undefined,
   ].filter(Boolean);
   return <p className="inquiry-summary">{summary.length ? summary.join(' ／ ') : '聞き取り内容あり'}</p>;
 }
@@ -898,11 +904,11 @@ function InquiryDetails({ inquiry, onClose }: { inquiry: CustomHomeInquiry; onCl
   const fields: Array<[string, string]> = [
     ['土地の有無', inquiryLandOwnership(intake.landOwnership)],
     ['土地の場所', inquiryValue(intake.landLocation)],
-    ['土地の広さ', intake.landSizeSqm ? `${inquiryValue(intake.landSizeSqm)}㎡` : '未回答'],
+    ['土地の広さ', intake.landSizeSqm ? `${inquiryValue(intake.landSizeSqm)}㎡` : intake.landSizeNote ? inquiryUndecidedNote(intake.landSizeNote) : '未回答'],
     ['希望エリア', inquiryValue(intake.desiredArea)],
     ['家族構成・人数', household],
     ['希望間取り', inquiryValue(intake.layout)],
-    ['予算', inquiryBudget(intake.budgetYen)],
+    ['予算', intake.budgetYen ? inquiryBudget(intake.budgetYen) : intake.budgetNote ? inquiryUndecidedNote(intake.budgetNote) : '未回答'],
     ['入居時期', inquiryValue(intake.timing)],
     ['こだわり・優先事項', inquiryValue(intake.priorities)],
   ];

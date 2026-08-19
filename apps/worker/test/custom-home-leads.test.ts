@@ -35,7 +35,7 @@ function mockDb() {
           return { success: true, meta: { changes: 0 } };
         }
         if (sql.includes('INSERT') && sql.includes('custom_home_leads')) {
-          if (sql.includes('contact_name_enc, intake_enc, notification_status')) {
+          if (sql.includes('(id, conversation_id, contact_name_enc')) {
             const [id, conversationId, nameEnc, intakeEnc] = args as [string, string, string, string];
             leads.push({ id, conversationId, customerId: null, intakeEnc, nameEnc });
             return { success: true, meta: { changes: 1 } };
@@ -82,6 +82,26 @@ describe('persistCustomHomeLead', () => {
     expect(await decryptPII(store.customers[0]!.nameEnc, env())).toBe('山田 太郎');
     expect(await decryptPII(store.customers[0]!.phoneEnc, env())).toBe('09012345678');
     expect(result.created).toBe(true);
+  });
+
+  it('retains safe notes when a visitor is unsure about land size or budget', async () => {
+    const store = mockDb();
+    const result = await persistCustomHomeLead(store.db, env(), {
+      conversationId: 'conversation-unknown-values',
+      contact: { name: '山田 太郎', phone: '09012345678' },
+      intake: {
+        landOwnership: 'unknown',
+        landSizeNote: '何坪ぐらいがよいか相談したい',
+        budgetNote: 'まだわからない',
+      },
+    });
+
+    const intake = await decryptPII(store.leads[0]!.intakeEnc, env());
+    expect(result.created).toBe(true);
+    expect(intake).toContain('landSizeNote');
+    expect(intake).toContain('何坪ぐらいがよいか相談したい');
+    expect(intake).toContain('budgetNote');
+    expect(intake).toContain('まだわからない');
   });
 
   it('deduplicates a repeated conversation and phone number', async () => {

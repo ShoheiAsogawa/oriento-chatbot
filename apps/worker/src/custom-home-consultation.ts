@@ -6,7 +6,7 @@ import { isObviousConversationDetour } from './property-search-continuation';
  * search flows. The caller can use the state and decision as a domain module
  * and decide how to persist a lead or send it to a CRM.
  */
-export type CustomHomeLandOwnership = 'owned' | 'not_owned';
+export type CustomHomeLandOwnership = 'owned' | 'not_owned' | 'unknown';
 
 export type CustomHomeStep =
   | 'land_ownership'
@@ -32,11 +32,15 @@ export type CustomHomeConsultationState = {
   landOwnership?: CustomHomeLandOwnership;
   landLocation?: string;
   landSizeSqm?: number;
+  /** Free-text note when the visitor does not know the land size yet. */
+  landSizeNote?: string;
   desiredArea?: string;
   householdSize?: number;
   householdDescription?: string;
   layout?: string;
   budgetYen?: number;
+  /** Free-text note when the visitor does not know the budget yet. */
+  budgetNote?: string;
   timing?: string;
   priorities?: string;
   /** The name is intentionally never retained; only whether it was supplied is tracked. */
@@ -77,7 +81,7 @@ export type CustomHomeContactExtractionOptions = {
 };
 
 const CUSTOM_HOME_INTENT = /(?:注文住宅|注文建築|自由設計|マイホームを建て|家を建て(?:たい|る|よう))/u;
-const MODE_SWITCH = /^(?:賃貸|賃貸物件(?:を探す|を探したい)?|購入|購入物件(?:を探す|を探したい)?|物件を探す|物件探し)(?:[。！!？?])?$/u;
+const MODE_SWITCH = /^(?:(?:賃貸|購入)(?:物件)?(?:を?(?:探す|探したい)|に変更|で探したい|がいい|を希望|にしたい|したい)?|物件を?(?:探す|探したい)|物件探し(?:をしたい|したい)?)(?:[。！!？?])?$/u;
 const LAND_PROMPT = /(?:土地を持っているか|土地の有無|土地.*(?:持って|所有))/u;
 const LAND_LOCATION_PROMPT = /(?:土地.*(?:所在地|場所)|土地の場所|所在地.*(?:市区町村|教えて))/u;
 const LAND_SIZE_PROMPT = /(?:土地.*(?:広さ|大きさ)|敷地.*(?:広さ|大きさ)|何坪|何㎡)/u;
@@ -92,6 +96,9 @@ const PHONE_PROMPT = /(?:電話番号|お電話|連絡先).*(?:教えて|入力|
 const PHONE_REDACTED = /\[電話番号\]/u;
 const NAME_REDACTED = /\[お名前\]/u;
 const NO_PREFERENCE = /^(?:(?:間取り|家族構成|希望条件|こだわり)(?:は|を)?)?(?:特に)?(?:なし|ない|ありません|未定|決まっていない|決めていない)(?:です)?[。！!？?]?$/u;
+const UNKNOWN_ANSWER = /^(?:(?:まだ|今は|現時点では)?(?:わからない|分からない|不明|未定|決まっていない|決まってない|決めていない|検討中)|相談したい|相談して決めたい|おまかせ|お任せ|特になし|なし|ない)(?:です|だと思います)?[。！!？?]?$/u;
+const LAND_SIZE_HELP_REQUEST = /(?:何坪|何平米|何㎡|どのくらいの広さ|(?:坪数?|広さ).*(?:目安|教えて|知りたい|どのくらい))/u;
+const UNKNOWN_NOTE = '未定（相談希望）';
 const NO_PHONE = /^(?:なし|ない|ありません|未定|後で|あとで)[。！!？?]?$/u;
 const BUDGET_TO_CONSULT = /^(?:予算(?:は|を)?(?:相談(?:して)?(?:決めたい|したい)|未定)|相談(?:して)?(?:決めたい|したい)|未定)[。！!？?]?$/u;
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/iu;
@@ -142,6 +149,9 @@ function numberFromJapanese(value: string | undefined) {
 
 function householdFromMessage(content: string) {
   const normalized = normalize(content);
+  // Keep composite household descriptions intact instead of incorrectly
+  // reducing e.g. "夫婦と子ども" to two people.
+  if (/(?:(?:夫婦|カップル).*(?:子ども|子供)|(?:子ども|子供).*(?:夫婦|カップル))/u.test(normalized)) return undefined;
   const explicit = normalized.match(/(?:家族(?:は|で)?\s*)(10|[1-9一二三四五六七八九])\s*人|(?:大人|子ども|子供)\s*(10|[1-9一二三四五六七八九])\s*人/u);
   const explicitSize = numberFromJapanese(explicit?.[1] || explicit?.[2]);
   if (explicitSize) return explicitSize;
@@ -266,6 +276,19 @@ function isNoPreferenceAnswer(content: string) {
   return NO_PREFERENCE.test(normalize(content));
 }
 
+function isUnknownAnswer(content: string) {
+  return UNKNOWN_ANSWER.test(normalize(content));
+}
+
+/** Accept an honest free-text answer for an intake field without accepting a
+ * conversational detour or a question that still needs clarification. */
+function freeTextAnswer(content: string) {
+  const normalized = stripAnswer(content);
+  if (!normalized || normalized.length > 300 || isObviousConversationDetour(normalized)) return undefined;
+  if (LAND_SIZE_HELP_REQUEST.test(normalized) || /[？?]$/u.test(normalized)) return undefined;
+  return normalized;
+}
+
 function isCustomHomePrompt(content: string) {
   const normalized = normalize(content);
   return LAND_PROMPT.test(normalized)
@@ -285,14 +308,33 @@ function isCriterionReply(content: string, lastAssistant: string) {
   const normalized = normalize(content);
   return Boolean(
     landOwnershipFromMessage(normalized)
+    || (LAND_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (LAND_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (LAND_LOCATION_PROMPT.test(lastAssistant) && locationFromMessage(normalized, LAND_LOCATION_PROMPT))
+    || (LAND_LOCATION_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (LAND_LOCATION_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (DESIRED_AREA_PROMPT.test(lastAssistant) && locationFromMessage(normalized, DESIRED_AREA_PROMPT))
+    || (DESIRED_AREA_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (DESIRED_AREA_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (LAND_SIZE_PROMPT.test(lastAssistant) && landSizeFromMessage(normalized) != null)
+    || (LAND_SIZE_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (LAND_SIZE_PROMPT.test(lastAssistant) && LAND_SIZE_HELP_REQUEST.test(normalized))
+    || (LAND_SIZE_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (HOUSEHOLD_PROMPT.test(lastAssistant) && (householdFromMessage(normalized) != null || isNoPreferenceAnswer(normalized)))
+    || (HOUSEHOLD_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (HOUSEHOLD_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (LAYOUT_PROMPT.test(lastAssistant) && layoutFromMessage(normalized, true) != null)
+    || (LAYOUT_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (LAYOUT_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (BUDGET_PROMPT.test(lastAssistant) && budgetFromMessage(normalized, true) != null)
+    || (BUDGET_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (BUDGET_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (TIMING_PROMPT.test(lastAssistant) && timingFromMessage(normalized, true) != null)
+    || (TIMING_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (TIMING_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (PRIORITIES_PROMPT.test(lastAssistant) && prioritiesFromMessage(normalized, true) != null)
+    || (PRIORITIES_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
+    || (PRIORITIES_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (NAME_PROMPT.test(lastAssistant) && nameFromMessage(normalized, true) != null)
     || (PHONE_PROMPT.test(lastAssistant) && customHomePhoneProvided(normalized)));
 }
@@ -330,23 +372,60 @@ export function extractCustomHomeConsultationState(
     if (ownership) {
       state.landOwnership = ownership;
       state.landOwnershipSet = true;
+    } else if (LAND_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+      // Do not guess whether land exists. Keep the uncertainty explicit and
+      // continue through the land-search path so the visitor is not trapped.
+      state.landOwnership = 'unknown';
+      state.landOwnershipSet = true;
+    } else if (LAND_PROMPT.test(assistant) && freeTextAnswer(content)) {
+      // A free-form response such as "家族と相談中" still answers the
+      // question without inventing owned/not-owned.
+      state.landOwnership = 'unknown';
+      state.landOwnershipSet = true;
     }
     if (state.landOwnership === 'owned') {
       const location = locationFromMessage(content, LAND_LOCATION_PROMPT);
       if (location) {
         state.landLocation = location;
         state.landLocationSet = true;
+      } else if (LAND_LOCATION_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+        state.landLocation = UNKNOWN_NOTE;
+        state.landLocationSet = true;
+      } else if (LAND_LOCATION_PROMPT.test(assistant)) {
+        const note = freeTextAnswer(content);
+        if (note) {
+          state.landLocation = note;
+          state.landLocationSet = true;
+        }
       }
       const size = landSizeFromMessage(content);
       if (size != null) {
         state.landSizeSqm = size;
         state.landSizeSet = true;
+      } else if (LAND_SIZE_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+        state.landSizeNote = UNKNOWN_NOTE;
+        state.landSizeSet = true;
+      } else if (LAND_SIZE_PROMPT.test(assistant) && !LAND_SIZE_HELP_REQUEST.test(content)) {
+        const note = freeTextAnswer(content);
+        if (note) {
+          state.landSizeNote = note;
+          state.landSizeSet = true;
+        }
       }
-    } else if (state.landOwnership === 'not_owned') {
+    } else if (state.landOwnership === 'not_owned' || state.landOwnership === 'unknown') {
       const area = locationFromMessage(content, DESIRED_AREA_PROMPT);
       if (area) {
         state.desiredArea = area;
         state.desiredAreaSet = true;
+      } else if (DESIRED_AREA_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+        state.desiredArea = UNKNOWN_NOTE;
+        state.desiredAreaSet = true;
+      } else if (DESIRED_AREA_PROMPT.test(assistant)) {
+        const note = freeTextAnswer(content);
+        if (note) {
+          state.desiredArea = note;
+          state.desiredAreaSet = true;
+        }
       }
     }
 
@@ -356,6 +435,10 @@ export function extractCustomHomeConsultationState(
       state.householdSet = true;
     } else if (HOUSEHOLD_PROMPT.test(assistant) && isNoPreferenceAnswer(content)) {
       state.householdDescription = '未定';
+      state.householdSet = true;
+    }
+    if (HOUSEHOLD_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+      state.householdDescription = UNKNOWN_NOTE;
       state.householdSet = true;
     }
     const householdDescription = HOUSEHOLD_PROMPT.test(assistant) && content.length <= 100
@@ -370,6 +453,15 @@ export function extractCustomHomeConsultationState(
     if (layout) {
       state.layout = layout;
       state.layoutSet = true;
+    } else if (LAYOUT_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+      state.layout = UNKNOWN_NOTE;
+      state.layoutSet = true;
+    } else if (LAYOUT_PROMPT.test(assistant)) {
+      const note = freeTextAnswer(content);
+      if (note) {
+        state.layout = note;
+        state.layoutSet = true;
+      }
     }
     const budget = budgetFromMessage(content, BUDGET_PROMPT.test(assistant));
     if (budget != null) {
@@ -377,16 +469,44 @@ export function extractCustomHomeConsultationState(
       state.budgetSet = true;
     } else if (BUDGET_PROMPT.test(assistant) && (isNoPreferenceAnswer(content) || BUDGET_TO_CONSULT.test(content))) {
       state.budgetSet = true;
+      state.budgetNote = UNKNOWN_NOTE;
+    } else if (BUDGET_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+      state.budgetSet = true;
+      state.budgetNote = UNKNOWN_NOTE;
+    } else if (BUDGET_PROMPT.test(assistant)) {
+      const note = freeTextAnswer(content);
+      if (note) {
+        state.budgetNote = note;
+        state.budgetSet = true;
+      }
     }
     const timing = timingFromMessage(content, TIMING_PROMPT.test(assistant));
     if (timing) {
       state.timing = timing;
       state.timingSet = true;
+    } else if (TIMING_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+      state.timing = UNKNOWN_NOTE;
+      state.timingSet = true;
+    } else if (TIMING_PROMPT.test(assistant)) {
+      const note = freeTextAnswer(content);
+      if (note) {
+        state.timing = note;
+        state.timingSet = true;
+      }
     }
     const priorities = prioritiesFromMessage(content, PRIORITIES_PROMPT.test(assistant));
     if (priorities) {
       state.priorities = priorities;
       state.prioritiesSet = true;
+    } else if (PRIORITIES_PROMPT.test(assistant) && isUnknownAnswer(content)) {
+      state.priorities = UNKNOWN_NOTE;
+      state.prioritiesSet = true;
+    } else if (PRIORITIES_PROMPT.test(assistant)) {
+      const note = freeTextAnswer(content);
+      if (note) {
+        state.priorities = note;
+        state.prioritiesSet = true;
+      }
     }
     const contact = extractCustomHomeContact(content, {
       expectingName: NAME_PROMPT.test(assistant) || PHONE_PROMPT.test(assistant),
@@ -425,17 +545,17 @@ function nextStep(state: CustomHomeConsultationState): CustomHomeStep {
 
 function responseForStep(step: CustomHomeStep, state?: CustomHomeConsultationState): string | undefined {
   switch (step) {
-    case 'land_ownership': return 'オリエントホームが得意な注文住宅の相談だね。まず、土地を持っているか教えてにゃん。';
-    case 'land_location': return '土地をお持ちなんだね。土地の所在地を市区町村まで教えてにゃん。';
-    case 'land_size': return '土地の広さを教えてにゃん。㎡または坪で大丈夫にゃん。';
-    case 'desired_area': return '土地探しからだね。建てたいエリア（市区町村や沿線）を教えてにゃん。';
-    case 'household': return 'ご家族の人数や構成を教えてにゃん。';
-    case 'layout': return '希望する間取りや住まい方を教えてにゃん。例：3LDK、平屋、二世帯などにゃん。';
+    case 'land_ownership': return 'オリエントホームが得意な注文住宅の相談だね。まず、土地を持っているか教えてにゃん。分からなければ「未定」でも大丈夫にゃん。';
+    case 'land_location': return '土地をお持ちなんだね。土地の所在地を市区町村まで教えてにゃん。分からなければ「未定」で大丈夫にゃん。';
+    case 'land_size': return '土地の広さを教えてにゃん。㎡または坪で大丈夫にゃん。まだ分からなければ「未定」でも大丈夫。戸建てなら30〜40坪前後が一つの目安だけど、希望の暮らし方で変わるにゃん。';
+    case 'desired_area': return '土地探しからだね。建てたいエリア（市区町村や沿線）を教えてにゃん。まだ決まっていなければ「未定」で大丈夫にゃん。';
+    case 'household': return 'ご家族の人数や構成を教えてにゃん。まだ決まっていなければ「未定」で大丈夫にゃん。';
+    case 'layout': return '希望する間取りや住まい方を教えてにゃん。例：3LDK、平屋、二世帯などにゃん。未定でも大丈夫にゃん。';
     case 'budget': return state?.landOwnership === 'owned'
-      ? '建物と諸費用を含めた予算の目安を教えてにゃん。土地代は除いた金額で大丈夫にゃん。'
-      : '土地と建物を含めた総予算の目安を教えてにゃん。例：4,000万円まで、相談したいなどで大丈夫にゃん。';
+      ? '建物と諸費用を含めた予算の目安を教えてにゃん。土地代は除いた金額で大丈夫にゃん。未定・相談したいでも大丈夫にゃん。'
+      : '土地と建物を含めた総予算の目安を教えてにゃん。例：4,000万円まで、未定、相談したいなどで大丈夫にゃん。';
     case 'timing': return 'いつ頃の完成・入居を希望しているか教えてにゃん。未定でも大丈夫にゃん。';
-    case 'priorities': return '住まいで重視したいことを教えてにゃん。性能・デザイン・家事動線・収納など、複数あっても大丈夫にゃん。';
+    case 'priorities': return '住まいで重視したいことを教えてにゃん。性能・デザイン・家事動線・収納など、複数あっても大丈夫にゃん。未定や相談したいでも大丈夫にゃん。';
     case 'contact_name': return 'ここまでの内容を担当者に相談するため、お名前を教えてにゃん。入力内容はご相談対応のために利用するにゃん。';
     case 'contact_phone': return '担当者からご連絡するため、お電話番号を教えてにゃん。';
     case 'complete': return undefined;
@@ -464,6 +584,14 @@ export function evaluateCustomHomeConsultation(
   const state = extractCustomHomeConsultationState(history, currentMessage);
   const step = nextStep(state);
   if (state.leadReady) return { active: true, step: 'complete', leadReady: true };
+  if (step === 'land_size' && LAND_SIZE_HELP_REQUEST.test(normalizedCurrent)) {
+    return {
+      active: true,
+      response: responseForStep(step, state),
+      step,
+      leadReady: false,
+    };
+  }
   return { active: true, response: responseForStep(step, state), step, leadReady: false };
 }
 

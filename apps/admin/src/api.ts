@@ -124,11 +124,13 @@ export interface CustomHomeInquiryIntake {
   landOwnership?: string;
   landLocation?: string;
   landSizeSqm?: number | string;
+  landSizeNote?: string;
   desiredArea?: string;
   householdSize?: number | string;
   householdDescription?: string;
   layout?: string;
   budgetYen?: number | string;
+  budgetNote?: string;
   timing?: string;
   priorities?: string;
 }
