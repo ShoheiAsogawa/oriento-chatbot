@@ -2346,6 +2346,100 @@ app.get('/api/admin/conversations/:id', async (context) => {
   return context.json({ conversation, messages: messages.results });
 });
 
+async function safeAdminPIIDecrypt(value: string | null, env: Env) {
+  try {
+    return await decryptPII(value, env);
+  } catch {
+    // A damaged legacy record must not prevent staff from viewing other leads.
+    return null;
+  }
+}
+
+/**
+ * Returns the custom-home inquiries for the admin inbox.
+ *
+ * The database stores contact details and intake JSON encrypted.  Keep the
+ * ciphertext out of this response and decrypt only after the admin middleware
+ * above has authenticated the request.  Notification error details are also
+ * intentionally omitted: the inbox needs the delivery status, not an
+ * implementation detail that could contain provider data.
+ */
+app.get('/api/admin/inquiries', async (context) => {
+  const page = boundedPositiveInteger(context.req.query('page'), 1, 10_000);
+  const perPage = boundedPositiveInteger(context.req.query('perPage'), 30, 100);
+  const offset = (page - 1) * perPage;
+  const [count, listed] = await Promise.all([
+    context.env.DB.prepare(
+      `SELECT COUNT(*) AS total FROM custom_home_leads
+       WHERE customer_id IS NOT NULL AND notification_status != 'collecting'`,
+    ).first<{ total: number }>(),
+    context.env.DB.prepare(
+      `SELECT l.id, l.conversation_id, l.contact_name_enc, l.intake_enc,
+        l.notification_status, l.notification_attempts, l.created_at, l.updated_at,
+        c.name_enc AS customer_name_enc, c.phone_enc
+       FROM custom_home_leads l
+       LEFT JOIN customers c ON c.id = l.customer_id
+       WHERE l.customer_id IS NOT NULL AND l.notification_status != 'collecting'
+       ORDER BY l.created_at DESC, l.id DESC LIMIT ? OFFSET ?`,
+    ).bind(perPage, offset).all<{
+      id: string;
+      conversation_id: string;
+      contact_name_enc: string | null;
+      intake_enc: string | null;
+      notification_status: string;
+      notification_attempts: number;
+      created_at: string;
+      updated_at: string;
+      customer_name_enc: string | null;
+      phone_enc: string | null;
+    }>(),
+  ]);
+
+  const result = await Promise.all(listed.results.map(async (row) => {
+    const [leadName, customerName, phone, intakeText] = await Promise.all([
+      safeAdminPIIDecrypt(row.contact_name_enc, context.env),
+      safeAdminPIIDecrypt(row.customer_name_enc, context.env),
+      safeAdminPIIDecrypt(row.phone_enc, context.env),
+      safeAdminPIIDecrypt(row.intake_enc, context.env),
+    ]);
+    let intake: Record<string, string | number> = {};
+    if (intakeText) {
+      try {
+        const parsed = JSON.parse(intakeText) as Record<string, unknown>;
+        const allowedKeys = [
+          'landOwnership', 'landLocation', 'landSizeSqm', 'desiredArea',
+          'householdSize', 'householdDescription', 'layout', 'budgetYen',
+          'timing', 'priorities',
+        ] as const;
+        for (const key of allowedKeys) {
+          const value = parsed[key];
+          if (typeof value === 'string' && value.trim()) intake[key] = value.trim().slice(0, 500);
+          else if (typeof value === 'number' && Number.isFinite(value)) intake[key] = value;
+        }
+      } catch {
+        // Keep a malformed/legacy record visible without returning its raw payload.
+      }
+    }
+    return {
+      id: row.id,
+      conversationId: row.conversation_id,
+      name: leadName || customerName || null,
+      phone,
+      intake,
+      notificationStatus: row.notification_status,
+      notificationAttempts: row.notification_attempts,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }));
+  return context.json({
+    result,
+    page,
+    perPage,
+    total: Number(count?.total || 0),
+  }, 200, { 'Cache-Control': 'private, no-store' });
+});
+
 app.get('/api/admin/customers', async (context) => {
   const result = await context.env.DB.prepare(
     `SELECT c.*, COUNT(cc.conversation_id) AS conversation_count

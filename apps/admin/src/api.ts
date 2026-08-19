@@ -120,6 +120,30 @@ export interface OverviewPageCount {
   count: number;
 }
 
+export interface CustomHomeInquiryIntake {
+  landOwnership?: string;
+  landLocation?: string;
+  landSizeSqm?: number | string;
+  desiredArea?: string;
+  householdSize?: number | string;
+  householdDescription?: string;
+  layout?: string;
+  budgetYen?: number | string;
+  timing?: string;
+  priorities?: string;
+}
+
+export interface CustomHomeInquiry {
+  id: string;
+  conversationId: string;
+  createdAt: string;
+  updatedAt: string;
+  name: string | null;
+  phone: string | null;
+  intake: CustomHomeInquiryIntake;
+  notificationStatus: 'collecting' | 'pending' | 'processing' | 'sent' | 'failed' | string;
+}
+
 export interface OverviewPrefectureCount {
   prefecture: string;
   total: number;
@@ -463,6 +487,14 @@ export const api = {
       `/api/admin/conversations?${params.toString()}`,
       undefined,
       { result: mockConversations.filter((row) => !search.trim() || row.latest_message.includes(search.trim())), page: 1, perPage: 100 },
+    );
+  },
+  inquiries: (page = 1, perPage = 50) => {
+    const params = new URLSearchParams({ page: String(Math.max(1, page)), perPage: String(Math.min(100, Math.max(1, perPage))) });
+    return request<{ result: CustomHomeInquiry[]; page: number; perPage: number; total: number }>(
+      `/api/admin/inquiries?${params.toString()}`,
+      undefined,
+      { result: [], page: 1, perPage, total: 0 },
     );
   },
   conversation: (id: string) => request<{ conversation: Record<string, unknown>; messages: ConversationMessage[] }>(`/api/admin/conversations/${id}`, undefined, {

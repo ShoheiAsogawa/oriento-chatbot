@@ -2,7 +2,7 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 import {
   Activity, Archive, BookOpen, ChevronDown, ChevronLeft, ChevronRight,
   EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
-  FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Plus,
+  FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Plus, ClipboardList,
   RefreshCw, Search, ShieldCheck, Trash2, UploadCloud,
   Pencil, X,
 } from 'lucide-react';
@@ -11,19 +11,22 @@ import {
   api,
   type ConversationMessage,
   type ConversationSummary,
+  type CustomHomeInquiry,
+  type CustomHomeInquiryIntake,
   type KnowledgeItem,
   type MonthlyReport,
   type PropertyKnowledgeInput,
 } from './api';
 import { OverviewPage } from './OverviewPage';
 
-type PageKey = 'overview' | 'reports' | 'knowledge' | 'conversations';
+type PageKey = 'overview' | 'reports' | 'knowledge' | 'conversations' | 'inquiries';
 
 const navItems: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
   { key: 'overview', label: '概要', icon: Home },
   { key: 'reports', label: '月次レポート', icon: Gauge },
   { key: 'knowledge', label: 'ナレッジ', icon: BookOpen },
   { key: 'conversations', label: '会話ログ', icon: MessageSquareText },
+  { key: 'inquiries', label: 'お問い合わせ', icon: ClipboardList },
 ];
 
 const orinyanSpriteStyle = { backgroundImage: "url('/assets/orinyan-states.png')" };
@@ -859,6 +862,103 @@ function ConversationsPage() {
   </main><aside className={`detail-drawer conversation-detail ${selected ? 'open' : ''}`}><div className="drawer-heading"><div><h2>会話の詳細</h2><p>{selected?.id}</p></div><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>{selected ? <><div className="conversation-meta"><span><History />{formatDate(selected.updated_at)}</span><span><Link2 />{selected.source_page}</span></div><div className="transcript">{messages.map((message) => <div key={message.id} className={message.role === 'user' ? 'transcript-user' : 'transcript-bot'}>{message.content_redacted}{message.role === 'assistant' && message.policy_action === 'allow' ? <small>出典は保存済みのナレッジ資料を参照</small> : null}</div>)}</div><div className="policy-result"><ShieldCheck /><div><strong>ポリシー判定</strong><p>{lastAssistant?.policy_action || '確認中'} {lastAssistant?.policy_action === 'allow' ? '— 根拠資料あり' : '— 回答を拒否または担当者へ案内'}</p></div></div></> : <div className="empty-detail"><MessageSquareText /><p>会話を選択してください。</p></div>}</aside></div>;
 }
 
+function inquiryValue(value: unknown) {
+  if (value === undefined || value === null || value === '') return '未回答';
+  return String(value);
+}
+
+function inquiryBudget(value: unknown) {
+  if (value === undefined || value === null || value === '') return '未回答';
+  const numeric = typeof value === 'number' ? value : Number(String(value).replace(/[^0-9]/g, ''));
+  return Number.isFinite(numeric) && numeric > 0 ? `${numeric.toLocaleString('ja-JP')}円` : String(value);
+}
+
+function inquiryLandOwnership(value: unknown) {
+  if (value === 'owned' || value === 'あり') return '土地あり';
+  if (value === 'not_owned' || value === 'なし') return '土地なし';
+  return inquiryValue(value);
+}
+
+function InquirySummary({ intake }: { intake: CustomHomeInquiryIntake }) {
+  const summary = [
+    intake.desiredArea,
+    intake.landOwnership ? inquiryLandOwnership(intake.landOwnership) : undefined,
+    intake.layout,
+    intake.budgetYen ? `予算 ${inquiryBudget(intake.budgetYen)}` : undefined,
+  ].filter(Boolean);
+  return <p className="inquiry-summary">{summary.length ? summary.join(' ／ ') : '聞き取り内容あり'}</p>;
+}
+
+function InquiryDetails({ inquiry, onClose }: { inquiry: CustomHomeInquiry; onClose: () => void }) {
+  const intake = inquiry.intake || {};
+  const household = [
+    intake.householdSize ? `${inquiryValue(intake.householdSize)}人` : '',
+    intake.householdDescription || '',
+  ].filter(Boolean).join(' ／ ') || '未回答';
+  const fields: Array<[string, string]> = [
+    ['土地の有無', inquiryLandOwnership(intake.landOwnership)],
+    ['土地の場所', inquiryValue(intake.landLocation)],
+    ['土地の広さ', intake.landSizeSqm ? `${inquiryValue(intake.landSizeSqm)}㎡` : '未回答'],
+    ['希望エリア', inquiryValue(intake.desiredArea)],
+    ['家族構成・人数', household],
+    ['希望間取り', inquiryValue(intake.layout)],
+    ['予算', inquiryBudget(intake.budgetYen)],
+    ['入居時期', inquiryValue(intake.timing)],
+    ['こだわり・優先事項', inquiryValue(intake.priorities)],
+  ];
+  return <div className="inquiry-modal-backdrop" role="presentation">
+    <section className="inquiry-modal" role="dialog" aria-modal="true" aria-labelledby="inquiry-modal-title">
+      <div className="drawer-heading"><div><h2 id="inquiry-modal-title">お問い合わせ内容</h2><p>{formatDate(inquiry.createdAt)}</p></div><button type="button" onClick={onClose} aria-label="閉じる"><X /></button></div>
+      <div className="inquiry-contact"><strong>{inquiry.name || '氏名未入力'}</strong>{inquiry.phone ? <a href={`tel:${inquiry.phone}`}>{inquiry.phone}</a> : <span>電話番号未入力</span>}</div>
+      <dl className="inquiry-detail-list">{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      <button className="secondary-button full" type="button" onClick={onClose}>一覧に戻る</button>
+    </section>
+  </div>;
+}
+
+const INQUIRIES_PAGE_SIZE = 50;
+
+function InquiriesPage() {
+  const [rows, setRows] = useState<CustomHomeInquiry[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<CustomHomeInquiry | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.inquiries(page, INQUIRIES_PAGE_SIZE);
+      setRows(data.result);
+      setTotal(data.total);
+      setSelected((current) => current ? data.result.find((row) => row.id === current.id) || null : null);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'お問い合わせを読み込めませんでした。');
+    } finally {
+      setLoading(false);
+    }
+  }, [page]);
+  useEffect(() => { void load(); }, [load]);
+  const totalPages = Math.max(1, Math.ceil(total / INQUIRIES_PAGE_SIZE));
+  return <main className="inquiries-page">
+    <PageHeader title="お問い合わせ" description="注文住宅のご相談内容を新しい順に確認できます。" action={<button className="secondary-button" type="button" onClick={() => void load()} disabled={loading}><RefreshCw className={loading ? 'spin' : ''} />再読み込み</button>} />
+    <p className="knowledge-notice">新しいお問い合わせはこの一覧で確認できます。</p>
+    {error ? <p className="knowledge-notice" role="alert">{error}</p> : null}
+    <div className="inquiry-list-heading"><strong>{total.toLocaleString()}件</strong><span>注文住宅のお問い合わせ</span></div>
+    <section className="surface inquiry-list" aria-busy={loading} aria-label="お問い合わせ一覧">
+      <div className="inquiry-list-head"><span>受付日時</span><span>お客様</span><span>相談内容</span><span>操作</span></div>
+      {rows.map((row) => <button className="inquiry-row" type="button" key={row.id} onClick={() => setSelected(row)}>
+        <time>{formatDate(row.createdAt)}</time><span className="inquiry-person"><strong>{row.name || '氏名未入力'}</strong><small>{row.phone || '電話番号未入力'}</small></span><InquirySummary intake={row.intake || {}} /><span className="row-action">詳細を見る <ChevronRight /></span>
+      </button>)}
+      {loading && rows.length === 0 ? <div className="knowledge-empty"><RefreshCw className="spin" /><p>お問い合わせを読み込んでいます…</p></div> : null}
+      {!loading && rows.length === 0 ? <div className="knowledge-empty"><ClipboardList /><p>お問い合わせはまだありません。</p></div> : null}
+    </section>
+    {totalPages > 1 ? <nav className="inquiry-pagination" aria-label="お問い合わせのページ移動"><button className="secondary-button" type="button" disabled={loading || page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft />前へ</button><span>{page} / {totalPages} ページ</span><button className="secondary-button" type="button" disabled={loading || page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>次へ<ChevronRight /></button></nav> : null}
+    {selected ? <InquiryDetails inquiry={selected} onClose={() => setSelected(null)} /> : null}
+  </main>;
+}
+
 function AuthScreen({ onAuthenticated }: { onAuthenticated: (identity: string) => void }) {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
@@ -889,7 +989,7 @@ export function App() {
     return () => window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, expireSession);
   }, []);
   const logout = async () => { try { await api.logout(); } finally { setSession(null); } };
-  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : null;
+  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : page === 'inquiries' ? InquiriesPage : null;
   if (checkingSession) return <main className="auth-page"><p>ログイン状態を確認しています…</p></main>;
   if (!session) return <AuthScreen onAuthenticated={setSession} />;
   return <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
