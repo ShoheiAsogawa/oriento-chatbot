@@ -194,6 +194,60 @@ describe('custom home consultation', () => {
     });
   });
 
+  it('keeps a substantive unknown answer when it has a polite acknowledgement attached', () => {
+    const history = [
+      user('注文住宅'),
+      assistant('まず、土地を持っているか教えてにゃん。'),
+    ];
+
+    expect(extractCustomHomeConsultationState(history, 'まだわからない、ありがとう')).toMatchObject({
+      landOwnership: 'unknown',
+      landOwnershipSet: true,
+    });
+    expect(evaluateCustomHomeConsultation(history, 'まだわからない、ありがとう')).toMatchObject({
+      active: true,
+      step: 'desired_area',
+    });
+  });
+
+  it('keeps a free-text location when it has a polite acknowledgement attached', () => {
+    const history = [
+      user('注文住宅'),
+      assistant('まず、土地を持っているか教えてにゃん。'),
+      user('土地を持っていない'),
+      assistant('建てたいエリアを教えてにゃん。'),
+    ];
+
+    expect(extractCustomHomeConsultationState(history, '実家の近くがいいです、ありがとう')).toMatchObject({
+      desiredArea: '実家の近くがいいです',
+      desiredAreaSet: true,
+    });
+    expect(evaluateCustomHomeConsultation(history, '実家の近くがいいです、ありがとう')).toMatchObject({
+      active: true,
+      step: 'household',
+    });
+  });
+
+  it.each([
+    ['あります', 'owned', 'land_location'],
+    ['持っていません', 'not_owned', 'desired_area'],
+    ['いいえ', 'not_owned', 'desired_area'],
+  ] as const)('accepts a short land ownership reply: %s', (reply, ownership, nextStep) => {
+    const history = [
+      user('注文住宅'),
+      assistant('まず、土地を持っているか教えてにゃん。'),
+    ];
+
+    expect(extractCustomHomeConsultationState(history, reply)).toMatchObject({
+      landOwnership: ownership,
+      landOwnershipSet: true,
+    });
+    expect(evaluateCustomHomeConsultation(history, reply)).toMatchObject({
+      active: true,
+      step: nextStep,
+    });
+  });
+
   it('answers a tsubo clarification helpfully without recording it as land size', () => {
     const history = [
       user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
@@ -242,6 +296,7 @@ describe('custom home consultation', () => {
     expect(evaluateCustomHomeConsultation(history, '何坪ぐらいが目安？')).toMatchObject({
       active: true,
       step: 'land_ownership',
+      response: expect.stringContaining('30〜40坪前後'),
     });
   });
 

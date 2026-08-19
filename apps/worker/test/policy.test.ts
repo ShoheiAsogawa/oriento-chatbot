@@ -137,6 +137,24 @@ describe('isPropertyKnowledgeQuestion', () => {
     ])).toBe(false);
   });
 
+  it.each([
+    ['家賃10万円まで', '家賃の上限を教えてにゃん。'],
+    ['家賃は8万円まで', '家賃の上限を教えてにゃん。'],
+    ['購入予算5000万円まで', '購入予算の上限を選んでにゃん。'],
+    ['販売価格1億2000万円まで', '購入予算の上限を選んでにゃん。'],
+  ])('keeps an exact budget choice in the guided search: %s', (selection, prompt) => {
+    expect(isPropertyKnowledgeQuestion(selection, [
+      '田辺市で物件を探しています',
+      prompt,
+    ])).toBe(false);
+  });
+
+  it('still grounds a real rent question after a recommendation', () => {
+    expect(isPropertyKnowledgeQuestion('家賃はいくら？', [
+      '田辺市で条件に合う賃貸物件が見つかったにゃん。',
+    ])).toBe(true);
+  });
+
   it('still treats a property detail question as knowledge lookup after a recommendation', () => {
     expect(isPropertyKnowledgeQuestion('この物件はペット可？', [
       '田辺市で条件に合う購入物件が見つかったにゃん。',

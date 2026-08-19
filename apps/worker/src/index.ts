@@ -8,6 +8,7 @@ import {
   logoutAdmin,
 } from './admin-auth';
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
+import { appendRateLimitAudit } from './rate-limit-audit';
 import { choicesForChatAnswer } from './chat-choices';
 import {
   customHomeChoicesForResponse,
@@ -291,7 +292,10 @@ app.post('/api/chat/session', async (context) => {
   const ip = context.req.header('CF-Connecting-IP') || 'local';
   const visitorHash = await sha256(`${context.env.HASH_SALT}:${ip}:${context.req.header('User-Agent') || ''}`);
   const rate = await context.env.RATE_LIMITER.limit({ key: `session:${visitorHash}` });
-  if (!rate.success) return context.json({ error: '少し時間をおいてからお試しください' }, 429);
+  if (!rate.success) {
+    await appendRateLimitAudit(context.env, 'session', id);
+    return context.json({ error: '少し時間をおいてからお試しください' }, 429);
+  }
   const dailySessions = await consumeDailyAllowance(
     context.env.DB,
     'chat_sessions',
@@ -1042,7 +1046,10 @@ app.post('/api/chat/message', async (context) => {
   if (!conversation) return context.json({ error: 'Conversation not found' }, 404);
 
   const rate = await context.env.CHAT_RATE_LIMITER.limit({ key: input.conversationId });
-  if (!rate.success) return context.json({ error: '少し時間をおいてからお試しください' }, 429);
+  if (!rate.success) {
+    await appendRateLimitAudit(context.env, 'message', input.conversationId);
+    return context.json({ error: '少し時間をおいてからお試しください' }, 429);
+  }
 
   // A complete custom-home intake has more than the normal 16-message
   // property-search window. Load the bounded intake window here; downstream
@@ -1521,7 +1528,10 @@ app.post('/api/chat/lead', async (context) => {
     .first<{ id: string }>();
   if (!conversation) return context.json({ error: 'Conversation not found' }, 404);
   const rate = await context.env.RATE_LIMITER.limit({ key: `lead:${input.conversationId}` });
-  if (!rate.success) return context.json({ error: '少し時間をおいてからお試しください' }, 429);
+  if (!rate.success) {
+    await appendRateLimitAudit(context.env, 'lead', input.conversationId);
+    return context.json({ error: '少し時間をおいてからお試しください' }, 429);
+  }
 
   const customerId = crypto.randomUUID();
   const normalizedEmail = input.email?.toLowerCase();

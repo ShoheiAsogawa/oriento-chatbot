@@ -49,6 +49,10 @@ const officialPropertyHosts = new Set([
   'www.oriho.com',
 ]);
 const propertySections = new Set(['buy', 'rent', 'property', 'house']);
+// Keep this aligned with the Worker source-link policy. A grounded property
+// answer can identify a listing by price or address before the model repeats
+// its full title, and that answer must still expose the approved detail link.
+const propertyDetailInAnswer = /(?:販売価格|物件価格|賃料|家賃|所在地)\s*(?:[：:]|は|\d)|\d+(?:\.\d+)?\s*万円/u;
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -751,7 +755,7 @@ class OrientChat extends HTMLElement {
         .filter((title, index, values) => title.length >= 3 && values.indexOf(title) === index);
       return pathParts.length >= 2
         && propertySections.has(pathParts[0]!.toLowerCase())
-        && titleVariants.some((title) => normalizedAnswer.includes(title));
+        && (propertyDetailInAnswer.test(answer) || titleVariants.some((title) => normalizedAnswer.includes(title)));
     } catch {
       return false;
     }

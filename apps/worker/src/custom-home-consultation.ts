@@ -106,9 +106,26 @@ const PHONE_CANDIDATE = /((?:\+81[-\s]?[789]0|0\d{1,4})[\d\s()\-]{7,17}\d)/u;
 const LAYOUT = /(?:\d+\s*[SLDKR]+|平屋|二世帯住宅?|自由設計)/iu;
 const AREA_SUFFIX = /(?:都|道|府|県|市|区|町|村|駅)/u;
 const LOCATION_NOISE = /(?:ありがとう|どうも|よろしく|わからない|分からない|おなか|ごはん|誰|だれ)/u;
+const COURTESY_PREFIX = /^(?:(?:ありがとう(?:ございます)?|どうも)(?:[、,\s]+|$))/u;
+const COURTESY_SUFFIX = /(?:[、,\s]*(?:ありがとう(?:ございます)?|どうも|よろしく(?:お願いします)?|お願いします|助かります))+(?:[。！!？?]*)$/u;
+const LAND_OWNERSHIP_AFFIRMATIVE = /^(?:はい|あります|ある|持っています|持ってます|所有しています|所有している|ございます)$/u;
+const LAND_OWNERSHIP_NEGATIVE = /^(?:いいえ|ありません|ない|ないです|持っていません|持っていない|持ってない|なし)$/u;
 
 function normalize(value: string) {
   return value.normalize('NFKC').trim();
+}
+
+/**
+ * A visitor often appends a polite acknowledgement to an otherwise valid
+ * intake answer (for example, "まだわからない、ありがとう").  Preserve the
+ * answer and ignore only that courtesy tail, rather than making the flow ask
+ * the same question again.
+ */
+function intakeAnswer(value: string) {
+  return normalize(value)
+    .replace(COURTESY_PREFIX, '')
+    .replace(COURTESY_SUFFIX, '')
+    .trim();
 }
 
 function allMessages(history: ConversationContextMessage[], currentMessage: string) {
@@ -135,7 +152,7 @@ function previousAssistant(messages: ConversationContextMessage[], index: number
 }
 
 function stripAnswer(value: string) {
-  return normalize(value)
+  return intakeAnswer(value)
     .replace(/^(?:場所|所在地|土地の場所|希望エリア|探す場所|広さ|大きさ|予算|建築費|間取り|家族構成|こだわり|重視すること|名前|氏名|お名前|電話番号|お電話)(?:は|を|:|：)?\s*/u, '')
     .replace(/[。！!？?]+$/u, '')
     .trim();
@@ -148,7 +165,7 @@ function numberFromJapanese(value: string | undefined) {
 }
 
 function householdFromMessage(content: string) {
-  const normalized = normalize(content);
+  const normalized = stripAnswer(content);
   // Keep composite household descriptions intact instead of incorrectly
   // reducing e.g. "夫婦と子ども" to two people.
   if (/(?:(?:夫婦|カップル).*(?:子ども|子供)|(?:子ども|子供).*(?:夫婦|カップル))/u.test(normalized)) return undefined;
@@ -163,7 +180,7 @@ function householdFromMessage(content: string) {
 }
 
 function budgetFromMessage(content: string, answeredPrompt: boolean) {
-  const normalized = normalize(content);
+  const normalized = stripAnswer(content);
   const number = (value: string) => Number(value.replace(/,/gu, ''));
   const oku = normalized.match(/(\d[\d,]*(?:\.\d+)?)\s*億(?:\s*(\d[\d,]*(?:\.\d+)?)\s*万)?(?:円)?/u);
   if (oku) return Math.round(number(oku[1] || '0') * 100_000_000 + number(oku[2] || '0') * 10_000);
@@ -182,11 +199,20 @@ function budgetFromMessage(content: string, answeredPrompt: boolean) {
 }
 
 function landOwnershipFromMessage(content: string): CustomHomeLandOwnership | undefined {
-  const normalized = normalize(content);
+  const normalized = stripAnswer(content);
   if (/(?:土地|敷地).*(?:持っていない|持ってない|ありません|なし|ない)/u.test(normalized)
     || /(?:土地|敷地)なし/u.test(normalized)) return 'not_owned';
   if (/(?:土地|敷地).*(?:持っている|持ってる|所有|あり)/u.test(normalized)
     || /(?:持っている|持ってる|所有地|土地あり)/u.test(normalized)) return 'owned';
+  return undefined;
+}
+
+/** Interpret a short yes/no reply only while the preceding question asks about
+ * land ownership. This avoids applying a later "はい" to the wrong field. */
+function landOwnershipFromPromptReply(content: string): CustomHomeLandOwnership | undefined {
+  const normalized = stripAnswer(content);
+  if (LAND_OWNERSHIP_AFFIRMATIVE.test(normalized)) return 'owned';
+  if (LAND_OWNERSHIP_NEGATIVE.test(normalized)) return 'not_owned';
   return undefined;
 }
 
@@ -209,7 +235,7 @@ function landSizeFromMessage(content: string) {
 }
 
 function layoutFromMessage(content: string, answeredPrompt: boolean) {
-  const normalized = normalize(content);
+  const normalized = stripAnswer(content);
   const layout = normalized.match(LAYOUT)?.[0]?.replace(/\s+/gu, '').toUpperCase();
   if (layout) return layout;
   if (answeredPrompt && NO_PREFERENCE.test(normalized)) return 'こだわりなし';
@@ -273,11 +299,11 @@ function customHomePhoneProvided(content: string) {
 }
 
 function isNoPreferenceAnswer(content: string) {
-  return NO_PREFERENCE.test(normalize(content));
+  return NO_PREFERENCE.test(stripAnswer(content));
 }
 
 function isUnknownAnswer(content: string) {
-  return UNKNOWN_ANSWER.test(normalize(content));
+  return UNKNOWN_ANSWER.test(stripAnswer(content));
 }
 
 /** Accept an honest free-text answer for an intake field without accepting a
@@ -305,9 +331,10 @@ function isCustomHomePrompt(content: string) {
 }
 
 function isCriterionReply(content: string, lastAssistant: string) {
-  const normalized = normalize(content);
+  const normalized = stripAnswer(content);
   return Boolean(
     landOwnershipFromMessage(normalized)
+    || (LAND_PROMPT.test(lastAssistant) && landOwnershipFromPromptReply(normalized))
     || (LAND_PROMPT.test(lastAssistant) && isUnknownAnswer(normalized))
     || (LAND_PROMPT.test(lastAssistant) && freeTextAnswer(normalized) != null)
     || (LAND_LOCATION_PROMPT.test(lastAssistant) && locationFromMessage(normalized, LAND_LOCATION_PROMPT))
@@ -366,9 +393,10 @@ export function extractCustomHomeConsultationState(
 
   messages.forEach((message, index) => {
     if (message.role !== 'user') return;
-    const content = normalize(message.content);
+    const content = stripAnswer(message.content);
     const assistant = previousAssistant(messages, index);
-    const ownership = landOwnershipFromMessage(content);
+    const ownership = landOwnershipFromMessage(content)
+      || (LAND_PROMPT.test(assistant) ? landOwnershipFromPromptReply(content) : undefined);
     if (ownership) {
       state.landOwnership = ownership;
       state.landOwnershipSet = true;
@@ -566,8 +594,9 @@ export function evaluateCustomHomeConsultation(
   history: ConversationContextMessage[],
   currentMessage: string,
 ): CustomHomeConsultationDecision {
-  const normalizedCurrent = normalize(currentMessage);
-  if (MODE_SWITCH.test(normalizedCurrent) || isObviousConversationDetour(normalizedCurrent)) return { active: false };
+  const rawCurrent = normalize(currentMessage);
+  const normalizedCurrent = stripAnswer(currentMessage);
+  if (MODE_SWITCH.test(normalizedCurrent)) return { active: false };
   const messages = flowMessages(history, currentMessage);
   const lastAssistant = [...messages].reverse().find((message) => (
     message.role === 'assistant' && isCustomHomePrompt(message.content)
@@ -577,8 +606,13 @@ export function evaluateCustomHomeConsultation(
     || (message.role === 'assistant' && isCustomHomePrompt(message.content))
   ));
   if (!hasFlow) return { active: false };
+  // A standalone "ありがとう" is a detour. A polite suffix on a substantive
+  // answer is not; `normalizedCurrent` keeps the substantive part above.
+  if (!normalizedCurrent && rawCurrent) return { active: false };
   const currentStartsFlow = isCustomHomeIntent(normalizedCurrent);
-  if (!currentStartsFlow && !isCustomHomePrompt(lastAssistant) && !isCriterionReply(normalizedCurrent, lastAssistant)) {
+  const currentCriterionReply = isCriterionReply(normalizedCurrent, lastAssistant);
+  if (isObviousConversationDetour(normalizedCurrent) && !currentCriterionReply) return { active: false };
+  if (!currentStartsFlow && !isCustomHomePrompt(lastAssistant) && !currentCriterionReply) {
     return { active: false };
   }
   const state = extractCustomHomeConsultationState(history, currentMessage);
@@ -588,6 +622,14 @@ export function evaluateCustomHomeConsultation(
     return {
       active: true,
       response: responseForStep(step, state),
+      step,
+      leadReady: false,
+    };
+  }
+  if (step === 'land_ownership' && LAND_SIZE_HELP_REQUEST.test(normalizedCurrent)) {
+    return {
+      active: true,
+      response: '戸建てなら30〜40坪前後が一つの目安だけど、希望の暮らし方で変わるにゃん。土地を持っているかは、未定でも大丈夫なので教えてにゃん。',
       step,
       leadReady: false,
     };

@@ -123,6 +123,10 @@ const PROPERTY_CONTEXT = /(?:物件|部屋|住戸|住宅|マンション|アパ�
 const PROPERTY_SEARCH_REQUEST = /(?:物件を探す|物件探し|ほかの物件|他の物件|別の物件|もっと物件|条件を広げ)/u;
 const GUIDED_SEARCH_PROMPT = /(?:賃貸(?:・|と|か)購入(?:・|と|か)?(?:注文住宅)?|都道府県を選んで|市区町村を選んで|家賃の上限|希望の間取りや条件|購入予算の上限|購入する物件の種類|購入物件の希望間取り|かなり手狭|登録物件情報だけでは全件を正確に絞り込めない)/u;
 const PROPERTY_SEARCH_SELECTION = /^(?:(?:物件種別は)?(?:新築戸建て|中古戸建て|中古マンション|戸建て|マンション|土地|その他・事業用)(?:がいい|を希望|にしたい)?|(?:間取りは)?(?:ワンルーム|\d+[SLDKR]+)(?:以上)?(?:がいい|を希望|にしたい)?|(?:(?:物件種別|間取り)は)?(?:特に)?(?:こだわり|指定)?(?:は)?(?:なし|ない|ありません)(?:で(?:いい|大丈夫)(?:ですか)?|に(?:する|したい))?|.{1,30}を条件から外す|ペット(?:可|OK|相談)?|駐車(?:場)?(?:あり|可|必要)?|駅近|徒歩\s*\d+分(?:以内|まで)?|築浅|オートロック|バス[・･]?トイレ別)[。！!？?]?$/iu;
+// A budget button may naturally contain words such as "家賃" or "販売価格".
+// Treat it as a guided-flow selection only when it is an exact amount, so a
+// genuine question such as "家賃はいくら？" still goes through grounding.
+const PROPERTY_SEARCH_BUDGET_SELECTION = /^(?:(?:家賃|購入予算|予算|販売価格)\s*(?:は|を)?\s*)?(?:\d[\d,]*(?:\.\d+)?\s*億(?:\s*\d[\d,]*(?:\.\d+)?\s*万)?(?:円)?|\d[\d,]*(?:\.\d+)?\s*千万(?:円)?|\d[\d,]*(?:\.\d+)?\s*万(?:円)?|\d[\d,]*(?:\.\d+)?\s*円)(?:まで|以下|以内)?(?:で(?:いい|大丈夫)(?:ですか)?)?(?:です)?[。！!？?]?$/u;
 const PROPERTY_FACT_QUESTION = /(?:この|その|あの)(?:物件|部屋|住戸|家|住宅|マンション|アパート|戸建|一戸建て|土地|テナント|店舗|事務所)|(?:価格|販売価格|家賃|管理費|共益費|敷金|礼金|保証金|間取り|面積|広さ|所在地|住所|最寄り|交通|徒歩|築年|築年月|完成|構造|階数|所在階|何階|方角|日当たり|採光|周辺環境|治安|買い物|設備|仕様|駐車|駐輪|ペット|楽器|ネット|インターネット|オートロック|エレベーター|バルコニー|リフォーム|リノベーション|用途地域|建ぺい率|容積率|接道|権利|所有権|入居|引渡|空室|内見|見学|申込|契約|学区|小学校|中学校|耐震|断熱|保証|修繕|管理状態|売主|境界|雨漏り|欠陥|告知事項|事故物件|詳細|詳しく).*(?:は|が|を|について|教えて|知りたい|ありますか|ある|ない|できますか|できる|いつ|どこ|いくら|何|可(?:能)?|[？?])/u;
 
 export function isPropertyKnowledgeQuestion(input: string, recentContext: readonly string[] = []) {
@@ -130,7 +134,8 @@ export function isPropertyKnowledgeQuestion(input: string, recentContext: readon
   if (!normalized || PROPERTY_SEARCH_REQUEST.test(normalized)) return false;
 
   const latestContext = recentContext.at(-1)?.normalize('NFKC') || '';
-  if (GUIDED_SEARCH_PROMPT.test(latestContext) && PROPERTY_SEARCH_SELECTION.test(normalized)) return false;
+  if (GUIDED_SEARCH_PROMPT.test(latestContext)
+    && (PROPERTY_SEARCH_SELECTION.test(normalized) || PROPERTY_SEARCH_BUDGET_SELECTION.test(normalized))) return false;
 
   const context = recentContext.slice(-6).join('\n').normalize('NFKC');
   const hasPropertyContext = PROPERTY_CONTEXT.test(normalized) || PROPERTY_CONTEXT.test(context);
