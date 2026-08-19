@@ -70,6 +70,7 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
       choice('2LDK'),
       choice('3LDK', '3LDK', 'primary'),
       choice('4LDK'),
+      choice('5LDK'),
       choice('こだわりなし', '間取りはこだわりなし'),
     ];
   }

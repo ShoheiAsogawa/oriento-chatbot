@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { evaluatePurchaseConsultation, extractPurchaseConsultationState } from '../src/purchase-consultation';
 
 describe('purchase consultation', () => {
+  it.each([
+    '注文住宅と購入はどっちがいい？',
+    '賃貸と購入で迷っています',
+    '購入と賃貸を比較したい',
+  ])('leaves a mode comparison to the conversational agent: %s', (message) => {
+    expect(evaluatePurchaseConsultation([], message)).toEqual({ active: false });
+  });
   it('collects purchase criteria in a deterministic button-friendly order', () => {
     const history = [
       { role: 'user' as const, content: '物件を探す' },
@@ -228,5 +235,79 @@ describe('purchase consultation', () => {
       { role: 'user', content: '中古戸建て' },
       { role: 'assistant', content: '購入物件の希望間取りを選んでにゃん。' },
     ], '間取りはこだわりなしにしたい')).toEqual({ active: true });
+  });
+
+  it.each(['未定', 'わからない', '相談したい'])('keeps going when the budget answer is %s', (answer) => {
+    const history = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '購入する物件の種類を選んでにゃん。' },
+      { role: 'user' as const, content: '物件種別はこだわりなし' },
+      { role: 'assistant' as const, content: '購入予算の上限を選んでにゃん。' },
+    ];
+    expect(extractPurchaseConsultationState(history, answer).maxPriceYen).toBe(Number.MAX_SAFE_INTEGER);
+    expect(evaluatePurchaseConsultation(history, answer).response).toContain('希望間取り');
+  });
+
+  it.each([
+    ['予算を変更したい', '購入予算の上限'],
+    ['間取りを選び直したい', '希望間取り'],
+    ['物件種別を変更したい', '物件の種類'],
+    ['エリアを変えたい', '希望の都道府県'],
+  ] as const)('asks for the requested purchase condition instead of replaying results: %s', (message, expected) => {
+    const history = [
+      { role: 'user' as const, content: '大阪市で購入を探したい' },
+      { role: 'assistant' as const, content: '購入する物件の種類を選んでにゃん。' },
+      { role: 'user' as const, content: '物件種別はこだわりなし' },
+      { role: 'assistant' as const, content: '購入予算の上限を選んでにゃん。' },
+      { role: 'user' as const, content: '5000万円' },
+      { role: 'assistant' as const, content: '購入物件の希望間取りを選んでにゃん。' },
+      { role: 'user' as const, content: '間取りはこだわりなし' },
+      { role: 'assistant' as const, content: '大阪市で条件に合う購入物件が見つかったにゃん。' },
+    ];
+    expect(evaluatePurchaseConsultation(history, message).response).toContain(expected);
+  });
+
+  it('clears an old city even when the newly selected prefecture is unchanged', () => {
+    const history = [
+      { role: 'user' as const, content: '大阪市で購入を探したい' },
+      { role: 'assistant' as const, content: '大阪市で条件に合う購入物件が見つかったにゃん。' },
+      { role: 'user' as const, content: 'エリアを変えたい' },
+      { role: 'assistant' as const, content: '新しい希望の都道府県を選んでにゃん。' },
+    ];
+    expect(extractPurchaseConsultationState(history, '大阪府')).toMatchObject({ prefecture: '大阪府', area: undefined });
+    expect(evaluatePurchaseConsultation(history, '大阪府').response).toContain('市区町村');
+  });
+
+  it.each(['未定', 'わからない', 'どこでもいい', 'おまかせ'])('does not store %s as a purchase location', (answer) => {
+    const prefectureHistory = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+    ];
+    expect(extractPurchaseConsultationState(prefectureHistory, answer).area).toBeUndefined();
+    expect(evaluatePurchaseConsultation(prefectureHistory, answer).response).toContain('都道府県を選んで');
+
+    const cityHistory = [
+      ...prefectureHistory,
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '大阪府で購入物件を探すにゃん。次に、市区町村を選んでにゃん。' },
+    ];
+    expect(extractPurchaseConsultationState(cityHistory, answer).area).toBeUndefined();
+    expect(evaluatePurchaseConsultation(cityHistory, answer).response).toContain('市区町村を選んで');
+  });
+
+  it('repeats represented wards when the ward is unknown', () => {
+    const history = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '大阪市で購入物件を探すにゃん。次に区を選んでにゃん。' },
+    ];
+    expect(evaluatePurchaseConsultation(history, 'わからない').response).toContain('物件の種類');
   });
 });

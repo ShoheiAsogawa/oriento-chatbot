@@ -51,6 +51,15 @@ describe('answer sources', () => {
     expect(shouldShowPropertyDetailLinks('物件Aは販売価格3,000万円、3LDKにゃん。[1]', sources)).toBe(true);
   });
 
+  it('treats the official pri2 route as a Japanese property detail page', () => {
+    const sources = propertyDetailSources(selectAnswerSources(
+      'プリッ2 東中浜は販売価格3,980万円にゃん。[1]',
+      [chunk('## プリッ2 東中浜\n公式ページ: https://orijyu.com/pri2/post-65240.html\n\n販売価格 3,980万円')],
+    ));
+    expect(sources).toEqual([expect.objectContaining({ url: 'https://orijyu.com/pri2/post-65240.html' })]);
+    expect(shouldShowPropertyDetailLinks('プリッ2 東中浜は販売価格3,980万円にゃん。[1]', sources)).toBe(true);
+  });
+
   it('filters unrelated property citations when the question names an exact address', () => {
     const chunks = [
       chunk('## OrientCity 伏見\n公式ページ: https://orijyu.com/buy/other/\n\n別の物件'),

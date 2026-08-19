@@ -26,16 +26,19 @@ const PURCHASE_INTENT = /(?:購入|買いたい|買う|新築|中古|戸建(?:�
 const RENTAL_INTENT = /(?:賃貸|借りたい|部屋を借り)/u;
 const EXACT_PURCHASE_START = /^(?:購入|購入したい|家を買いたい|物件を買いたい)(?:[。！!？?])?$/u;
 const AREA_PROMPT = /(?:希望エリア|購入したい地域|都道府県|市区町村)/u;
+const WARD_PROMPT = /(?:次に|希望の?)区を選んで/u;
 const BUDGET_PROMPT = /購入予算の上限/u;
 const TYPE_PROMPT = /購入する物件の種類/u;
 const LAYOUT_PROMPT = /購入物件の希望間取り/u;
 const COMPLETED_PURCHASE_SEARCH = /条件に合う購入物件.*(?:見つかった|見つからなかった)/u;
-const PURCHASE_EXPLANATION_REQUEST = /(?:(?:とは|違い|メリット|デメリット|特徴|について教えて|について知りたい|どういう|どんな)(?:物件)?|どちら.*(?:いい|良い|おすすめ|向いて))/u;
-const NO_PREFERENCE = /^(?:(?:物件種別|間取り)(?:は|を)?)?(?:特に)?(?:こだわり|指定)?(?:は)?(?:なし|ない|ありません)(?:で(?:いい|大丈夫)(?:ですか)?|に(?:する|したい))?(?:です)?[。！!？?]?$/u;
+const PURCHASE_EXPLANATION_REQUEST = /(?:(?:とは|違い|比較|メリット|デメリット|特徴|について教えて|について知りたい|どういう|どんな)(?:物件)?|(?:どちら|どっち).*(?:いい|良い|おすすめ|向いて)|(?:迷って|悩んで))/u;
+const NO_PREFERENCE = /^(?:(?:物件種別|間取り)(?:は|を)?)?(?:特に)?(?:(?:こだわり|指定)(?:は)?(?:なし|ない|ありません)|なし|ない|ありません|未定|わからない|わかりません|決めていない|決まっていない)(?:で(?:いい|大丈夫)(?:ですか)?|に(?:する|したい))?(?:です)?[。！!？?]?$/u;
+const UNLIMITED_BUDGET = /(?:予算|購入価格|購入金額).*(?:未定|わからない|わかりません|決めていない|決まっていない|相談したい|上限.*(?:なし|ない)|なし)/u;
 const AREA_WITH_SUFFIX = /([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,18}(?:都|道|府|県|市|区|町|村)|[\p{Script=Han}々ヶケァ-ヶー]{1,18}駅)/gu;
 const PREFECTURE = /([\p{Script=Han}々ヶケ]{2,8}(?:都|道|府|県))/u;
 const CITY_WARD = /(大阪市|堺市)\s*([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,10}区)/u;
 const GUIDED_WARD_CITY = /^(?:大阪市|堺市)$/u;
+const UNKNOWN_LOCATION = /^(?:未定|わからない|わかりません|決めていない|決まっていない|どこでも(?:いい|大丈夫)?|おまかせ|相談したい)[。！!？?]*$/u;
 
 function messagesSinceLatestSearch(history: ConversationContextMessage[], currentMessage: string) {
   const messages = scopePropertySearchMessages(history, currentMessage);
@@ -50,7 +53,7 @@ function messagesSinceLatestSearch(history: ConversationContextMessage[], curren
 function shortArea(content: string) {
   const candidate = content.trim().replace(/[。！!？?、,]/gu, '');
   if (!/^[\p{Script=Han}々ヶケぁ-んァ-ヶー]{2,18}$/u.test(candidate)) return undefined;
-  if (/(?:購入|予算|万円?|物件|戸建|マンション|土地|間取り|LDK|こだわり|なし)/iu.test(candidate)) return undefined;
+  if (/(?:購入|予算|万円?|物件|戸建|マンション|土地|間取り|LDK|こだわり|なし|未定|わから|決めていない|相談|どこでも|おまかせ)/iu.test(candidate)) return undefined;
   return candidate;
 }
 
@@ -75,7 +78,12 @@ function wardFromMessage(content: string) {
 }
 
 function budgetFromMessage(content: string, answeredPrompt: boolean) {
+  if (/(?:^|[^\d])[-−]\s*\d/u.test(content)) return undefined;
   const number = (value: string) => Number(value.replace(/,/gu, ''));
+  if (UNLIMITED_BUDGET.test(content)
+    || (answeredPrompt && /^(?:未定|わからない|わかりません|決めていない|決まっていない|相談(?:したい|して決めたい)?)[。！!？?]*$/u.test(content.trim()))) {
+    return Number.MAX_SAFE_INTEGER;
+  }
   const hundredMillions = content.match(/(\d[\d,]*(?:\.\d+)?)\s*億(?:\s*(\d[\d,]*(?:\.\d+)?)\s*万)?(?:円)?/u);
   if (hundredMillions?.[1]) {
     return Math.round(number(hundredMillions[1]) * 100_000_000 + number(hundredMillions[2] || '0') * 10_000);
@@ -109,10 +117,13 @@ function propertyTypeFromMessage(content: string) {
 }
 
 function layoutFromMessage(content: string) {
-  return content.match(/\d+[SLDKR]+/iu)?.[0]?.toUpperCase().replace(/([SLDKR])\1+/gu, '$1');
+  if (/(?:^|[^\d])[-−]\s*\d+\s*[SLDKR]/iu.test(content)) return undefined;
+  const layout = content.match(/\d+[SLDKR]+/iu)?.[0]?.toUpperCase().replace(/([SLDKR])\1+/gu, '$1');
+  return layout && /(?:以上|より広|から)/u.test(content) ? `${layout}+` : layout;
 }
 
 function walkMinutesFromMessage(content: string) {
+  if (/徒歩\s*[-−]\s*\d+/u.test(content)) return undefined;
   const minutes = content.match(/徒歩\s*(\d+)分\s*(?:以内|まで)?/u)?.[1];
   return minutes ? Number(minutes) : undefined;
 }
@@ -163,6 +174,12 @@ export function extractPurchaseConsultationState(
     const propertyType = propertyTypeFromMessage(content);
     const layout = layoutFromMessage(content);
     const maxWalkMinutes = walkMinutesFromMessage(content);
+
+    if (/新しい希望の都道府県/u.test(previousAssistant)) {
+      state.prefecture = undefined;
+      state.area = undefined;
+      state.ward = undefined;
+    }
 
     if (prefecture) {
       if (state.prefecture && state.prefecture !== prefecture) {
@@ -228,6 +245,18 @@ export function evaluatePurchaseConsultation(
   const startsPurchaseSearch = PURCHASE_INTENT.test(currentMessage) && !RENTAL_INTENT.test(currentMessage);
   const completedSearchFollowUp = !shouldContinueCompletedPropertySearch(messages, '__topic_change__')
     && shouldContinueCompletedPropertySearch(messages, currentMessage);
+  const normalizedCurrent = currentMessage.normalize('NFKC').trim();
+  if (UNKNOWN_LOCATION.test(normalizedCurrent) && WARD_PROMPT.test(lastAssistant)) {
+    return { active: true, response: '購入する物件の種類を選んでにゃん。まだ決まっていなければ、こだわりなしでも探せるにゃん。' };
+  }
+  if (UNKNOWN_LOCATION.test(normalizedCurrent) && AREA_PROMPT.test(lastAssistant)) {
+    return {
+      active: true,
+      response: /都道府県/u.test(lastAssistant)
+        ? '登録物件のある都道府県を選んでにゃん。'
+        : '登録物件のある市区町村を選んでにゃん。',
+    };
+  }
   if (!startsPurchaseSearch
     && !completedSearchFollowUp
     && !isPurchaseFlowPrompt(lastAssistant)
@@ -246,12 +275,17 @@ export function evaluatePurchaseConsultation(
   const completedPurchaseSearch = messages.some((message) => (
     message.role === 'assistant' && COMPLETED_PURCHASE_SEARCH.test(message.content)
   ));
-  const normalizedCurrent = currentMessage.normalize('NFKC');
-  if (completedPurchaseSearch && /(?:もっと|より).*(?:安|価格を下げ)/u.test(normalizedCurrent)) {
+  if (completedPurchaseSearch && /(?:(?:もっと|より).*(?:安|価格を下げ)|(?:予算|価格(?:上限)?).*(?:変更|変え|見直|上げ|下げ|増や|減ら|広げ))/u.test(normalizedCurrent)) {
     return { active: true, response: '新しい購入予算の上限を選んでにゃん。' };
   }
-  if (completedPurchaseSearch && /(?:もっと|より).*(?:広|部屋数を増)/u.test(normalizedCurrent)) {
+  if (completedPurchaseSearch && /(?:(?:もっと|より).*(?:広|部屋数を増)|(?:間取り|部屋数).*(?:変更|変え|選び直|見直))/u.test(normalizedCurrent)) {
     return { active: true, response: '購入物件の希望間取りを選んでにゃん。決まっていなければ、こだわりなしで大丈夫にゃん。' };
+  }
+  if (completedPurchaseSearch && /(?:物件種別|物件の種類|種類).*(?:変更|変え|選び直|見直)/u.test(normalizedCurrent)) {
+    return { active: true, response: '購入する物件の種類を選んでにゃん。まだ決まっていなければ、こだわりなしでも探せるにゃん。' };
+  }
+  if (completedPurchaseSearch && /(?:エリア|地域|場所|市区町村|都道府県).*(?:変更|変え|選び直|見直)/u.test(normalizedCurrent)) {
+    return { active: true, response: '新しい希望の都道府県を選んでにゃん。' };
   }
   if (completedPurchaseSearch && /(?:もっと|より).*(?:駅|徒歩).*(?:近|短)/u.test(normalizedCurrent)) {
     return { active: true, response: '希望する駅徒歩の上限を「徒歩10分以内」のように教えてにゃん。' };

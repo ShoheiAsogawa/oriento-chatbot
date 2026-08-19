@@ -28,7 +28,8 @@ const SALE_INTENT = /(?:購入|買いたい|^(?:新築|中古)(?:戸建て?|マ�
 const FRESH_RENTAL_RESTART = /^(?:(?:もう一度|改めて|新しく)\s*)?賃貸(?:物件)?(?:を探(?:す|したい))?[。！!？?]?$/u;
 const PROPERTY_SEARCH_STARTER = /^(?:物件を探す|物件を探したい|物件探し(?:をしたい|したい)?)(?:[。！!？?])?$/u;
 const PROPERTY_TYPE_QUESTION = /賃貸(?:と|か)購入.*(?:教えて|選んで)/u;
-const AREA_PROMPT = /(?:住みたい地域|希望(?:の)?エリア|地域や最寄り駅|最寄り駅)/u;
+const AREA_PROMPT = /(?:住みたい地域|希望(?:の)?エリア|地域や最寄り駅|最寄り駅|都道府県|市区町村)/u;
+const WARD_PROMPT = /(?:次に|希望の?)区を選んで/u;
 const BUDGET_PROMPT = /(?:家賃|予算).*(?:上限|教えて)/u;
 const PREFERENCE_PROMPT = /(?:希望の間取りや条件|希望条件)/u;
 const COMPACT_LAYOUT_CONFIRMATION = /(?:かなり手狭|ワンルームのまま|1Rのまま|1Kのまま)/u;
@@ -38,15 +39,16 @@ const PREFECTURE = /([\p{Script=Han}々ヶケ]{2,8}(?:都|道|府|県))/u;
 const CITY_WARD = /(大阪市|堺市)\s*([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,10}区)/u;
 const GUIDED_WARD_CITY = /^(?:大阪市|堺市)$/u;
 const PREFERENCE = /(?:ワンルーム|\d+[SLDKR]+|駅近|徒歩\s*\d+分|ペット|築浅|駐車|オートロック|バス・トイレ|こだわり.*(?:なし|ない))/iu;
-const NO_PREFERENCE = /^(?:特に)?(?:なし|ない|ありません|こだわり(?:は)?なし|指定(?:は)?なし|なんでも(?:いい|大丈夫)|問わない|未定)(?:です)?[。！!？?]?$/u;
+const NO_PREFERENCE = /^(?:特に)?(?:なし|ない|ありません|こだわり(?:は)?(?:なし|ない)|指定(?:は)?(?:なし|ない)|なんでも(?:いい|大丈夫)|問わない|未定|わからない|わかりません|決めていない|決まっていない)(?:です)?[。！!？?]?$/u;
 const CLEAR_LAYOUT_PREFERENCE = /(?:間取り|部屋数).*(?:こだわり|指定).*(?:なし|ない)|(?:間取り|部屋数).*(?:なんでも|問わない|未定)/u;
 const CLEAR_WALK_PREFERENCE = /(?:徒歩|駅からの距離|駅距離).*(?:こだわり|指定).*(?:なし|ない)|(?:徒歩|駅からの距離|駅距離).*(?:なんでも|問わない|未定)/u;
 const UNSUPPORTED_RENTAL_CONDITION = /(?:ペット|犬|猫|駐車場|駐輪場|オートロック|バス・トイレ|築浅|築年|楽器|ネット無料|インターネット無料|敷金|礼金|保証人|南向き|角部屋|女性限定)/u;
 const CLEAR_UNSUPPORTED_CONDITION = /(?:ペット|犬|猫|駐車場|駐輪場|オートロック|バス・トイレ|築浅|築年|楽器|ネット|インターネット|敷金|礼金|保証人|南向き|角部屋|女性限定).*(?:条件から外|なしで|不要|こだわらない|問わない|なくても|じゃなくても)/u;
-const UNLIMITED_BUDGET = /(?:上限.*(?:なし|ない|未定|問わない)|(?:家賃|予算).*(?:決めていない|決めてない|未定|問わない))/u;
-const RENTAL_EXPLANATION_REQUEST = /(?:賃貸|購入|借りる|買う).*(?:とは|違い|メリット|デメリット|特徴|どちら.*(?:いい|良い|おすすめ|向いて)|向いている)/u;
+const UNLIMITED_BUDGET = /(?:上限.*(?:なし|ない|未定|問わない)|(?:家賃|予算).*(?:決めていない|決めてない|未定|問わない|わからない|相談したい))/u;
+const RENTAL_EXPLANATION_REQUEST = /(?:賃貸|購入|注文住宅|借りる|買う|建てる).*(?:とは|違い|比較|メリット|デメリット|特徴|(?:どちら|どっち).*(?:いい|良い|おすすめ|向いて)|向いている|迷って|悩んで)/u;
 const COMPLETED_RENTAL_SEARCH = /条件に合う.*賃貸.*(?:見つかった|見つからなかった)/u;
 const NON_AREA_ANSWER = /(?:賃貸|購入|物件|部屋|探す|したい|家族|人家族|一人暮らし|ひとり暮らし|単身|夫婦|カップル|子ども|子供|大人|家賃|予算|万円?|円|間取り|ワンルーム|[SLDKR]|ペット|徒歩|駅近|駐車|なし|ない)/iu;
+const UNKNOWN_LOCATION = /^(?:未定|わからない|わかりません|決めていない|決まっていない|どこでも(?:いい|大丈夫)?|おまかせ|相談したい)[。！!？?]*$/u;
 
 function messagesSinceLatestPropertySearch(
   history: ConversationContextMessage[],
@@ -81,6 +83,7 @@ function numericPeople(value: string | undefined) {
 }
 
 function householdSizeFromMessage(content: string) {
+  if (/(?:家族\s*-\s*\d|[-−]\s*\d\s*(?:人|名))/u.test(content)) return undefined;
   const explicit = content.match(/(?:家族(?:は|で)?\s*(10|[1-9一二三四五六七八九])\s*人|(10|[1-9一二三四五六七八九])\s*人家族)/u);
   const explicitSize = numericPeople(explicit?.[1] || explicit?.[2]);
   if (explicitSize) return explicitSize;
@@ -105,7 +108,7 @@ function shortAreaCandidate(content: string) {
   if (!/^[\p{Script=Han}々ヶケぁ-んァ-ヶー]{2,18}$/u.test(candidate)) return undefined;
   if (/^[ぁ-んー]+$/u.test(candidate) && !/^(?:なんば|なかもず|あびこ|うめだ|さかい|きしわだ|てんのうじ)$/u.test(candidate)) return undefined;
   if (/^[でにのがをとへ]/u.test(candidate)) return undefined;
-  if (NON_AREA_ANSWER.test(candidate)) return undefined;
+  if (NON_AREA_ANSWER.test(candidate) || UNKNOWN_LOCATION.test(candidate)) return undefined;
   return candidate;
 }
 
@@ -138,7 +141,11 @@ function wardFromMessage(content: string) {
 }
 
 function budgetFromMessage(content: string, answeredBudgetPrompt: boolean) {
-  if (UNLIMITED_BUDGET.test(content)) return Number.MAX_SAFE_INTEGER;
+  if (/(?:^|[^\d])[-−]\s*\d/u.test(content)) return undefined;
+  if (UNLIMITED_BUDGET.test(content)
+    || (answeredBudgetPrompt && /^(?:未定|わからない|わかりません|決めていない|決まっていない|相談(?:したい|して決めたい)?)[。！!？?]*$/u.test(content.trim()))) {
+    return Number.MAX_SAFE_INTEGER;
+  }
 
   const tenThousandsAndThousands = content.match(/(\d+)\s*万\s*(\d+)\s*千(?:円)?/u);
   if (tenThousandsAndThousands) {
@@ -167,19 +174,21 @@ function budgetFromMessage(content: string, answeredBudgetPrompt: boolean) {
 }
 
 function layoutFromMessage(content: string) {
+  if (/(?:^|[^\d])[-−]\s*\d+\s*[SLDKR]/iu.test(content)) return undefined;
   const layout = content.match(/(?:ワンルーム|\d+[SLDKR]+)/iu)?.[0];
   const normalized = layout?.toUpperCase().replace('ワンルーム', '1R');
   return normalized && /(?:以上|より広|から)/u.test(content) ? `${normalized}+` : normalized;
 }
 
 function walkMinutesFromMessage(content: string) {
+  if (/徒歩\s*[-−]\s*\d+/u.test(content)) return undefined;
   const walk = content.match(/徒歩\s*(\d+)分\s*(?:以内|まで)?/u)?.[1];
   return walk ? Number(walk) : undefined;
 }
 
 function commonFeePreferenceFromMessage(content: string) {
   if (/(?:共益費|管理費).*(?:別|除く|含めない)/u.test(content)) return false;
-  if (/(?:共益費|管理費).*(?:込み|含む|含めて)|(?:込み|含めて).*(?:共益費|管理費)/u.test(content)) return true;
+  if (/(?:共益費|管理費).*(?:込(?:み)?|含む|含めて)|(?:込(?:み)?|含めて).*(?:共益費|管理費)/u.test(content)) return true;
   return undefined;
 }
 
@@ -237,11 +246,23 @@ export function extractRentalConsultationState(
     const includeCommonFee = commonFeePreferenceFromMessage(normalizedContent);
     const layout = layoutFromMessage(normalizedContent);
     const maxWalkMinutes = walkMinutesFromMessage(normalizedContent);
-    const clearsAllPreferences = NO_PREFERENCE.test(normalizedContent);
+    const answeredPreferencePrompt = PREFERENCE_PROMPT.test(previousAssistant)
+      || COMPACT_LAYOUT_CONFIRMATION.test(previousAssistant);
+    // A bare "未定" can answer the immediately preceding budget question.
+    // Do not also consume the same turn as the later preference answer.
+    const clearsAllPreferences = NO_PREFERENCE.test(normalizedContent)
+      && (answeredPreferencePrompt
+        || /(?:こだわり|指定|間取り|部屋数|徒歩|駅距離|条件|なんでも|問わない)/u.test(normalizedContent));
     const clearsLayout = clearsAllPreferences || CLEAR_LAYOUT_PREFERENCE.test(normalizedContent);
     const clearsWalk = clearsAllPreferences || CLEAR_WALK_PREFERENCE.test(normalizedContent);
     const clearsUnsupported = clearsAllPreferences || CLEAR_UNSUPPORTED_CONDITION.test(normalizedContent);
     const unsupportedCondition = unsupportedConditionFromMessage(normalizedContent);
+
+    if (/新しい希望の都道府県/u.test(previousAssistant)) {
+      state.prefecture = undefined;
+      state.area = undefined;
+      state.ward = undefined;
+    }
 
     if (householdSize) state.householdSize = householdSize;
     if (prefecture) {
@@ -269,7 +290,6 @@ export function extractRentalConsultationState(
     if (clearsUnsupported) state.unsupportedCondition = undefined;
     else if (unsupportedCondition) state.unsupportedCondition = unsupportedCondition;
     if (PREFERENCE.test(normalizedContent)
-      || NO_PREFERENCE.test(normalizedContent)
       || clearsLayout
       || clearsWalk
       || unsupportedCondition) state.hasPreference = true;
@@ -338,6 +358,18 @@ export function evaluateRentalConsultation(
   const startsRentalSearch = RENTAL_INTENT.test(currentMessage) && !SALE_INTENT.test(currentMessage);
   const completedSearchFollowUp = !shouldContinueCompletedPropertySearch(currentSearchMessages, '__topic_change__')
     && shouldContinueCompletedPropertySearch(currentSearchMessages, currentMessage);
+  const normalizedCurrent = currentMessage.normalize('NFKC').trim();
+  if (UNKNOWN_LOCATION.test(normalizedCurrent) && WARD_PROMPT.test(lastAssistant)) {
+    return { active: true, response: '次に、家賃の上限を教えてにゃん。共益費込みか別かも分かれば探しやすいにゃん。' };
+  }
+  if (UNKNOWN_LOCATION.test(normalizedCurrent) && AREA_PROMPT.test(lastAssistant)) {
+    return {
+      active: true,
+      response: /都道府県/u.test(lastAssistant)
+        ? '登録物件のある都道府県を選んでにゃん。'
+        : '登録物件のある市区町村を選んでにゃん。',
+    };
+  }
   if (!startsRentalSearch
     && !completedSearchFollowUp
     && !isRentalFlowPrompt(lastAssistant)
@@ -356,12 +388,14 @@ export function evaluateRentalConsultation(
   const completedRentalSearch = currentSearchMessages.some((message) => (
     message.role === 'assistant' && COMPLETED_RENTAL_SEARCH.test(message.content)
   ));
-  const normalizedCurrent = currentMessage.normalize('NFKC');
-  if (completedRentalSearch && /(?:もっと|より).*(?:安|家賃を下げ)/u.test(normalizedCurrent)) {
+  if (completedRentalSearch && /(?:(?:もっと|より).*(?:安|家賃を下げ)|(?:家賃|予算).*(?:変更|変え|見直|上げ|下げ|増や|減ら|広げ))/u.test(normalizedCurrent)) {
     return { active: true, response: '新しい家賃の上限を教えてにゃん。' };
   }
-  if (completedRentalSearch && /(?:もっと|より).*(?:広|部屋数を増)/u.test(normalizedCurrent)) {
+  if (completedRentalSearch && /(?:(?:もっと|より).*(?:広|部屋数を増)|(?:間取り|部屋数).*(?:変更|変え|選び直|見直))/u.test(normalizedCurrent)) {
     return { active: true, response: '希望の間取りや条件を教えてにゃん。2LDK・3LDKなどから選べるにゃん。' };
+  }
+  if (completedRentalSearch && /(?:エリア|地域|場所|市区町村|都道府県).*(?:変更|変え|選び直|見直)/u.test(normalizedCurrent)) {
+    return { active: true, response: '新しい希望の都道府県を選んでにゃん。' };
   }
   if (completedRentalSearch && /(?:もっと|より).*(?:駅|徒歩).*(?:近|短)/u.test(normalizedCurrent)) {
     return { active: true, response: '希望する駅徒歩の上限を「徒歩10分以内」のように教えてにゃん。' };

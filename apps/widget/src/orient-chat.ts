@@ -31,6 +31,7 @@ interface TurnstileApi {
   render(container: HTMLElement, options: Record<string, unknown>): string;
   execute(widgetId: string): void;
   reset(widgetId: string): void;
+  remove(widgetId: string): void;
 }
 
 declare global {
@@ -49,7 +50,7 @@ const officialPropertyHosts = new Set([
   'oriho.com',
   'www.oriho.com',
 ]);
-const propertySections = new Set(['buy', 'rent', 'property', 'house']);
+const propertySections = new Set(['buy', 'rent', 'pri2', 'property', 'house']);
 // Keep this aligned with the Worker source-link policy. A grounded property
 // answer can identify a listing by price or address before the model repeats
 // its full title, and that answer must still expose the approved detail link.
@@ -398,6 +399,10 @@ class OrientChat extends HTMLElement {
       input.style.height = `${Math.min(input.scrollHeight, 92)}px`;
     });
     input?.addEventListener('keydown', (event) => {
+      // Pressing Enter confirms a Japanese IME conversion before it means
+      // "send".  Submitting while composition is active cuts off the last
+      // word and is especially easy to trigger on mobile keyboards.
+      if (event.isComposing || event.keyCode === 229) return;
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         form?.requestSubmit();
@@ -431,19 +436,45 @@ class OrientChat extends HTMLElement {
   private async ensureSession() {
     if (this.demoMode || this.conversationId) return;
     const turnstileToken = await this.getTurnstileToken();
-    const response = await this.fetchWithTimeout(`${this.apiUrl}/api/chat/session`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sourcePage: location.href, turnstileToken }),
-    }, 15_000);
+    let response: Response;
+    try {
+      response = await this.fetchWithTimeout(`${this.apiUrl}/api/chat/session`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sourcePage: location.href, turnstileToken }),
+      }, 15_000);
+    } catch (error) {
+      this.disposeTurnstileWidget();
+      throw error;
+    }
     if (!response.ok) {
-      this.turnstilePromise = null;
-      if (this.turnstileWidgetId && window.turnstile) window.turnstile.reset(this.turnstileWidgetId);
+      this.disposeTurnstileWidget();
       throw new Error('セッションを開始できませんでした。もう一度お試しください。');
     }
-    const data = await response.json() as { conversationId: string; sessionToken: string };
+    const data = await this.readJsonResponse<{ conversationId?: string; sessionToken?: string }>(response);
+    if (!data.conversationId || !data.sessionToken) {
+      this.disposeTurnstileWidget();
+      throw new Error('セッション情報を確認できませんでした。もう一度お試しください。');
+    }
     this.conversationId = data.conversationId;
     this.sessionToken = data.sessionToken;
+    // Turnstile tokens are single-use.  Remove the completed widget so a
+    // future expired chat session always starts with a fresh challenge.
+    this.disposeTurnstileWidget();
+  }
+
+  private disposeTurnstileWidget() {
+    const widgetId = this.turnstileWidgetId;
+    this.turnstileWidgetId = '';
+    this.turnstilePromise = null;
+    if (widgetId && window.turnstile) {
+      try {
+        window.turnstile.remove(widgetId);
+      } catch {
+        // The provider may already have removed an expired widget.
+      }
+    }
+    this.root.querySelector<HTMLElement>('.turnstile-slot')?.replaceChildren();
   }
 
   private async getTurnstileToken() {
@@ -465,11 +496,10 @@ class OrientChat extends HTMLElement {
         if (settled) return;
         settled = true;
         window.clearTimeout(challengeTimeout);
-        this.turnstilePromise = null;
+        this.disposeTurnstileWidget();
         reject(new Error(message));
       };
       const challengeTimeout = window.setTimeout(() => {
-        if (this.turnstileWidgetId && window.turnstile) window.turnstile.reset(this.turnstileWidgetId);
         failWith('セキュリティ確認に時間がかかっています。ページを再読み込みして、もう一度お試しください。');
       }, 15_000);
       const waitForApi = () => {
@@ -484,21 +514,22 @@ class OrientChat extends HTMLElement {
           return;
         }
 
-        const fail = () => {
-          if (this.turnstileWidgetId) api.reset(this.turnstileWidgetId);
-          failWith('セキュリティ確認に失敗しました。もう一度お試しください。');
-        };
-        this.turnstileWidgetId = api.render(container, {
-          sitekey,
-          action: 'chat_session',
-          execution: 'execute',
-          appearance: 'interaction-only',
-          callback: finish,
-          'error-callback': fail,
-          'expired-callback': fail,
-          'timeout-callback': fail,
-        });
-        api.execute(this.turnstileWidgetId);
+        const fail = () => failWith('セキュリティ確認に失敗しました。もう一度お試しください。');
+        try {
+          this.turnstileWidgetId = api.render(container, {
+            sitekey,
+            action: 'chat_session',
+            execution: 'execute',
+            appearance: 'interaction-only',
+            callback: finish,
+            'error-callback': fail,
+            'expired-callback': fail,
+            'timeout-callback': fail,
+          });
+          api.execute(this.turnstileWidgetId);
+        } catch {
+          failWith('セキュリティ確認を開始できませんでした。ページを再読み込みしてください。');
+        }
       };
       waitForApi();
     });
@@ -528,7 +559,7 @@ class OrientChat extends HTMLElement {
 
     try {
       await this.ensureSession();
-      const result = this.demoMode ? await this.demoResponse(content) : await this.remoteResponse(content);
+      const result = this.demoMode ? await this.demoResponse(content) : await this.remoteResponse(content, userMessageId);
       if (result.redactUserMessage) {
         const userMessage = this.messages.find((item) => item.id === userMessageId);
         if (userMessage) userMessage.content = '（連絡先を送信しました）';
@@ -539,7 +570,9 @@ class OrientChat extends HTMLElement {
         message.content = this.displayAnswer(result.answer).slice(0, 1);
         message.sources = result.sources;
         message.choices = result.choices;
-        message.moreResults = this.shouldShowMoreResults(result.answer);
+        message.moreResults = typeof result.hasMoreResults === 'boolean'
+          ? result.hasMoreResults
+          : this.shouldShowMoreResults(result.answer);
         message.lineLink = this.shouldShowLineLink(content, result.answer, result.choices, result.policy);
       }
       this.renderMessages();
@@ -560,22 +593,54 @@ class OrientChat extends HTMLElement {
     }
   }
 
-  private async remoteResponse(content: string) {
+  private async remoteResponse(content: string, clientTurnId: string) {
     const response = await this.fetchWithTimeout(`${this.apiUrl}/api/chat/message`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ conversationId: this.conversationId, sessionToken: this.sessionToken, message: content }),
+      body: JSON.stringify({
+        conversationId: this.conversationId,
+        sessionToken: this.sessionToken,
+        clientTurnId,
+        message: content,
+      }),
     }, 30_000);
-    const data = await response.json() as { answer?: string; sources?: Source[]; choices?: ChatChoice[]; policy?: string; error?: string; redactUserMessage?: boolean };
-    if (response.status === 401) this.clearStoredSession();
-    if (!response.ok) throw new Error(data.error || '回答を取得できませんでした');
+    const data = await this.readJsonResponse<{
+      answer?: string;
+      sources?: Source[];
+      choices?: ChatChoice[];
+      policy?: string;
+      error?: string;
+      redactUserMessage?: boolean;
+      hasMoreResults?: boolean;
+    }>(response);
+    if (response.status === 401) {
+      this.clearStoredSession();
+      this.disposeTurnstileWidget();
+      throw new Error('チャットの有効期限が切れました。もう一度送信してにゃん。');
+    }
+    if (!response.ok) throw new Error(data.error || '回答を取得できませんでした。もう一度お試しください。');
+    if (typeof data.answer !== 'string' || data.answer.trim().length === 0) {
+      throw new Error('回答データを確認できませんでした。もう一度お試しください。');
+    }
     return {
-      answer: data.answer || '',
-      sources: data.sources || [],
-      choices: data.choices || [],
-      policy: data.policy || 'allow',
+      answer: data.answer,
+      sources: Array.isArray(data.sources) ? data.sources : [],
+      choices: Array.isArray(data.choices) ? data.choices : [],
+      policy: typeof data.policy === 'string' ? data.policy : 'allow',
       redactUserMessage: data.redactUserMessage === true,
+      hasMoreResults: typeof data.hasMoreResults === 'boolean' ? data.hasMoreResults : undefined,
     };
+  }
+
+  private async readJsonResponse<T extends object>(response: Response): Promise<Partial<T>> {
+    try {
+      const data = await response.json() as unknown;
+      return data != null && typeof data === 'object' && !Array.isArray(data)
+        ? data as Partial<T>
+        : {};
+    } catch {
+      return {};
+    }
   }
 
   private async fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
@@ -587,7 +652,7 @@ class OrientChat extends HTMLElement {
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new Error('通信が混み合っています。少し時間をおいて、もう一度お試しください。');
       }
-      throw error;
+      throw new Error('通信に失敗しました。ネットワークを確認して、もう一度お試しください。');
     } finally {
       window.clearTimeout(timeout);
     }
@@ -602,6 +667,7 @@ class OrientChat extends HTMLElement {
         choices: [],
         policy: 'out_of_scope',
         redactUserMessage: false,
+        hasMoreResults: false,
       };
     }
     return {
@@ -610,6 +676,7 @@ class OrientChat extends HTMLElement {
       choices: [],
       policy: 'allow',
       redactUserMessage: false,
+      hasMoreResults: false,
     };
   }
 

@@ -342,6 +342,230 @@ describe('custom home consultation', () => {
     expect(JSON.stringify(withPhone)).not.toMatch(/お名前|電話番号/);
   });
 
+  it.each([
+    ['81 90 1234 5678', '09012345678'],
+    ['0081-90-1234-5678', '09012345678'],
+    ['+81 6 1234 5678', '0612345678'],
+    ['090.1234.5678', '09012345678'],
+    ['0120-123-456', '0120123456'],
+  ])('accepts common phone format: %s', (input, expected) => {
+    expect(normalizeCustomHomePhone(input)).toBe(expected);
+    expect(extractCustomHomeContact(input, { expectingName: true }).phone).toBe(expected);
+  });
+
+  it.each([
+    '000-0000-0000',
+    '090-1234-56',
+    '090-1234-56789',
+    'https://page.line.me/089wmudt',
+  ])('does not mistake an invalid/contact link value for a phone: %s', (input) => {
+    expect(extractCustomHomeContact(input, { expectingName: true })).toEqual({});
+  });
+
+  it('does not treat an official LINE link or instruction as the visitor name', () => {
+    const history = [
+      user('注文住宅'),
+      assistant('お名前を教えてにゃん。'),
+    ];
+    expect(extractCustomHomeContact('公式LINEから問い合わせてにゃん', { expectingName: true })).toEqual({});
+    expect(extractCustomHomeContact('https://page.line.me/089wmudt', { expectingName: true })).toEqual({});
+    expect(evaluateCustomHomeConsultation(history, '公式LINEから問い合わせてにゃん')).toMatchObject({ active: true });
+  });
+
+  it.each(['😀', '😂😂', '！！！'])('does not accept emoji/punctuation-only input as a name', (input) => {
+    expect(extractCustomHomeContact(input, { expectingName: true })).toEqual({});
+  });
+
+  it('keeps the contact steps active when a visitor declines to provide contact details', () => {
+    const nameHistory = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('未定'), assistant('建てたいエリアを教えてにゃん。'),
+      user('未定'), assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('未定'), assistant('希望する間取りや住まい方を教えてにゃん。'),
+      user('未定'), assistant('総予算を教えてにゃん。'),
+      user('未定'), assistant('いつ頃の完成・入居を希望しているか教えてにゃん。'),
+      user('未定'), assistant('住まいで重視したいことを教えてにゃん。'),
+      user('未定'), assistant('お名前を教えてにゃん。'),
+    ];
+    expect(evaluateCustomHomeConsultation(nameHistory, '匿名希望')).toMatchObject({
+      active: true,
+      step: 'contact_name',
+    });
+    const phoneHistory = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('土地を持っていない'), assistant('建てたいエリアを教えてにゃん。'),
+      user('大阪市'), assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('4人'), assistant('希望する間取りを教えてにゃん。'),
+      user('3LDK'), assistant('予算を教えてにゃん。'),
+      user('5000万円'), assistant('いつ頃の完成・入居を希望しているか教えてにゃん。'),
+      user('1年以内'), assistant('住まいで重視したいことを教えてにゃん。'),
+      user('家事動線'), assistant('お名前を教えてにゃん。'),
+      user('[お名前]'), assistant('お電話番号を教えてにゃん。'),
+    ];
+    expect(evaluateCustomHomeConsultation(phoneHistory, 'なし')).toMatchObject({
+      active: true,
+      step: 'contact_phone',
+    });
+  });
+
+  it('does not record emoji-only intake answers as valid criteria', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('土地を持っていない'), assistant('建てたいエリアを教えてにゃん。'),
+    ];
+    const state = extractCustomHomeConsultationState(history, '😀');
+    expect(state.desiredAreaSet).toBe(false);
+    expect(evaluateCustomHomeConsultation(history, '😀')).toMatchObject({
+      active: true,
+      step: 'desired_area',
+    });
+  });
+
+  it('does not record a URL as a land location or numeric intake answer', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('土地を持っている'), assistant('土地の所在地を教えてにゃん。'),
+    ];
+    const url = 'https://example.com/5000万円/150坪';
+    const state = extractCustomHomeConsultationState(history, url);
+    expect(state.landLocationSet).toBe(false);
+    expect(state.landSizeSet).toBe(false);
+    expect(state.budgetSet).toBe(false);
+    expect(evaluateCustomHomeConsultation(history, url)).toMatchObject({
+      active: true,
+      step: 'land_location',
+    });
+  });
+
+  it('does not complete the phone step from a phone-shaped value entered as budget', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('土地を持っていない'), assistant('建てたいエリアを教えてにゃん。'),
+      user('大阪市'), assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('4人'), assistant('希望する間取りを教えてにゃん。'),
+      user('3LDK'), assistant('土地と建物を含めた総予算の目安を教えてにゃん。'),
+    ];
+    const state = extractCustomHomeConsultationState(history, '09012345678');
+    expect(state.budgetSet).toBe(true);
+    expect(state.contactPhoneSet).toBe(false);
+    expect(evaluateCustomHomeConsultation(history, '09012345678')).toMatchObject({ step: 'timing' });
+  });
+
+  it.each(['匿名で', '名前は教えたくない', '個人情報が心配'])('offers LINE without storing a refused name: %s', (answer) => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('未定'), assistant('建てたいエリアを教えてにゃん。'),
+      user('未定'), assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('未定'), assistant('希望する間取りを教えてにゃん。'),
+      user('未定'), assistant('総予算を教えてにゃん。'),
+      user('未定'), assistant('入居時期を教えてにゃん。'),
+      user('未定'), assistant('重視したいことを教えてにゃん。'),
+      user('未定'), assistant('お名前を教えてにゃん。'),
+    ];
+    expect(extractCustomHomeContact(answer, { expectingName: true }).name).toBeUndefined();
+    expect(evaluateCustomHomeConsultation(history, answer)).toMatchObject({
+      active: true,
+      step: 'contact_name',
+      response: expect.stringContaining('公式LINE'),
+    });
+  });
+
+  it.each(['電話番号は教えたくない', '後で', 'LINEで相談する'])('offers LINE without accepting a refused phone: %s', (answer) => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('未定'), assistant('建てたいエリアを教えてにゃん。'),
+      user('未定'), assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('未定'), assistant('希望する間取りを教えてにゃん。'),
+      user('未定'), assistant('総予算を教えてにゃん。'),
+      user('未定'), assistant('入居時期を教えてにゃん。'),
+      user('未定'), assistant('重視したいことを教えてにゃん。'),
+      user('未定'), assistant('お名前を教えてにゃん。'),
+      user('[お名前]'), assistant('お電話番号を教えてにゃん。'),
+    ];
+    expect(evaluateCustomHomeConsultation(history, answer)).toMatchObject({
+      active: true,
+      step: 'contact_phone',
+      response: expect.stringContaining('公式LINE'),
+      leadReady: false,
+    });
+  });
+
+  it('does not resume a completed lead when the visitor later sends a detour', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('土地を持っていない'), assistant('建てたいエリアを教えてにゃん。'),
+      user('大阪市'), assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('4人'), assistant('希望する間取りを教えてにゃん。'),
+      user('3LDK'), assistant('予算を教えてにゃん。'),
+      user('5000万円'), assistant('いつ頃の完成・入居を希望しているか教えてにゃん。'),
+      user('1年以内'), assistant('住まいで重視したいことを教えてにゃん。'),
+      user('家事動線'), assistant('お名前を教えてにゃん。'),
+      user('[お名前]'), assistant('お電話番号を教えてにゃん。'),
+      user('[電話番号]'), assistant('ご相談を受け付けたにゃん。'),
+    ];
+    expect(extractCustomHomeConsultationState(history, '')).toMatchObject({ leadReady: true });
+    expect(evaluateCustomHomeConsultation(history, 'ありがとう')).toEqual({ active: false });
+    expect(evaluateCustomHomeConsultation(history, '購入物件を探したい')).toEqual({ active: false });
+    expect(evaluateCustomHomeConsultation(history, '注文住宅')).toMatchObject({
+      active: true,
+      step: 'land_ownership',
+    });
+  });
+
+  it.each(['やり直し', 'リセット', '最初から', 'キャンセル', 'やめる'])('treats %s as a hard reset boundary', (reset) => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('土地を持っていない'), assistant('建てたいエリアを教えてにゃん。'),
+      user(reset), assistant('了解にゃん。物件探しを最初からやり直すなら「物件を探す」と送ってにゃん。'),
+    ];
+    expect(evaluateCustomHomeConsultation(history, '大阪府')).toEqual({ active: false });
+    expect(evaluateCustomHomeConsultation(history, '未定')).toEqual({ active: false });
+    expect(evaluateCustomHomeConsultation(history, '注文住宅')).toMatchObject({
+      active: true,
+      step: 'land_ownership',
+    });
+  });
+
+  it.each([
+    '注文住宅から購入に切り替え',
+    '注文住宅から賃貸へ変更',
+    '注文住宅じゃなくて購入',
+    '注文住宅ではなく賃貸',
+    '注文住宅をやめて購入',
+    '購入に切り替え',
+    '賃貸へ変更',
+  ])('stops custom-home intake on an explicit mode switch: %s', (message) => {
+    const history = [
+      user('注文住宅'),
+      assistant('土地を持っているか教えてにゃん。'),
+    ];
+    expect(evaluateCustomHomeConsultation(history, message)).toEqual({ active: false });
+  });
+
+  it.each([
+    '注文住宅とは？',
+    '注文住宅と購入はどっちがいい？',
+    '建売と注文住宅の違いを教えて',
+  ])('leaves an explanation or comparison question to the conversational answer path: %s', (message) => {
+    expect(evaluateCustomHomeConsultation([], message)).toEqual({ active: false });
+  });
+
+  it('starts custom-home intake when switching from purchase to custom home', () => {
+    expect(evaluateCustomHomeConsultation([
+      user('購入'),
+      assistant('希望の都道府県を選んでにゃん。'),
+    ], '購入から注文住宅に切り替え')).toMatchObject({ active: true, step: 'land_ownership' });
+  });
+
+  it('does not revive custom-home intake after a switch sentence that mentions both modes', () => {
+    const history = [
+      user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),
+      user('注文住宅から購入に切り替え'),
+      assistant('購入物件を探すにゃん。まず、希望の都道府県を選んでにゃん。'),
+    ];
+    expect(evaluateCustomHomeConsultation(history, '広島県')).toEqual({ active: false });
+  });
+
   it('does not hijack mode switches or unrelated conversation', () => {
     const history = [
       user('注文住宅'),

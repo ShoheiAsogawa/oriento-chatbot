@@ -39,7 +39,7 @@ export type GuidedSearchOptions = {
   sale: Record<string, SaleAreaAvailability>;
 };
 
-const RESIDENTIAL_RENTAL = /(?:賃貸住宅|マンション|アパート|貸家|一戸建|テラスハウス)/u;
+const RESIDENTIAL_RENTAL = /(?:賃貸住宅|マンション|アパート|貸家|一戸建|戸建|テラスハウス|メゾネット|長屋|ハイツ)/u;
 const UNAVAILABLE_RENTAL_STATUS = /(?:成約|契約済|募集終了|非公開|掲載終了|取扱終了)/u;
 const UNAVAILABLE_SALE_STATUS = /(?:成約済|契約済|販売終了|掲載終了|非公開|取(?:り)?下げ|売(?:り)?止)/u;
 const RESTART_CHOICE: ChatChoice = {
@@ -144,7 +144,19 @@ function rentalLayoutFromChoice(value: string) {
 
 function guidedLayout(value: string) {
   return value.normalize('NFKC').toUpperCase().replace('ワンルーム', '1R')
-    .match(/(?:1R|1K|1LDK|2LDK|3LDK|4LDK)/u)?.[0];
+    .match(/\d+[SLDKR]+/u)?.[0];
+}
+
+function mergeInventoryLayouts(choices: ChatChoice[], layouts: string[]) {
+  const canonical = (value: string) => value.normalize('NFKC').toUpperCase().replace('ワンルーム', '1R');
+  const existing = new Set(choices.map((choice) => canonical(choice.value)));
+  return [
+    ...choices,
+    ...layouts
+      .filter((layout) => !existing.has(canonical(layout)))
+      .sort((left, right) => left.localeCompare(right, 'ja', { numeric: true }))
+      .map(button),
+  ];
 }
 
 function canonicalSaleType(value: string) {
@@ -176,7 +188,9 @@ export function buildGuidedSearchOptions(
   rentals.forEach((property) => {
     if (!RESIDENTIAL_RENTAL.test(property.property_type)
       || UNAVAILABLE_RENTAL_STATUS.test(property.status)
-      || !property.url.startsWith('https://orijyu.com/rent/')) return;
+      || !property.url.startsWith('https://orijyu.com/rent/')
+      || !Number.isFinite(property.rent_yen)
+      || property.rent_yen <= 0) return;
     const area = propertyArea(property.address);
     if (!area) return;
     const entry = rental[area.municipality] ||= {
@@ -201,7 +215,10 @@ export function buildGuidedSearchOptions(
 
   const sale: GuidedSearchOptions['sale'] = {};
   sales.forEach((property) => {
-    if (UNAVAILABLE_SALE_STATUS.test(property.status) || !property.url.startsWith('https://orijyu.com/buy/')) return;
+    if (UNAVAILABLE_SALE_STATUS.test(property.status)
+      || !/^https:\/\/orijyu\.com\/(?:buy|pri2)\//u.test(property.url)
+      || !Number.isFinite(property.price_yen)
+      || property.price_yen <= 0) return;
     const area = propertyArea(property.address);
     if (!area) return;
     const entry = sale[area.municipality] ||= {
@@ -306,7 +323,9 @@ export function rentalChoicesForAvailability(
 
   if (/希望の間取りや条件/u.test(answer)) {
     if (!area || criteria.maxRentYen == null) return [RESTART_CHOICE];
-    return filteredOrRestart(choices.filter((item) => {
+    const availableLayouts = Object.keys(area.layout_min_rent_yen);
+    const layoutChoices = mergeInventoryLayouts(choices, availableLayouts);
+    return filteredOrRestart(layoutChoices.filter((item) => {
       if (item.value === 'こだわりなし') return true;
       const minimum = area.layout_min_rent_yen[rentalLayoutFromChoice(item.value)];
       return minimum != null && minimum <= criteria.maxRentYen!;
@@ -365,7 +384,8 @@ export function purchaseChoicesForAvailability(
     const layoutMinimums = criteria.propertyType
       ? area.layout_min_price_yen_by_type[criteria.propertyType] || {}
       : area.layout_min_price_yen;
-    return filteredOrRestart(choices.filter((item) => {
+    const layoutChoices = mergeInventoryLayouts(choices, Object.keys(layoutMinimums));
+    return filteredOrRestart(layoutChoices.filter((item) => {
       if (item.value === '間取りはこだわりなし') return true;
       const minimum = layoutMinimums[item.value.toUpperCase()];
       return minimum != null && minimum <= criteria.maxPriceYen!;

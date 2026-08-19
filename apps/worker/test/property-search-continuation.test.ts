@@ -95,6 +95,45 @@ describe('property search conversation routing', () => {
     ], '購入で検索したい')).toEqual([{ role: 'user', content: '購入で検索したい' }]);
   });
 
+  it.each([
+    ['購入に切り替え', '購入に切り替え'],
+    ['賃貸に切り替え', '賃貸に切り替え'],
+    ['購入で探し直す', '購入で探し直す'],
+    ['賃貸で探し直す', '賃貸で探し直す'],
+  ])('starts a fresh scope for a conversational mode switch: %s', (message, expected) => {
+    const previousMode = message.startsWith('購入') ? '賃貸' : '購入';
+    expect(scopePropertySearchMessages([
+      { role: 'user', content: previousMode },
+      { role: 'assistant', content: '希望条件を教えてにゃん。' },
+      { role: 'user', content: '大阪府' },
+    ], message)).toEqual([{ role: 'user', content: expected }]);
+  });
+
+  it('does not let a completed result continue after a reset request', () => {
+    const messages = [
+      { role: 'assistant' as const, content: '大阪市で条件に合う購入物件が見つかったにゃん。' },
+    ];
+    expect(shouldContinueCompletedPropertySearch(messages, 'やり直し')).toBe(false);
+    expect(shouldContinueCompletedPropertySearch(messages, 'リセット')).toBe(false);
+  });
+
+  it.each(['やり直し', 'リセット', '最初から', 'キャンセル', 'やめる'])
+  ('does not revive old criteria on the turn after a reset: %s', (reset) => {
+    const scoped = scopePropertySearchMessages([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user', content: '大阪府' },
+      { role: 'assistant', content: '市区町村を選んでにゃん。' },
+      { role: 'user', content: reset },
+      { role: 'assistant', content: '了解にゃん。物件探しを最初からやり直すなら「物件を探す」と送ってにゃん。' },
+    ], '堺市');
+
+    expect(scoped).toEqual([
+      { role: 'assistant', content: '了解にゃん。物件探しを最初からやり直すなら「物件を探す」と送ってにゃん。' },
+      { role: 'user', content: '堺市' },
+    ]);
+  });
+
   it.each(['購入じゃなくて賃貸', '部屋探ししたい', '引っ越したい'])
   ('clears purchase criteria for a natural rental-mode switch: %s', (message) => {
     expect(scopePropertySearchMessages([

@@ -65,9 +65,13 @@ export class CustomHomeLeadValidationError extends Error {
 }
 
 function normalizePhone(input: string) {
-  const digits = input.normalize('NFKC').replace(/\D/gu, '');
-  if (digits.startsWith('81') && digits.length === 12) return `0${digits.slice(2)}`;
-  return digits;
+  const normalized = input.normalize('NFKC').trim();
+  const digits = normalized.replace(/\D/gu, '');
+  const japanese = normalized.startsWith('+81') || normalized.startsWith('0081') || /^81[789]0/u.test(digits)
+    ? `0${digits.slice(digits.startsWith('0081') ? 4 : 2)}`
+    : digits;
+  if (/^0[789]0/u.test(japanese)) return /^0[789]0\d{8}$/u.test(japanese) ? japanese : '';
+  return /^0[1-9]\d{8,9}$/u.test(japanese) ? japanese : '';
 }
 
 function safeIntake(input: CustomHomeLeadIntake) {
@@ -75,7 +79,11 @@ function safeIntake(input: CustomHomeLeadIntake) {
   for (const key of INTAKE_KEYS) {
     const value = input[key];
     if (typeof value === 'string') {
-      const trimmed = value.trim().slice(0, 500);
+      const trimmed = value
+        .normalize('NFKC')
+        .replace(/[\u0000-\u001F\u007F]/gu, ' ')
+        .trim()
+        .slice(0, 500);
       if (trimmed) result[key] = trimmed;
     } else if (typeof value === 'number' && Number.isFinite(value)) {
       result[key] = value;
@@ -85,7 +93,10 @@ function safeIntake(input: CustomHomeLeadIntake) {
 }
 
 function safeText(value: string | undefined, maxLength: number) {
-  return value?.normalize('NFKC').trim().slice(0, maxLength) || '';
+  return value?.normalize('NFKC')
+    .replace(/[\u0000-\u001F\u007F]/gu, ' ')
+    .trim()
+    .slice(0, maxLength) || '';
 }
 
 /**

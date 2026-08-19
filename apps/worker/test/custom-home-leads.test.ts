@@ -84,6 +84,28 @@ describe('persistCustomHomeLead', () => {
     expect(result.created).toBe(true);
   });
 
+  it.each(['+81 90-1234-5678', '0081-90-1234-5678', '81 90 1234 5678'])('accepts international phone notation: %s', async (phone) => {
+    const store = mockDb();
+    const result = await persistCustomHomeLead(store.db, env(), {
+      conversationId: `conversation-${phone}`,
+      contact: { name: '山田 太郎', phone },
+      intake: {},
+    });
+    expect(result.created).toBe(true);
+    expect(await decryptPII(store.customers[0]!.phoneEnc, env())).toBe('09012345678');
+  });
+
+  it('normalizes control characters before storing intake text', async () => {
+    const store = mockDb();
+    await persistCustomHomeLead(store.db, env(), {
+      conversationId: 'conversation-control-chars',
+      contact: { name: '山田\n太郎', phone: '09012345678' },
+      intake: { priorities: '断熱\u0000性能\n家事動線' },
+    });
+    expect(await decryptPII(store.customers[0]!.nameEnc, env())).toBe('山田 太郎');
+    expect(await decryptPII(store.leads[0]!.intakeEnc, env())).toContain('断熱 性能 家事動線');
+  });
+
   it('retains safe notes when a visitor is unsure about land size or budget', async () => {
     const store = mockDb();
     const result = await persistCustomHomeLead(store.db, env(), {

@@ -340,7 +340,7 @@
         "南海本線「貝塚」徒歩5分",
         "水間線「貝塚」徒歩5分"
       ],
-      "layout": "",
+      "layout": "3LDK",
       "walk_minutes": 5,
       "status": ""
     },
@@ -1774,7 +1774,7 @@
       "url": "https://orijyu.com/buy/post-124373.html",
       "property_type": "新築一戸建て",
       "price_yen": 32980000,
-      "address": "八尾市八尾市恩智南町3丁目",
+      "address": "八尾市恩智南町3丁目",
       "transport": [
         "近鉄大阪線「恩智」徒歩13分"
       ],
@@ -1924,7 +1924,7 @@
       "url": "https://orijyu.com/buy/post-124857.html",
       "property_type": "土地",
       "price_yen": 4500000,
-      "address": "阪南市阪南市石田",
+      "address": "阪南市石田",
       "transport": [
         "JR阪和線「和泉鳥取」徒歩27分",
         "南海本線「鳥取ノ荘」駅徒歩25分",
@@ -2626,7 +2626,7 @@
         "阪急今津線「仁川」徒歩14分",
         "阪急今津線「甲東園」徒歩19分"
       ],
-      "layout": "",
+      "layout": "3LDK",
       "walk_minutes": 14,
       "status": ""
     },
@@ -3881,7 +3881,7 @@
       "url": "https://orijyu.com/buy/post-130918.html",
       "property_type": "マンション",
       "price_yen": 32800000,
-      "address": "大阪市天王寺区大阪市天王寺区小橋町",
+      "address": "大阪市天王寺区小橋町",
       "transport": [
         "大阪メトロ千日前線「鶴橋」駅徒歩2分",
         "近鉄大阪線「大阪上本町」駅 徒歩8分"
@@ -4686,7 +4686,7 @@
       "url": "https://orijyu.com/buy/post-131987.html",
       "property_type": "中古一戸建て",
       "price_yen": 17800000,
-      "address": "堺市美原区堺市美原区平尾",
+      "address": "堺市美原区平尾",
       "transport": [
         "南海高野線「北野田」駅徒歩59分",
         "バス20分「平尾」停徒歩7分"
@@ -5187,6 +5187,20 @@
       "status": ""
     },
     {
+      "id": "132537",
+      "title": "OrientCity 長居公園",
+      "url": "https://orijyu.com/buy/post-132537.html",
+      "property_type": "新築一戸建て",
+      "price_yen": 27800000,
+      "address": "大阪市東住吉区住道矢田1丁目",
+      "transport": [
+        "近鉄南大阪線「矢田」徒歩10分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 10,
+      "status": ""
+    },
+    {
       "id": "132563",
       "title": "神戸市兵庫区浜中町2丁目",
       "url": "https://orijyu.com/buy/post-132563.html",
@@ -5504,6 +5518,21 @@
       ],
       "layout": "4LDK",
       "walk_minutes": 3,
+      "status": ""
+    },
+    {
+      "id": "132997",
+      "title": "堺市堺区出島海岸通2丁",
+      "url": "https://orijyu.com/buy/post-132997.html",
+      "property_type": "新築一戸建て",
+      "price_yen": 28800000,
+      "address": "堺市堺区出島海岸通2丁",
+      "transport": [
+        "南海本線「湊」徒歩4分",
+        "阪堺線「東湊」徒歩12分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 4,
       "status": ""
     },
     {
@@ -5933,7 +5962,7 @@
       "url": "https://orijyu.com/buy/post-133577.html",
       "property_type": "新築一戸建て,新築一戸建て",
       "price_yen": 15800000,
-      "address": "",
+      "address": "貝塚市堀3丁目",
       "transport": [
         "南海本線「貝塚」徒歩14分",
         "水間線「貝塚」徒歩14分",

@@ -73,6 +73,12 @@ describe('generateGroundedAnswer', () => {
     await expect(generateGroundedAnswer(env, '質問', chunks, 'system prompt'))
       .rejects.toEqual(expect.objectContaining<Partial<AiGatewayError>>({ status: 429, message: 'spend_limit_exceeded' }));
   });
+
+  it('turns an aborted upstream request into a bounded gateway timeout', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new DOMException('aborted', 'AbortError'));
+    await expect(generateGroundedAnswer(env, '質問', chunks, 'system prompt'))
+      .rejects.toEqual(expect.objectContaining<Partial<AiGatewayError>>({ status: 504 }));
+  });
 });
 
 describe('generateConversationAnswer', () => {

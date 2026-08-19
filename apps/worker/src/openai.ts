@@ -7,6 +7,7 @@ const MAX_CONTEXT_CHARS = 6_000;
 const MAX_CHUNK_CHARS = 2_000;
 const MAX_COMPLETION_TOKENS = 280;
 const GENERATION_HISTORY_MESSAGE_LIMIT = 8;
+const AI_GATEWAY_TIMEOUT_MS = 25_000;
 
 type OpenAIChatCompletion = {
   model?: string;
@@ -21,6 +22,21 @@ export class AiGatewayError extends Error {
   ) {
     super(message);
     this.name = 'AiGatewayError';
+  }
+}
+
+async function fetchAiGateway(endpoint: string, init: RequestInit) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AI_GATEWAY_TIMEOUT_MS);
+  try {
+    return await fetch(endpoint, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new AiGatewayError(504, 'AI Gateway request timed out');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -49,7 +65,7 @@ export async function generateGroundedAnswer(
   history: ConversationContextMessage[] = [],
 ) {
   const endpoint = `https://gateway.ai.cloudflare.com/v1/${encodeURIComponent(env.CLOUDFLARE_ACCOUNT_ID)}/${encodeURIComponent(env.AI_GATEWAY_ID)}/openai/chat/completions`;
-  const response = await fetch(endpoint, {
+  const response = await fetchAiGateway(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -88,7 +104,7 @@ export async function generateConversationAnswer(
   history: ConversationContextMessage[] = [],
 ) {
   const endpoint = `https://gateway.ai.cloudflare.com/v1/${encodeURIComponent(env.CLOUDFLARE_ACCOUNT_ID)}/${encodeURIComponent(env.AI_GATEWAY_ID)}/openai/chat/completions`;
-  const response = await fetch(endpoint, {
+  const response = await fetchAiGateway(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

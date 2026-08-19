@@ -81,7 +81,8 @@ export type CustomHomeContactExtractionOptions = {
 };
 
 const CUSTOM_HOME_INTENT = /(?:注文住宅|注文建築|自由設計|マイホームを建て|家を建て(?:たい|る|よう))/u;
-const MODE_SWITCH = /^(?:(?:賃貸|購入)(?:物件)?(?:を?(?:探す|探したい)|に変更|で探したい|がいい|を希望|にしたい|したい)?|物件を?(?:探す|探したい)|物件探し(?:をしたい|したい)?)(?:[。！!？?])?$/u;
+const MODE_SWITCH = /^(?:(?:賃貸|購入)(?:物件)?(?:を?(?:探す|探したい)|に変更|で探したい|がいい|を希望|にしたい|したい|に切り替え|へ切り替え|へ変更)?|(?:注文住宅|注文建築|自由設計)(?:(?:から|じゃなくて?|ではなく|をやめて?)\s*(?:賃貸|購入)|.*(?:賃貸|購入).*(?:切り替え|変更|探したい|にする))|物件を?(?:探す|探したい)|物件探し(?:をしたい|したい)?)(?:[。！!？?])?$/u;
+const CUSTOM_HOME_EXPLANATION = /(?:(?:注文住宅|注文建築|自由設計).*(?:とは|って何|メリット|デメリット|違い|比較|どっち|どちら|迷って|悩んで)|(?:建売|購入|賃貸).*(?:注文住宅|注文建築|自由設計).*(?:違い|比較|どっち|どちら|迷って|悩んで))/u;
 const LAND_PROMPT = /(?:土地を持っているか|土地の有無|土地.*(?:持って|所有))/u;
 const LAND_LOCATION_PROMPT = /(?:土地.*(?:所在地|場所)|土地の場所|所在地.*(?:市区町村|教えて))/u;
 const LAND_SIZE_PROMPT = /(?:土地.*(?:広さ|大きさ)|敷地.*(?:広さ|大きさ)|何坪|何㎡)/u;
@@ -99,10 +100,10 @@ const NO_PREFERENCE = /^(?:(?:間取り|家族構成|希望条件|こだわり)(
 const UNKNOWN_ANSWER = /^(?:(?:まだ|今は|現時点では)?(?:わからない|分からない|不明|未定|決まっていない|決まってない|決めていない|検討中)|相談したい|相談して決めたい|おまかせ|お任せ|特になし|なし|ない)(?:です|だと思います)?[。！!？?]?$/u;
 const LAND_SIZE_HELP_REQUEST = /(?:何坪|何平米|何㎡|どのくらいの広さ|(?:坪数?|広さ).*(?:目安|教えて|知りたい|どのくらい))/u;
 const UNKNOWN_NOTE = '未定（相談希望）';
-const NO_PHONE = /^(?:なし|ない|ありません|未定|後で|あとで)[。！!？?]?$/u;
+const CONTACT_DECLINE = /(?:^(?:なし|ない|ありません|未定|後で|あとで|匿名(?:で|希望)?|名無し)[。！!？?]?$|(?:名前|氏名|電話番号|連絡先|個人情報).*(?:教えたくない|言いたくない|入力したくない|送りたくない|不安|心配)|LINEで(?:相談|送る|連絡))/u;
 const BUDGET_TO_CONSULT = /^(?:予算(?:は|を)?(?:相談(?:して)?(?:決めたい|したい)|未定)|相談(?:して)?(?:決めたい|したい)|未定)[。！!？?]?$/u;
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/iu;
-const PHONE_CANDIDATE = /((?:\+81[-\s]?[789]0|0\d{1,4})[\d\s()\-]{7,17}\d)/u;
+const PHONE_CANDIDATE = /((?:(?:\+?81|0081)[-\s()]?[1-9]\d{0,3}|0\d{1,4})[\d\s().\-]{7,20}\d)/u;
 const LAYOUT = /(?:\d+\s*[SLDKR]+|平屋|二世帯住宅?|自由設計)/iu;
 const AREA_SUFFIX = /(?:都|道|府|県|市|区|町|村|駅)/u;
 const LOCATION_NOISE = /(?:ありがとう|どうも|よろしく|わからない|分からない|おなか|ごはん|誰|だれ)/u;
@@ -110,9 +111,16 @@ const COURTESY_PREFIX = /^(?:(?:ありがとう(?:ございます)?|どうも)(?
 const COURTESY_SUFFIX = /(?:[、,\s]*(?:ありがとう(?:ございます)?|どうも|よろしく(?:お願いします)?|お願いします|助かります))+(?:[。！!？?]*)$/u;
 const LAND_OWNERSHIP_AFFIRMATIVE = /^(?:はい|あります|ある|持っています|持ってます|所有しています|所有している|ございます)$/u;
 const LAND_OWNERSHIP_NEGATIVE = /^(?:いいえ|ありません|ない|ないです|持っていません|持っていない|持ってない|なし)$/u;
+const CONTACT_LINK_OR_URL = /(?:https?:\/\/|www\.|line\.me|公式\s*LINE|LINEから|リンク|URL)/iu;
+const NON_NAME_REPLY = /(?:教えて|おすすめ|探して|検索して|してください|できますか|どこ|いつ|なぜ|どうすれば|病院|医者|ラーメン|飲食店|物件|賃貸|購入|注文住宅|連絡先を送信)/u;
+const RESET_INTENT = /^(?:やり直し|リセット|最初から|キャンセル|やめる)[。！!？?]*$/u;
 
 function normalize(value: string) {
   return value.normalize('NFKC').trim();
+}
+
+function hasMeaningfulText(value: string) {
+  return /[\p{L}\p{N}]/u.test(value);
 }
 
 /**
@@ -135,9 +143,16 @@ function allMessages(history: ConversationContextMessage[], currentMessage: stri
 function flowMessages(history: ConversationContextMessage[], currentMessage: string) {
   const messages = allMessages(history, currentMessage);
   let start = 0;
+  let latestReset = -1;
   messages.forEach((message, index) => {
-    if (message.role === 'user' && CUSTOM_HOME_INTENT.test(normalize(message.content))) start = index;
+    if (message.role !== 'user') return;
+    const content = normalize(message.content);
+    if (RESET_INTENT.test(content)) latestReset = index;
+    if (CUSTOM_HOME_INTENT.test(content)) start = index;
   });
+  // A reset is a hard boundary. An old custom-home selection must not be
+  // revived when the visitor sends an ordinary answer after the reset reply.
+  if (latestReset >= start) start = latestReset + 1;
   return messages.slice(start);
 }
 
@@ -152,8 +167,10 @@ function customHomeSupersededByModeSwitch(messages: ConversationContextMessage[]
   messages.forEach((message, index) => {
     if (message.role !== 'user') return;
     const content = normalize(message.content);
-    if (isCustomHomeIntent(content)) lastCustomHomeIntent = index;
-    else if (MODE_SWITCH.test(content)) lastPropertyModeSwitch = index;
+    // A sentence such as "注文住宅から購入に切り替え" contains both
+    // intents; the explicit switch must win over the embedded old intent.
+    if (MODE_SWITCH.test(content)) lastPropertyModeSwitch = index;
+    else if (isCustomHomeIntent(content)) lastCustomHomeIntent = index;
   });
   return lastPropertyModeSwitch > lastCustomHomeIntent;
 }
@@ -173,6 +190,13 @@ function stripAnswer(value: string) {
     .replace(/^(?:場所|所在地|土地の場所|希望エリア|探す場所|広さ|大きさ|予算|建築費|間取り|家族構成|こだわり|重視すること|名前|氏名|お名前|電話番号|お電話)(?:は|を|:|：)?\s*/u, '')
     .replace(/[。！!？?]+$/u, '')
     .trim();
+}
+
+function isContactDecline(value: string) {
+  const raw = normalize(value);
+  const stripped = stripAnswer(value);
+  return CONTACT_DECLINE.test(raw)
+    || /^(?:教えたくない|言いたくない|入力したくない|送りたくない|不安|心配)[。！!？?]*$/u.test(stripped);
 }
 
 function numberFromJapanese(value: string | undefined) {
@@ -198,6 +222,7 @@ function householdFromMessage(content: string) {
 
 function budgetFromMessage(content: string, answeredPrompt: boolean) {
   const normalized = stripAnswer(content);
+  if (CONTACT_LINK_OR_URL.test(normalized)) return undefined;
   const number = (value: string) => Number(value.replace(/,/gu, ''));
   const oku = normalized.match(/(\d[\d,]*(?:\.\d+)?)\s*億(?:\s*(\d[\d,]*(?:\.\d+)?)\s*万)?(?:円)?/u);
   if (oku) return Math.round(number(oku[1] || '0') * 100_000_000 + number(oku[2] || '0') * 10_000);
@@ -236,7 +261,8 @@ function landOwnershipFromPromptReply(content: string): CustomHomeLandOwnership 
 function locationFromMessage(content: string, prompt: RegExp) {
   const normalized = stripAnswer(content);
   if (!prompt.test(normalized) && !AREA_SUFFIX.test(normalized)) return undefined;
-  if (LOCATION_NOISE.test(normalized) || normalized.length < 2 || normalized.length > 60) return undefined;
+  if (LOCATION_NOISE.test(normalized) || CONTACT_LINK_OR_URL.test(normalized) || normalized.length < 2 || normalized.length > 60) return undefined;
+  if (!hasMeaningfulText(normalized)) return undefined;
   if (/(?:土地|敷地).*(?:持って|所有|なし|ない)/u.test(normalized)) return undefined;
   const suffix = normalized.match(/[都道府県市区町村駅]/u);
   if (prompt.test(content) || suffix) return normalized;
@@ -244,7 +270,9 @@ function locationFromMessage(content: string, prompt: RegExp) {
 }
 
 function landSizeFromMessage(content: string) {
-  const match = normalize(content).match(/(\d[\d,]*(?:\.\d+)?)\s*(㎡|m2|m²|平米|坪)/iu);
+  const normalized = normalize(content);
+  if (CONTACT_LINK_OR_URL.test(normalized)) return undefined;
+  const match = normalized.match(/(\d[\d,]*(?:\.\d+)?)\s*(㎡|m2|m²|平米|坪)/iu);
   if (!match) return undefined;
   const value = Number((match[1] || '0').replace(/,/gu, ''));
   if (!Number.isFinite(value) || value <= 0 || value > 100_000) return undefined;
@@ -253,6 +281,7 @@ function landSizeFromMessage(content: string) {
 
 function layoutFromMessage(content: string, answeredPrompt: boolean) {
   const normalized = stripAnswer(content);
+  if (CONTACT_LINK_OR_URL.test(normalized)) return undefined;
   const layout = normalized.match(LAYOUT)?.[0]?.replace(/\s+/gu, '').toUpperCase();
   if (layout) return layout;
   if (answeredPrompt && NO_PREFERENCE.test(normalized)) return 'こだわりなし';
@@ -262,24 +291,26 @@ function layoutFromMessage(content: string, answeredPrompt: boolean) {
 function timingFromMessage(content: string, answeredPrompt: boolean) {
   const normalized = stripAnswer(content);
   if (!answeredPrompt && !/(?:以内|まで|年後|か月後|月頃|春|夏|秋|冬|未定|決まっていない|すぐ|できるだけ早く)/u.test(normalized)) return undefined;
-  if (LOCATION_NOISE.test(normalized) || normalized.length < 1 || normalized.length > 80) return undefined;
+  if (LOCATION_NOISE.test(normalized) || CONTACT_LINK_OR_URL.test(normalized) || normalized.length < 1 || normalized.length > 80 || !hasMeaningfulText(normalized)) return undefined;
   return normalized;
 }
 
 function prioritiesFromMessage(content: string, answeredPrompt: boolean) {
   if (!answeredPrompt) return undefined;
   const normalized = stripAnswer(content);
-  if (!normalized || normalized.length > 300 || LOCATION_NOISE.test(normalized)) return undefined;
+  if (!normalized || normalized.length > 300 || LOCATION_NOISE.test(normalized) || CONTACT_LINK_OR_URL.test(normalized) || !hasMeaningfulText(normalized)) return undefined;
   return NO_PREFERENCE.test(normalized) ? 'こだわりなし' : normalized;
 }
 
 function nameFromMessage(content: string, answeredPrompt: boolean) {
+  if (isContactDecline(content)) return undefined;
   if (NAME_REDACTED.test(normalize(content))) return undefined;
   const explicitName = normalize(content).match(/(?:お名前|氏名|名前)(?:は|:|：)?\s*([^、,。]+)/u)?.[1];
-  const normalized = stripAnswer(explicitName || content).replace(/(?:です|と申します)$/u, '').trim();
+  const normalized = stripAnswer(explicitName || content).replace(/(?:です|と申します|さん)$/u, '').trim();
   if (!answeredPrompt && !/^(?:名前|氏名|お名前)(?:は|:|：)/u.test(normalize(content))) return undefined;
-  if (!normalized || normalized.length > 100 || EMAIL.test(normalized) || PHONE_CANDIDATE.test(normalized)) return undefined;
-  if (/[\d]/u.test(normalized) || LOCATION_NOISE.test(normalized)) return undefined;
+  if (!normalized || normalized.length > 100 || EMAIL.test(normalized) || PHONE_CANDIDATE.test(normalized) || CONTACT_LINK_OR_URL.test(normalized)) return undefined;
+  if (!hasMeaningfulText(normalized)) return undefined;
+  if (/[\d？?]/u.test(normalized) || LOCATION_NOISE.test(normalized) || NON_NAME_REPLY.test(normalized)) return undefined;
   return normalized;
 }
 
@@ -287,8 +318,14 @@ function nameFromMessage(content: string, answeredPrompt: boolean) {
 export function normalizeCustomHomePhone(value: string) {
   const normalized = normalize(value);
   const digits = normalized.replace(/\D/gu, '');
-  const japanese = normalized.startsWith('+81') ? `0${digits.slice(2)}` : digits;
-  return /^0\d{9,10}$/u.test(japanese) ? japanese : undefined;
+  const japanese = normalized.startsWith('+81') || normalized.startsWith('0081') || /^81[789]0/u.test(digits)
+    ? `0${digits.slice(digits.startsWith('0081') ? 4 : 2)}`
+    : digits;
+  // Mobile/IP phones are 11 digits; ordinary Japanese fixed-line numbers are
+  // 10 or 11 digits. Reject all-zero and other short/fake values while still
+  // accepting common 03/06/0120 and international +81 formats.
+  if (/^0[789]0/u.test(japanese)) return /^0[789]0\d{8}$/u.test(japanese) ? japanese : undefined;
+  return /^0[1-9]\d{8,9}$/u.test(japanese) ? japanese : undefined;
 }
 
 /**
@@ -327,7 +364,7 @@ function isUnknownAnswer(content: string) {
  * conversational detour or a question that still needs clarification. */
 function freeTextAnswer(content: string) {
   const normalized = stripAnswer(content);
-  if (!normalized || normalized.length > 300 || isObviousConversationDetour(normalized)) return undefined;
+  if (!normalized || normalized.length > 300 || CONTACT_LINK_OR_URL.test(normalized) || !hasMeaningfulText(normalized) || isObviousConversationDetour(normalized)) return undefined;
   if (LAND_SIZE_HELP_REQUEST.test(normalized) || /[？?]$/u.test(normalized)) return undefined;
   return normalized;
 }
@@ -487,7 +524,7 @@ export function extractCustomHomeConsultationState(
       state.householdSet = true;
     }
     const householdDescription = HOUSEHOLD_PROMPT.test(assistant) && content.length <= 100
-      ? stripAnswer(content)
+      ? freeTextAnswer(content)
       : undefined;
     if (householdDescription && !LOCATION_NOISE.test(householdDescription) && !state.householdSet) {
       state.householdDescription = householdDescription;
@@ -559,7 +596,11 @@ export function extractCustomHomeConsultationState(
     if (contact.name || (NAME_PROMPT.test(assistant) && NAME_REDACTED.test(content))) {
       state.contactNameSet = true;
     }
-    if (customHomePhoneProvided(content)) {
+    // A phone-shaped value in an earlier intake answer (for example a budget
+    // or a deliberately malicious long number) must not silently complete the
+    // contact step. Only count it while asking for contact details, or when a
+    // privacy marker has already been produced for the current turn.
+    if ((PHONE_PROMPT.test(assistant) || NAME_PROMPT.test(assistant)) && customHomePhoneProvided(content)) {
       const phone = contact.phone;
       state.contactPhoneLast4 = phone?.slice(-4) || state.contactPhoneLast4 || '番号入力済み';
       state.contactPhoneSet = true;
@@ -614,8 +655,15 @@ export function evaluateCustomHomeConsultation(
   const rawCurrent = normalize(currentMessage);
   const normalizedCurrent = stripAnswer(currentMessage);
   if (MODE_SWITCH.test(normalizedCurrent)) return { active: false };
+  if (CUSTOM_HOME_EXPLANATION.test(normalizedCurrent)) return { active: false };
   const messages = flowMessages(history, currentMessage);
   if (customHomeSupersededByModeSwitch(messages)) return { active: false };
+  // Once a lead has been accepted, this intake is terminal. Without this
+  // guard, any later chat message re-entered the completed flow and could ask
+  // for the phone again or enqueue another notification.
+  if (!isCustomHomeIntent(normalizedCurrent) && extractCustomHomeConsultationState(history, '').leadReady) {
+    return { active: false };
+  }
   const lastAssistant = [...messages].reverse().find((message) => (
     message.role === 'assistant' && isCustomHomePrompt(message.content)
   ))?.content || '';
@@ -626,6 +674,22 @@ export function evaluateCustomHomeConsultation(
     message.role === 'user' && isCustomHomeIntent(message.content)
   ));
   if (!hasFlow) return { active: false };
+  if (isContactDecline(currentMessage) && NAME_PROMPT.test(lastAssistant)) {
+    return {
+      active: true,
+      response: 'お名前をこのチャットで入力しない場合は、公式LINEから担当者へ相談してにゃん。チャットで続ける場合は、お名前を入力してにゃん。',
+      step: 'contact_name',
+      leadReady: false,
+    };
+  }
+  if (isContactDecline(currentMessage) && PHONE_PROMPT.test(lastAssistant)) {
+    return {
+      active: true,
+      response: '電話番号をこのチャットで入力しない場合は、公式LINEから担当者へ相談してにゃん。チャットで続ける場合は、電話番号を入力してにゃん。',
+      step: 'contact_phone',
+      leadReady: false,
+    };
+  }
   // A standalone "ありがとう" is a detour. A polite suffix on a substantive
   // answer is not; `normalizedCurrent` keeps the substantive part above.
   if (!normalizedCurrent && rawCurrent) return { active: false };

@@ -33,6 +33,28 @@ PHP_DIAGNOSTIC_RE = re.compile(
     r"\s.*(?:wp-content|\.php\b).*\bon line\s+\d+\s*$",
     re.I,
 )
+FIELD_LABELS = {
+    PROPERTY_NUMBER, PROPERTY_TYPE, *RENT_LABELS, *COMMON_FEE_LABELS, ADDRESS,
+    TRANSPORT, *TRANSPORT_END_LABELS, *LAYOUT_LABELS, *STATUS_LABELS,
+}
+
+
+def normalize_address(value: str) -> str:
+    normalized = re.sub(r"\s+", " ", value).strip()
+    boundaries = [match.end() for match in re.finditer(r"[市区町村]", normalized)]
+    candidates: list[tuple[int, int, str]] = []
+    for start in range(len(normalized)):
+        for end in boundaries:
+            if end <= start:
+                continue
+            candidate = normalized[start:end]
+            if len(candidate) >= 2 and normalized.startswith(candidate, end):
+                candidates.append((len(candidate), start, candidate))
+    if not candidates:
+        return normalized
+    _, start, candidate = max(candidates, key=lambda item: (item[0], -item[1]))
+    end = start + len(candidate)
+    return normalized[:start] + candidate + normalized[end + len(candidate):]
 
 
 def field(section: str, *labels: str) -> str | None:
@@ -45,7 +67,11 @@ def field(section: str, *labels: str) -> str | None:
                 candidate = candidate.strip()
                 if PHP_DIAGNOSTIC_RE.match(candidate):
                     continue
-                if not candidate or candidate.startswith('#'):
+                if not candidate or candidate.startswith("#"):
+                    continue
+                if candidate.startswith(f"{OFFICIAL_PAGE}:") or candidate.startswith("更新日:"):
+                    continue
+                if candidate in FIELD_LABELS:
                     return None
                 return candidate
     return None
@@ -99,7 +125,7 @@ def main() -> None:
                 "property_type": field(body, PROPERTY_TYPE) or "",
                 "rent_yen": rent,
                 "common_fee": field(body, *COMMON_FEE_LABELS) or "",
-                "address": field(body, ADDRESS) or "",
+                "address": normalize_address(field(body, ADDRESS) or ""),
                 "transport": transports,
                 "layout": field(body, *LAYOUT_LABELS) or "",
                 "walk_minutes": min(walk_times) if walk_times else None,

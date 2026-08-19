@@ -41,6 +41,13 @@ describe('custom-home chat integration boundaries', () => {
     expect(JSON.stringify(state)).not.toContain('山田');
   });
 
+  it.each(['おすすめの病院を教えて', '物件を探したい', '名無し', '連絡先を送信しました'])
+  ('does not redact an unrelated or refused reply as a visitor name: %s', (message) => {
+    const turn = redactCustomHomeContactTurn(readyForNameHistory(), message);
+    expect(turn.redacted).toBe(message);
+    expect(turn.contact.name).toBeUndefined();
+  });
+
   it('keeps a final phone number out of chat state while completing the lead handoff', () => {
     const history = [
       ...readyForNameHistory(),

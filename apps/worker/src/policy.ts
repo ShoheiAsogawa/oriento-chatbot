@@ -23,9 +23,12 @@ const importantMatterPatterns = [
 
 const promptInjectionPatterns = [
   /(?:system|developer)\s*prompt/iu,
-  /指示を無視/u,
-  /プロンプトを(?:表示|開示)/u,
-  /秘密(?:鍵|情報)を/u,
+  /(?:system|developer)\s*(?:message|instructions?|prompt|設定)/iu,
+  /(?:ignore|disregard|forget)\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions?|rules?)/iu,
+  /(?:指示|命令|ルール)を(?:無視|忘れ|破棄)/u,
+  /(?:システム|内部|隠し|秘密の?)\s*(?:プロンプト|指示|命令|設定)(?:を|は).{0,12}(?:表示|開示|見せ|教え|出し)/u,
+  /(?:プロンプト|内部指示|システム指示)を(?:表示|開示|見せ|教え|出し)/u,
+  /(?:秘密(?:鍵|情報)|API\s*key|環境変数|アクセストークン)を/u,
 ];
 
 const foodTopicPatterns = [
@@ -53,6 +56,7 @@ const outOfScopePatterns = [
   /(?:病気|症状|薬|診断|治療)/u,
   /(?:料理|レシピ|献立)/u,
   /(?:試合結果|スポーツ速報)/u,
+  /^(?:しりとり(?:しよう|して)?|なぞなぞ(?:出して|しよう)?|冗談|暇つぶし|歌って|踊って|うんこ|おなら|死ね|くそ|バカ|アホ|asdf+|test)[\s　。！!？?]*$/iu,
 ];
 
 export type PolicyCode =
@@ -75,50 +79,54 @@ function matchesAny(input: string, patterns: RegExp[]) {
 }
 
 export function evaluatePolicy(input: string): PolicyDecision {
-  if (matchesAny(input, promptInjectionPatterns)) {
+  // Normalize compatibility-width characters and invisible separators before
+  // every safety check. Otherwise a visually identical full-width or
+  // zero-width prompt-injection phrase can bypass the deterministic policy.
+  const normalized = input.normalize('NFKC').replace(/[\u200B-\u200D\u2060\uFEFF]/gu, '');
+  if (matchesAny(normalized, promptInjectionPatterns)) {
     return {
       allowed: false,
       code: 'prompt_injection',
       response: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
     };
   }
-  if (matchesAny(input, priceNegotiationPatterns)) {
+  if (matchesAny(normalized, priceNegotiationPatterns)) {
     return {
       allowed: false,
       code: 'price_negotiation',
       response: 'ごめんね、価格交渉や値引きの判断は案内できないにゃん。公式LINEから担当者に相談してにゃん。',
     };
   }
-  if (matchesAny(input, importantMatterPatterns)) {
+  if (matchesAny(normalized, importantMatterPatterns)) {
     return {
       allowed: false,
       code: 'important_matters',
       response: 'ごめんね、重要事項説明に代わる案内はできないにゃん。公式LINEから担当の宅地建物取引士への確認を依頼してにゃん。',
     };
   }
-  if (matchesAny(input, legalJudgmentPatterns)) {
+  if (matchesAny(normalized, legalJudgmentPatterns)) {
     return {
       allowed: false,
       code: 'legal_judgment',
       response: 'ごめんね、法的な判断はオリにゃんでは案内できないにゃん。公式LINEから担当者へ相談し、必要に応じて専門家に確認してにゃん。',
     };
   }
-  const hasRealEstateContext = /(?:物件|店舗|テナント|居抜き|賃貸|購入|出店|事業用)/u.test(input);
-  if (matchesAny(input, foodTopicPatterns) && !hasRealEstateContext) {
+  const hasRealEstateContext = /(?:物件|店舗|テナント|居抜き|賃貸|購入|出店|事業用)/u.test(normalized);
+  if (matchesAny(normalized, foodTopicPatterns) && !hasRealEstateContext) {
     return {
       allowed: false,
       code: 'out_of_scope',
       response: 'お腹がすいたんだね。ごめんね、飲食店やグルメの案内はできないにゃん。お部屋探しや住まいのことなら手伝えるにゃん。',
     };
   }
-  if (matchesAny(input, healthcareTopicPatterns) && !hasRealEstateContext) {
+  if (matchesAny(normalized, healthcareTopicPatterns) && !hasRealEstateContext) {
     return {
       allowed: false,
       code: 'out_of_scope',
       response: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
     };
   }
-  if (matchesAny(input, outOfScopePatterns)) {
+  if (matchesAny(normalized, outOfScopePatterns)) {
     return {
       allowed: false,
       code: 'out_of_scope',
@@ -163,6 +171,15 @@ export function directConversationAnswer(input: string) {
   const normalized = input.normalize('NFKC').trim();
   if (/(?:あなた|君|きみ|オリにゃん).*(?:誰|だれ|何者)|^(?:誰|だれ)(?:なの|ですか)?[。！!？?]?$/u.test(normalized)) {
     return 'オリにゃんだよ。オリエントグループの住まい・物件探しをお手伝いする不動産案内AIにゃん。';
+  }
+  if (/^(?:おはよう|こんにちは|こんばんは|hello|hi)[。！!？?\s]*$/iu.test(normalized)) {
+    return 'こんにちは、オリにゃんだよ。お部屋探しや住まいのことを気軽に聞いてにゃん。';
+  }
+  if (/^(?:ありがとう|ありがと|助かった|thanks|thank\s+you)[。！!？?\s]*$/iu.test(normalized)) {
+    return 'どういたしましてにゃん。住まいの相談があればいつでも聞いてにゃん。';
+  }
+  if (/^(?:やり直し|リセット|最初から|キャンセル|やめる)[。！!？?]*$/u.test(normalized)) {
+    return '了解にゃん。物件探しを最初からやり直すなら「物件を探す」と送ってにゃん。';
   }
   if (/(?:オリエントホーム|オリエントホームの家づくり).{0,24}(?:こだわり|特徴|良さ)|(?:こだわり|特徴|良さ).{0,24}(?:オリエントホーム|オリエントホームの家づくり)/u.test(normalized)) {
     return 'オリエントホームのこだわりは、暮らしに合う「世界に一軒だけの家」を一緒につくることにゃん。一級建築士と相談しながら、間取り・デザイン・仕様まで細かく選べるオールオーダーの家づくりが特徴にゃん。新築だけでなく、中古住宅・リフォーム・土地活用までまとめて相談できるにゃん。';

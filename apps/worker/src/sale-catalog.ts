@@ -2,7 +2,7 @@ import type { ConversationContextMessage } from './conversation-context';
 import { extractPurchaseConsultationState } from './purchase-consultation';
 import type { SearchChunk } from './types';
 import { loadManagedProperties, transportFromText, walkMinutesFromText, yenFromText } from './property-inventory';
-import { prefectureFromText } from './property-areas';
+import { prefectureFromText, propertyArea } from './property-areas';
 
 export type SaleProperty = {
   id: string;
@@ -121,6 +121,27 @@ function normalizeLayout(value: string) {
   return value.normalize('NFKC').toUpperCase().replace(/([SLDKR])\1+/gu, '$1');
 }
 
+function layoutMatches(actual: string, requested: string) {
+  const normalizedActual = normalizeLayout(actual).replace('ワンルーム', '1R');
+  const normalizedRequested = normalizeLayout(requested).replace('ワンルーム', '1R');
+  const parse = (value: string) => Array.from(value.matchAll(/(\d+)\s*S*(LDK|DK|K|R)/gu))
+    .map((match) => ({ rooms: Number(match[1]), kind: match[2]! }));
+  const actualLayouts = parse(normalizedActual);
+  const requestedLayouts = parse(normalizedRequested);
+  if (actualLayouts.length === 0 || requestedLayouts.length === 0) return false;
+  const minimum = /(?:\+|以上|より広|から)/u.test(normalizedRequested);
+  return requestedLayouts.some((requestedLayout) => actualLayouts.some((actualLayout) => (
+    actualLayout.kind === requestedLayout.kind
+      && (minimum ? actualLayout.rooms >= requestedLayout.rooms : actualLayout.rooms === requestedLayout.rooms)
+  )));
+}
+
+function normalizeResultLimit(limit: number) {
+  if (!Number.isFinite(limit)) return 3;
+  const integer = Math.floor(limit);
+  return integer > 0 && integer <= 100 ? integer : 3;
+}
+
 function isUnavailableStatus(value: string) {
   return /(?:成約済|契約済|販売終了|掲載終了|非公開|取(?:り)?下げ|売(?:り)?止)/u.test(value);
 }
@@ -129,27 +150,31 @@ export function recommendSaleProperties(
   properties: SaleProperty[],
   criteria: SaleCriteria,
   exclusions: SaleRecommendationExclusions = {},
+  limit = 3,
 ) {
   const excludedIds = new Set(exclusions.ids || []);
   const excludedUrls = new Set(exclusions.urls || []);
   return properties.filter((property) => {
     if (excludedIds.has(property.id) || excludedUrls.has(property.url)) return false;
-    if (!property.url.startsWith('https://orijyu.com/buy/')) return false;
+    if (!/^https:\/\/orijyu\.com\/(?:buy|pri2)\//u.test(property.url)) return false;
     if (isUnavailableStatus(property.status)) return false;
+    if (!Number.isFinite(property.price_yen) || property.price_yen <= 0) return false;
     const location = `${property.title}\n${property.address}\n${property.transport.join('\n')}`;
-    const listedPrefecture = prefectureFromText(property.address) || prefectureFromText(property.title);
-    if (criteria.prefecture && listedPrefecture && listedPrefecture !== criteria.prefecture) return false;
+    const listedPrefecture = prefectureFromText(property.address)
+      || prefectureFromText(property.title)
+      || propertyArea(property.address)?.prefecture;
+    if (criteria.prefecture && listedPrefecture !== criteria.prefecture) return false;
     if (criteria.area) {
       if (!location.includes(criteria.area)) return false;
       if (criteria.ward && !location.includes(criteria.ward)) return false;
     }
     if (criteria.maxPriceYen != null && property.price_yen > criteria.maxPriceYen) return false;
     if (criteria.propertyType && !matchesPropertyType(property.property_type, criteria.propertyType)) return false;
-    if (criteria.layout && !normalizeLayout(property.layout).includes(normalizeLayout(criteria.layout))) return false;
+    if (criteria.layout && !layoutMatches(property.layout, criteria.layout)) return false;
     if (criteria.maxWalkMinutes != null
       && (property.walk_minutes == null || property.walk_minutes > criteria.maxWalkMinutes)) return false;
     return true;
-  }).sort((left, right) => left.price_yen - right.price_yen || (left.walk_minutes ?? 999) - (right.walk_minutes ?? 999)).slice(0, 3);
+  }).sort((left, right) => left.price_yen - right.price_yen || (left.walk_minutes ?? 999) - (right.walk_minutes ?? 999)).slice(0, normalizeResultLimit(limit));
 }
 
 export function salePropertyChunk(property: SaleProperty, index: number): SearchChunk {

@@ -8,6 +8,16 @@ import {
   logoutAdmin,
 } from './admin-auth';
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
+import {
+  appendChatAudit,
+  ChatHttpError,
+  claimChatTurn,
+  completeChatTurn,
+  readChatJson,
+  releaseChatTurn,
+  safeChatSourcePage,
+  type ChatTurnClaim,
+} from './chat-http';
 import { appendRateLimitAudit } from './rate-limit-audit';
 import { choicesForChatAnswer } from './chat-choices';
 import {
@@ -59,7 +69,7 @@ import type { AdminIdentity, AuditArchiveEvent, SearchChunk } from './types';
 
 export { AuditLedger, MaintenanceScheduler };
 
-type Variables = { admin: AdminIdentity; requestId: string };
+type Variables = { admin: AdminIdentity; requestId: string; chatTurnClaim?: ChatTurnClaim };
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const sessionSchema = z.object({
@@ -74,6 +84,7 @@ const propertyViewSchema = z.object({
 const messageSchema = z.object({
   conversationId: z.string().uuid(),
   sessionToken: z.string().min(20).max(500),
+  clientTurnId: z.string().uuid(),
   message: z.string().trim().min(1).max(2000),
 });
 
@@ -182,8 +193,42 @@ app.use('/api/*', async (context, next) => {
   })(context, next);
 });
 
-app.onError((error, context) => {
-  const status = error instanceof z.ZodError || error instanceof SyntaxError
+// Finalize the idempotency record after a successful chat response. Keeping
+// this at the route boundary covers every deterministic and AI-backed branch
+// without duplicating completion logic throughout the large handler below.
+app.use('/api/chat/message', async (context, next) => {
+  await next();
+  const claim = context.get('chatTurnClaim');
+  if (!claim) return context.res;
+  if (context.res.status >= 400) {
+    try { await releaseChatTurn(context.env.DB, claim); } catch { /* best effort */ }
+    return context.res;
+  }
+  try {
+    const payload = await context.res.clone().json() as unknown;
+    const completed = await completeChatTurn(context.env.DB, claim, payload);
+    if (!completed) {
+      console.warn(JSON.stringify({
+        level: 'warn',
+        event: 'chat.turn_completion_lost',
+        conversationId: claim.conversationId,
+      }));
+    }
+  } catch (error) {
+    console.warn(JSON.stringify({
+      level: 'warn',
+      event: 'chat.turn_completion_failed',
+      conversationId: claim.conversationId,
+      errorType: error instanceof Error ? error.name : 'unknown',
+    }));
+  }
+  return context.res;
+});
+
+app.onError(async (error, context) => {
+  const status = error instanceof ChatHttpError
+    ? error.status
+    : error instanceof z.ZodError || error instanceof SyntaxError
     ? 400
     : error.message === 'Unauthorized'
       ? 401
@@ -204,6 +249,10 @@ app.onError((error, context) => {
   const canSeeInternalDetails = context.req.path === '/api/internal/knowledge/reseed'
     && Boolean(context.env.KNOWLEDGE_SYNC_SECRET)
     && context.req.header('X-Knowledge-Sync-Token') === context.env.KNOWLEDGE_SYNC_SECRET;
+  const claim = context.get('chatTurnClaim');
+  if (claim) {
+    try { await releaseChatTurn(context.env.DB, claim); } catch { /* best effort */ }
+  }
   return context.json({
     error: status === 500 ? '処理中にエラーが発生しました' : error.message,
     requestId,
@@ -283,7 +332,12 @@ app.post('/api/property-view', async (context) => {
 });
 
 app.post('/api/chat/session', async (context) => {
-  const input = sessionSchema.parse(await context.req.json());
+  // Public chat must remain usable during a transient audit-ledger outage.
+  // Administrative mutations continue to use the strict audit writer.
+  const appendAudit = appendChatAudit;
+  const input = sessionSchema.parse(await readChatJson(context.req.raw));
+  const sourcePage = safeChatSourcePage(input.sourcePage, context.env.ALLOWED_ORIGINS);
+  if (input.sourcePage && !sourcePage) return context.json({ error: 'Invalid sourcePage' }, 400);
   if (!(await verifyTurnstile(input.turnstileToken, context.req.raw, context.env))) {
     return context.json({ error: 'Bot verification failed' }, 403);
   }
@@ -308,14 +362,14 @@ app.post('/api/chat/session', async (context) => {
   }
   await context.env.DB.prepare(
     `INSERT INTO conversations (id, visitor_hash, source_page, operational_consent) VALUES (?, ?, ?, 1)`,
-  ).bind(id, visitorHash, input.sourcePage || null).run();
+  ).bind(id, visitorHash, sourcePage || null).run();
   await appendAudit(context.env, {
     eventType: 'conversation.created',
     actorType: 'visitor',
     actorId: visitorHash,
     subjectType: 'conversation',
     subjectId: id,
-    metadata: { sourcePage: input.sourcePage || null },
+    metadata: { sourcePage: sourcePage || null },
   });
   return context.json({
     conversationId: id,
@@ -1037,13 +1091,24 @@ async function previouslyCitedPropertyUrls(database: D1Database, conversationId:
 }
 
 app.post('/api/chat/message', async (context) => {
+  const appendAudit = appendChatAudit;
   const startedAt = Date.now();
-  const input = messageSchema.parse(await context.req.json());
+  const input = messageSchema.parse(await readChatJson(context.req.raw));
   if (!(await verifySessionToken(input.sessionToken, input.conversationId, context.env))) {
     return context.json({ error: 'Session expired' }, 401);
   }
   const conversation = await context.env.DB.prepare(`SELECT id FROM conversations WHERE id = ?`).bind(input.conversationId).first();
   if (!conversation) return context.json({ error: 'Conversation not found' }, 404);
+
+  const turn = await claimChatTurn(context.env.DB, input.conversationId, input.clientTurnId);
+  if (turn.kind === 'cached') {
+    if (!turn.response || typeof turn.response !== 'object') return context.json({ error: 'Stored response unavailable' }, 409);
+    return context.json(turn.response as Record<string, unknown>);
+  }
+  if (turn.kind === 'busy') {
+    return context.json({ error: '前のメッセージを処理中です。少し待ってからお試しください。' }, 409);
+  }
+  context.set('chatTurnClaim', turn.claim);
 
   const rate = await context.env.CHAT_RATE_LIMITER.limit({ key: input.conversationId });
   if (!rate.success) {
@@ -1273,11 +1338,14 @@ app.post('/api/chat/message', async (context) => {
     const excludedUrls = wantsOtherCandidates
       ? await previouslyCitedPropertyUrls(context.env.DB, input.conversationId)
       : new Set<string>();
-    const recommendations = recommendRentalProperties(
+    const recommendationPage = recommendRentalProperties(
       await loadRentalCatalog(context.env),
       criteria,
       excludedUrls,
+      4,
     );
+    const hasMoreResults = recommendationPage.length > 3;
+    const recommendations = recommendationPage.slice(0, 3);
     const answer = wantsOtherCandidates && recommendations.length === 0
       ? '条件に合うほかの賃貸物件は、現在の登録情報では見つからなかったにゃん。条件を変えて探すか、最新情報は公式LINEで問い合わせてにゃん。'
       : formatRentalAnswer(recommendations, criteria);
@@ -1300,7 +1368,15 @@ app.post('/api/chat/message', async (context) => {
       subjectId: messageId,
       metadata: { model: 'rental-catalog-v1', sourceCount: sources.length, flow: 'rental_consultation' },
     });
-    return context.json({ answer, sources, choices: choicesForChatAnswer(answer), action: 'none', policy: 'allow', messageId });
+    return context.json({
+      answer,
+      sources,
+      choices: choicesForChatAnswer(answer),
+      action: 'none',
+      policy: 'allow',
+      messageId,
+      hasMoreResults,
+    });
   }
 
   const purchaseConsultation = propertyKnowledgeQuestion
@@ -1351,11 +1427,14 @@ app.post('/api/chat/message', async (context) => {
     const excludedUrls = wantsOtherCandidates
       ? await previouslyCitedPropertyUrls(context.env.DB, input.conversationId)
       : new Set<string>();
-    const recommendations = recommendSaleProperties(
+    const recommendationPage = recommendSaleProperties(
       await loadSaleCatalog(context.env),
       criteria,
       { urls: excludedUrls },
+      4,
     );
+    const hasMoreResults = recommendationPage.length > 3;
+    const recommendations = recommendationPage.slice(0, 3);
     const answer = wantsOtherCandidates && recommendations.length === 0
       ? '条件に合うほかの購入物件は、現在の登録情報では見つからなかったにゃん。条件を変えて探すか、最新情報は公式LINEで問い合わせてにゃん。'
       : formatSaleAnswer(recommendations, criteria);
@@ -1378,7 +1457,15 @@ app.post('/api/chat/message', async (context) => {
       subjectId: messageId,
       metadata: { model: 'sale-catalog-v1', sourceCount: sources.length, flow: 'purchase_consultation' },
     });
-    return context.json({ answer, sources, choices: choicesForChatAnswer(answer), action: 'none', policy: 'allow', messageId });
+    return context.json({
+      answer,
+      sources,
+      choices: choicesForChatAnswer(answer),
+      action: 'none',
+      policy: 'allow',
+      messageId,
+      hasMoreResults,
+    });
   }
 
   const dailyAi = await consumeDailyAllowance(
@@ -1519,7 +1606,8 @@ app.post('/api/chat/message', async (context) => {
 });
 
 app.post('/api/chat/lead', async (context) => {
-  const input = leadSchema.parse(await context.req.json());
+  const appendAudit = appendChatAudit;
+  const input = leadSchema.parse(await readChatJson(context.req.raw));
   if (!(await verifySessionToken(input.sessionToken, input.conversationId, context.env))) {
     return context.json({ error: 'Session expired' }, 401);
   }
@@ -1538,48 +1626,54 @@ app.post('/api/chat/lead', async (context) => {
   const normalizedPhone = input.phone?.replace(/\D/g, '');
   const emailHash = normalizedEmail ? await sha256(`${context.env.HASH_SALT}:${normalizedEmail}`) : null;
   const phoneHash = normalizedPhone ? await sha256(`${context.env.HASH_SALT}:${normalizedPhone}`) : null;
+  const encryptedName = await encryptPII(input.name, context.env);
+  const encryptedEmail = await encryptPII(normalizedEmail, context.env);
+  const encryptedPhone = await encryptPII(normalizedPhone, context.env);
+  const consentAt = new Date().toISOString();
+  // Two rapid submissions can both observe "no customer" before either one
+  // inserts. Let the unique contact hashes choose one winner, then always
+  // resolve the authoritative row instead of turning the loser into a 500.
+  await context.env.DB.prepare(
+    `INSERT OR IGNORE INTO customers
+      (id, name_enc, email_enc, phone_enc, email_hash, phone_hash, email_last4, phone_last4, consent_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).bind(
+    customerId,
+    encryptedName,
+    encryptedEmail,
+    encryptedPhone,
+    emailHash,
+    phoneHash,
+    normalizedEmail?.slice(-4) || null,
+    normalizedPhone?.slice(-4) || null,
+    consentAt,
+  ).run();
   const matches = await context.env.DB.prepare(
     `SELECT id FROM customers WHERE (? IS NOT NULL AND email_hash = ?) OR (? IS NOT NULL AND phone_hash = ?) LIMIT 2`,
   ).bind(emailHash, emailHash, phoneHash, phoneHash).all<{ id: string }>();
   const matchedIds = [...new Set(matches.results.map((row) => row.id))];
-  if (matchedIds.length > 1) return context.json({ error: '連絡先情報を確認できませんでした。お問い合わせフォームをご利用ください。' }, 409);
-  const existing = matchedIds[0] ? { id: matchedIds[0] } : null;
-  const resolvedId = existing?.id || customerId;
-  if (!existing) {
-    await context.env.DB.prepare(
-      `INSERT INTO customers (id, name_enc, email_enc, phone_enc, email_hash, phone_hash, email_last4, phone_last4, consent_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(
-      resolvedId,
-      await encryptPII(input.name, context.env),
-      await encryptPII(normalizedEmail, context.env),
-      await encryptPII(normalizedPhone, context.env),
-      emailHash,
-      phoneHash,
-      normalizedEmail?.slice(-4) || null,
-      normalizedPhone?.slice(-4) || null,
-      new Date().toISOString(),
-    ).run();
-  } else {
-    await context.env.DB.prepare(
-      `UPDATE customers SET
-         name_enc = COALESCE(?, name_enc), email_enc = COALESCE(?, email_enc), phone_enc = COALESCE(?, phone_enc),
-         email_hash = COALESCE(?, email_hash), phone_hash = COALESCE(?, phone_hash),
-         email_last4 = COALESCE(?, email_last4), phone_last4 = COALESCE(?, phone_last4),
-         consent_at = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-    ).bind(
-      await encryptPII(input.name, context.env),
-      await encryptPII(normalizedEmail, context.env),
-      await encryptPII(normalizedPhone, context.env),
-      emailHash,
-      phoneHash,
-      normalizedEmail?.slice(-4) || null,
-      normalizedPhone?.slice(-4) || null,
-      new Date().toISOString(),
-      resolvedId,
-    ).run();
+  if (matchedIds.length !== 1) {
+    return context.json({ error: '連絡先情報を確認できませんでした。お問い合わせフォームをご利用ください。' }, 409);
   }
+  const resolvedId = matchedIds[0]!;
+  await context.env.DB.prepare(
+    `UPDATE customers SET
+       name_enc = COALESCE(?, name_enc), email_enc = COALESCE(?, email_enc), phone_enc = COALESCE(?, phone_enc),
+       email_hash = COALESCE(?, email_hash), phone_hash = COALESCE(?, phone_hash),
+       email_last4 = COALESCE(?, email_last4), phone_last4 = COALESCE(?, phone_last4),
+       consent_at = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+  ).bind(
+    encryptedName,
+    encryptedEmail,
+    encryptedPhone,
+    emailHash,
+    phoneHash,
+    normalizedEmail?.slice(-4) || null,
+    normalizedPhone?.slice(-4) || null,
+    consentAt,
+    resolvedId,
+  ).run();
   await context.env.DB.batch([
     context.env.DB.prepare(`INSERT OR IGNORE INTO conversation_customers (conversation_id, customer_id) VALUES (?, ?)`).bind(input.conversationId, resolvedId),
     context.env.DB.prepare(`UPDATE conversations SET marketing_consent = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(input.conversationId),

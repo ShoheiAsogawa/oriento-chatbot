@@ -22,7 +22,7 @@ export interface AnswerSource {
 function isPropertyDetailSource(source: AnswerSource) {
   if (!source.url) return false;
   const path = new URL(source.url).pathname;
-  return /\/(?:buy|rent)\//u.test(path);
+  return /\/(?:buy|rent|pri2)\//u.test(path);
 }
 
 const PROPERTY_DETAIL_IN_ANSWER = /(?:販売価格|物件価格|賃料|家賃|所在地)\s*(?:[：:]|は|\d)|\d+(?:\.\d+)?\s*万円/u;

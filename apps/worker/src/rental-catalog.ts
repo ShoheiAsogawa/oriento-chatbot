@@ -2,6 +2,7 @@ import type { ConversationContextMessage } from './conversation-context';
 import type { SearchChunk } from './types';
 import { extractRentalConsultationState } from './rental-consultation';
 import { loadManagedProperties, transportFromText, walkMinutesFromText, yenFromText } from './property-inventory';
+import { prefectureFromText, propertyArea } from './property-areas';
 
 export type RentalProperty = {
   id: string;
@@ -27,7 +28,7 @@ export type RentalCriteria = {
   maxWalkMinutes?: number;
 };
 
-const RESIDENTIAL_TYPES = /(?:賃貸住宅|マンション|アパート|貸家|一戸建|テラスハウス)/u;
+const RESIDENTIAL_TYPES = /(?:賃貸住宅|マンション|アパート|貸家|一戸建|戸建|テラスハウス|メゾネット|長屋|ハイツ)/u;
 const UNAVAILABLE_STATUS = /(?:成約|契約済|申込済|募集終了|非公開|掲載終了|取扱終了|空室なし)/u;
 
 export function extractRentalCriteria(
@@ -48,12 +49,23 @@ export function extractRentalCriteria(
 
 function layoutMatches(actual: string, requested: string) {
   const normalizedActual = actual.normalize('NFKC').toUpperCase().replace('ワンルーム', '1R');
-  if (!requested.endsWith('+')) return normalizedActual === requested;
-  const minimumRooms = Number(requested.match(/^\d+/u)?.[0]);
-  const actualRooms = Number(normalizedActual.match(/^\d+/u)?.[0]);
-  return Number.isFinite(minimumRooms)
-    && Number.isFinite(actualRooms)
-    && actualRooms >= minimumRooms;
+  const normalizedRequested = requested.normalize('NFKC').toUpperCase().replace('ワンルーム', '1R');
+  const parse = (value: string) => Array.from(value.matchAll(/(\d+)\s*S*(LDK|DK|K|R)/gu))
+    .map((match) => ({ rooms: Number(match[1]), kind: match[2]! }));
+  const actualLayouts = parse(normalizedActual);
+  const requestedLayouts = parse(normalizedRequested);
+  if (actualLayouts.length === 0 || requestedLayouts.length === 0) return false;
+  const minimum = /(?:\+|以上|より広|から)/u.test(normalizedRequested);
+  return requestedLayouts.some((requestedLayout) => actualLayouts.some((actualLayout) => (
+    actualLayout.kind === requestedLayout.kind
+      && (minimum ? actualLayout.rooms >= requestedLayout.rooms : actualLayout.rooms === requestedLayout.rooms)
+  )));
+}
+
+function normalizeResultLimit(limit: number) {
+  if (!Number.isFinite(limit)) return 3;
+  const integer = Math.floor(limit);
+  return integer > 0 && integer <= 100 ? integer : 3;
 }
 
 export async function loadRentalCatalog(env: Env): Promise<RentalProperty[]> {
@@ -93,12 +105,20 @@ export function recommendRentalProperties(
   properties: RentalProperty[],
   criteria: RentalCriteria,
   excludedPropertyIdsOrUrls: ReadonlySet<string> = new Set(),
+  limit = 3,
 ) {
   return properties.filter((property) => {
     if (excludedPropertyIdsOrUrls.has(property.id) || excludedPropertyIdsOrUrls.has(property.url)) return false;
     if (!RESIDENTIAL_TYPES.test(property.property_type)) return false;
     if (!property.url.startsWith('https://orijyu.com/rent/')) return false;
     if (UNAVAILABLE_STATUS.test(property.status)) return false;
+    if (!Number.isFinite(property.rent_yen) || property.rent_yen <= 0) return false;
+    if (criteria.prefecture) {
+      const listedPrefecture = prefectureFromText(property.address)
+        || prefectureFromText(property.title)
+        || propertyArea(property.address)?.prefecture;
+      if (listedPrefecture !== criteria.prefecture) return false;
+    }
     if (criteria.area) {
       const location = `${property.title}\n${property.address}\n${property.transport.join('\n')}`;
       if (!location.includes(criteria.area)) return false;
@@ -109,7 +129,7 @@ export function recommendRentalProperties(
     if (criteria.layout && !layoutMatches(property.layout, criteria.layout)) return false;
     if (criteria.maxWalkMinutes != null && (property.walk_minutes == null || property.walk_minutes > criteria.maxWalkMinutes)) return false;
     return true;
-  }).sort((left, right) => left.rent_yen - right.rent_yen || (left.walk_minutes ?? 999) - (right.walk_minutes ?? 999)).slice(0, 3);
+  }).sort((left, right) => left.rent_yen - right.rent_yen || (left.walk_minutes ?? 999) - (right.walk_minutes ?? 999)).slice(0, normalizeResultLimit(limit));
 }
 
 export function rentalPropertyChunk(property: RentalProperty, index: number): SearchChunk {

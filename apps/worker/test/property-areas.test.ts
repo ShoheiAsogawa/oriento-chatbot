@@ -7,6 +7,7 @@ describe('property area normalization', () => {
     ['茨城県水戸市酒門町', { prefecture: '茨城県', municipality: '水戸市' }],
     ['大阪市都島区友渕町', { prefecture: '大阪府', municipality: '大阪市', ward: '都島区' }],
     ['和歌山県田辺市文里2丁目', { prefecture: '和歌山県', municipality: '田辺市' }],
+    ['河内長野市木戸3丁目', { prefecture: '大阪府', municipality: '河内長野市' }],
   ])('extracts prefecture and municipality from %s', (address, expected) => {
     expect(propertyArea(address)).toEqual(expected);
   });

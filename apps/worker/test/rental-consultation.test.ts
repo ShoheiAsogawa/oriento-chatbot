@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { evaluateRentalConsultation, extractRentalConsultationState } from '../src/rental-consultation';
 
 describe('rental consultation', () => {
+  it.each([
+    '注文住宅と賃貸はどっちがいい？',
+    '賃貸と購入で迷っています',
+    '賃貸と購入を比較したい',
+  ])('leaves a mode comparison to the conversational agent: %s', (message) => {
+    expect(evaluateRentalConsultation([], message)).toEqual({ active: false });
+  });
   it('starts a property search without returning property detail links before conditions are known', () => {
     expect(evaluateRentalConsultation([], '物件を探す')).toEqual({
       active: false,
@@ -448,5 +455,74 @@ describe('rental consultation', () => {
     expect(extractRentalConsultationState([], '岸和田市で家族4人、家賃10万円、2LDK以上の賃貸')).toMatchObject({
       layout: '2LDK+',
     });
+  });
+
+  it.each(['未定', 'わからない', '相談したい'])('keeps going when the rent ceiling answer is %s', (answer) => {
+    const history = [
+      { role: 'user' as const, content: '賃貸' },
+      { role: 'assistant' as const, content: '住みたい都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '堺市' },
+      { role: 'assistant' as const, content: '家賃の上限を教えてにゃん。' },
+    ];
+    expect(extractRentalConsultationState(history, answer).maxRentYen).toBe(Number.MAX_SAFE_INTEGER);
+    expect(evaluateRentalConsultation(history, answer).response).toContain('希望の間取りや条件');
+  });
+
+  it.each([
+    ['家賃を変更したい', '家賃の上限'],
+    ['間取りを選び直したい', '希望の間取りや条件'],
+    ['エリアを変えたい', '希望の都道府県'],
+  ] as const)('asks for the requested rental condition instead of replaying results: %s', (message, expected) => {
+    const history = [
+      { role: 'user' as const, content: '大阪市で賃貸を探したい' },
+      { role: 'assistant' as const, content: '家賃の上限を教えてにゃん。' },
+      { role: 'user' as const, content: '10万円' },
+      { role: 'assistant' as const, content: '希望の間取りや条件を教えてにゃん。' },
+      { role: 'user' as const, content: 'こだわりなし' },
+      { role: 'assistant' as const, content: '大阪市で条件に合う賃貸物件が見つかったにゃん。' },
+    ];
+    expect(evaluateRentalConsultation(history, message).response).toContain(expected);
+  });
+
+  it('clears an old rental city even when the newly selected prefecture is unchanged', () => {
+    const history = [
+      { role: 'user' as const, content: '大阪市で賃貸を探したい' },
+      { role: 'assistant' as const, content: '大阪市で条件に合う賃貸物件が見つかったにゃん。' },
+      { role: 'user' as const, content: 'エリアを変えたい' },
+      { role: 'assistant' as const, content: '新しい希望の都道府県を選んでにゃん。' },
+    ];
+    expect(extractRentalConsultationState(history, '大阪府')).toMatchObject({ prefecture: '大阪府', area: undefined });
+    expect(evaluateRentalConsultation(history, '大阪府').response).toContain('市区町村');
+  });
+
+  it.each(['未定', 'わからない', 'どこでもいい', 'おまかせ'])('does not store %s as a rental location', (answer) => {
+    const prefectureHistory = [
+      { role: 'user' as const, content: '賃貸' },
+      { role: 'assistant' as const, content: '住みたい都道府県を選んでにゃん。' },
+    ];
+    expect(extractRentalConsultationState(prefectureHistory, answer).area).toBeUndefined();
+    expect(evaluateRentalConsultation(prefectureHistory, answer).response).toContain('都道府県を選んで');
+
+    const cityHistory = [
+      ...prefectureHistory,
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '大阪府で賃貸を探すにゃん。次に、市区町村を選んでにゃん。' },
+    ];
+    expect(extractRentalConsultationState(cityHistory, answer).area).toBeUndefined();
+    expect(evaluateRentalConsultation(cityHistory, answer).response).toContain('市区町村を選んで');
+  });
+
+  it('repeats represented rental wards when the ward is unknown', () => {
+    const history = [
+      { role: 'user' as const, content: '賃貸' },
+      { role: 'assistant' as const, content: '住みたい都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '大阪市で賃貸を探すにゃん。次に区を選んでにゃん。' },
+    ];
+    expect(evaluateRentalConsultation(history, 'わからない').response).toContain('家賃の上限');
   });
 });

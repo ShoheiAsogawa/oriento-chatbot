@@ -15,6 +15,38 @@ PHP_DIAGNOSTIC_RE = re.compile(
     r"\s.*(?:wp-content|\.php\b).*\bon line\s+\d+\s*$",
     re.I,
 )
+FIELD_LABELS = {
+    "物件種別", "物件番号", "販売価格", "価格", "所在地", "交通", "土地面積",
+    "建物面積", "専有面積", "販売戸数", "総戸数", "構造", "間取", "間取り",
+    "用途地域", "都市計画", "地目", "建ぺい率", "容積率", "国土法届出",
+    "権利", "取引態様", "現況", "販売状況", "備考1", "備考2", "備考3", "お問い合わせ",
+}
+
+
+def normalize_address(value: str) -> str:
+    """Remove an accidentally repeated municipality prefix from an address.
+
+    Scraped detail pages occasionally contain e.g. ``大阪市天王寺区大阪市天王寺区小橋町``.
+    Do this generically by looking for the longest leading segment ending at a
+    Japanese municipality boundary that is repeated immediately afterwards.
+    The prefix before the municipality (usually a prefecture) is preserved.
+    """
+    normalized = re.sub(r"\s+", " ", value).strip()
+    boundaries = [match.end() for match in re.finditer(r"[市区町村]", normalized)]
+    candidates: list[tuple[int, int, str]] = []
+    for start in range(len(normalized)):
+        for end in boundaries:
+            if end <= start:
+                continue
+            candidate = normalized[start:end]
+            if len(candidate) < 2 or not normalized.startswith(candidate, end):
+                continue
+            candidates.append((len(candidate), start, candidate))
+    if not candidates:
+        return normalized
+    _, start, candidate = max(candidates, key=lambda item: (item[0], -item[1]))
+    end = start + len(candidate)
+    return normalized[:start] + candidate + normalized[end + len(candidate):]
 
 
 def field(text: str, *labels: str) -> str | None:
@@ -27,7 +59,15 @@ def field(text: str, *labels: str) -> str | None:
                 candidate = candidate.strip()
                 if PHP_DIAGNOSTIC_RE.match(candidate):
                     continue
-                if not candidate or candidate.startswith('#'):
+                # Long listing pages can be split into continuation chunks
+                # exactly between a field label and its value. Skip only the
+                # generated chunk metadata, but stop at the next real field so
+                # an empty value is never borrowed from a different field.
+                if not candidate or candidate.startswith("#"):
+                    continue
+                if candidate.startswith("公式ページ:") or candidate.startswith("更新日:"):
+                    continue
+                if candidate in FIELD_LABELS:
                     return None
                 return candidate
     return None
@@ -83,7 +123,7 @@ def main() -> None:
             "url": url,
             "property_type": field(text, "物件種別") or "",
             "price_yen": price,
-            "address": field(text, "所在地") or "",
+            "address": normalize_address(field(text, "所在地") or ""),
             "transport": transports,
             "layout": field(text, "間取", "間取り") or "",
             "walk_minutes": min(walk_times) if walk_times else None,

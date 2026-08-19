@@ -67,6 +67,21 @@ PHP_DIAGNOSTIC_RE = re.compile(
 )
 
 
+def collapse_duplicate_location_prefix(value: str) -> str:
+    """Remove a WordPress address prefix accidentally printed twice.
+
+    Some property templates concatenate the selected municipality with a
+    complete address that already contains it (for example
+    ``大阪市天王寺区大阪市天王寺区小橋町``).  Check every municipality/
+    ward boundary so the same rule also handles other cities and wards.
+    """
+    for match in re.finditer(r"(?:市|区)", value):
+        prefix = value[: match.end()]
+        if len(prefix) >= 2 and value.startswith(prefix + prefix):
+            return prefix + value[len(prefix) * 2 :]
+    return value
+
+
 @dataclass(frozen=True)
 class Page:
     url: str
@@ -230,7 +245,7 @@ def clean_text(value: str) -> str:
     lines: list[str] = []
     previous = ""
     for raw in value.replace("\r", "\n").split("\n"):
-        line = SPACE_RE.sub(" ", raw).strip(" |\t")
+        line = collapse_duplicate_location_prefix(SPACE_RE.sub(" ", raw).strip(" |\t"))
         if not line or line == previous:
             continue
         # A legacy WordPress template can print PHP diagnostics into otherwise
