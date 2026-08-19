@@ -5,14 +5,14 @@ describe('rental consultation', () => {
   it('starts a property search without returning property detail links before conditions are known', () => {
     expect(evaluateRentalConsultation([], '物件を探す')).toEqual({
       active: false,
-      response: '物件探しだね。まず、賃貸と購入のどちらを探しているか選んでにゃん。',
+      response: '住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
     });
   });
 
   it('accepts a natural property-search starter', () => {
     expect(evaluateRentalConsultation([], '物件を探したい')).toEqual({
       active: false,
-      response: '物件探しだね。まず、賃貸と購入のどちらを探しているか選んでにゃん。',
+      response: '住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
     });
   });
 
@@ -27,7 +27,7 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '物件探しだね。賃貸と購入のどちらを探しているか、希望エリアを教えてにゃん。' },
     ], '高槻市')).toEqual({
       active: false,
-      response: 'まず、賃貸か購入か教えてにゃん。',
+      response: 'まず、賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
     });
   });
 
@@ -39,7 +39,7 @@ describe('rental consultation', () => {
 
     expect(evaluateRentalConsultation(awaitingType, '高槻市')).toEqual({
       active: false,
-      response: 'まず、賃貸か購入か教えてにゃん。',
+      response: 'まず、賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
     });
     expect(evaluateRentalConsultation([], '高槻市')).toEqual({ active: false });
   });
@@ -50,7 +50,7 @@ describe('rental consultation', () => {
       { role: 'assistant', content: 'まず、賃貸か購入か教えてにゃん。' },
     ], '茨木市')).toEqual({
       active: false,
-      response: 'まず、賃貸か購入か教えてにゃん。',
+      response: 'まず、賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
     });
   });
 
@@ -72,7 +72,7 @@ describe('rental consultation', () => {
       { role: 'assistant', content: '物件探しだね。賃貸と購入のどちらを探しているか、希望エリアを教えてにゃん。' },
     ], '高槻市')).toEqual({
       active: false,
-      response: 'まず、賃貸か購入か教えてにゃん。',
+      response: 'まず、賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
     });
   });
 

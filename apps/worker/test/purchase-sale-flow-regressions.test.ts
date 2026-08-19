@@ -89,7 +89,7 @@ describe('purchase-to-sale catalog regressions', () => {
       { role: 'assistant' as const, content: '次に、市区町村を選んでにゃん。' },
     ];
     expect(extractPurchaseConsultationState(history, '福山').area).toBe('福山');
-    expect(evaluatePurchaseConsultation(history, '福山').response).toContain('購入予算の上限');
+    expect(evaluatePurchaseConsultation(history, '福山').response).toContain('購入する物件の種類');
   });
 
   it('starts cleanly when purchase is selected again after a completed search', () => {

@@ -54,12 +54,21 @@
   ],
   "queues": {
     "producers": [
-      { "binding": "AUDIT_QUEUE", "queue": "orient-chat-audit" }
+      { "binding": "AUDIT_QUEUE", "queue": "orient-chat-audit" },
+      { "binding": "CUSTOM_HOME_LEAD_QUEUE", "queue": "orient-chat-custom-home-leads" }
     ],
     "consumers": [
-      { "queue": "orient-chat-audit", "max_batch_size": 50, "max_batch_timeout": 10 }
+      { "queue": "orient-chat-audit", "max_batch_size": 50, "max_batch_timeout": 10 },
+      { "queue": "orient-chat-custom-home-leads", "max_batch_size": 5, "max_batch_timeout": 10, "max_retries": 5 }
     ]
   },
+  "send_email": [
+    {
+      "name": "CUSTOM_HOME_LEAD_EMAIL",
+      "destination_address": "uken.shohei@gmail.com",
+      "allowed_sender_addresses": ["no-reply@orijyu.com"]
+    }
+  ],
   "durable_objects": {
     "bindings": [
       { "name": "AUDIT_LEDGER", "class_name": "AuditLedger" },

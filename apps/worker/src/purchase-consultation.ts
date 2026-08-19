@@ -13,6 +13,7 @@ export type PurchaseConsultationDecision = {
 export type PurchaseConsultationState = {
   prefecture?: string;
   area?: string;
+  ward?: string;
   maxPriceYen?: number;
   propertyType?: string;
   layout?: string;
@@ -33,6 +34,8 @@ const PURCHASE_EXPLANATION_REQUEST = /(?:(?:とは|違い|メリット|デメリ
 const NO_PREFERENCE = /^(?:(?:物件種別|間取り)(?:は|を)?)?(?:特に)?(?:こだわり|指定)?(?:は)?(?:なし|ない|ありません)(?:で(?:いい|大丈夫)(?:ですか)?|に(?:する|したい))?(?:です)?[。！!？?]?$/u;
 const AREA_WITH_SUFFIX = /([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,18}(?:都|道|府|県|市|区|町|村)|[\p{Script=Han}々ヶケァ-ヶー]{1,18}駅)/gu;
 const PREFECTURE = /([\p{Script=Han}々ヶケ]{2,8}(?:都|道|府|県))/u;
+const CITY_WARD = /(大阪市|堺市)\s*([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,10}区)/u;
+const GUIDED_WARD_CITY = /^(?:大阪市|堺市)$/u;
 
 function messagesSinceLatestSearch(history: ConversationContextMessage[], currentMessage: string) {
   const messages = scopePropertySearchMessages(history, currentMessage);
@@ -65,6 +68,10 @@ function areaFromMessage(content: string, answeredPrompt: boolean) {
 
 function prefectureFromMessage(content: string) {
   return content.match(PREFECTURE)?.[1];
+}
+
+function wardFromMessage(content: string) {
+  return content.match(/^[\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,10}区$/u)?.[0];
 }
 
 function budgetFromMessage(content: string, answeredPrompt: boolean) {
@@ -150,6 +157,7 @@ export function extractPurchaseConsultationState(
     const previous = messages[index - 1];
     const previousAssistant = previous?.role === 'assistant' ? previous.content : '';
     const prefecture = prefectureFromMessage(content);
+    const cityWard = content.match(CITY_WARD);
     const area = areaFromMessage(content, AREA_PROMPT.test(previousAssistant));
     const maxPriceYen = budgetFromMessage(content, BUDGET_PROMPT.test(previousAssistant));
     const propertyType = propertyTypeFromMessage(content);
@@ -157,10 +165,23 @@ export function extractPurchaseConsultationState(
     const maxWalkMinutes = walkMinutesFromMessage(content);
 
     if (prefecture) {
-      if (state.prefecture && state.prefecture !== prefecture) state.area = undefined;
+      if (state.prefecture && state.prefecture !== prefecture) {
+        state.area = undefined;
+        state.ward = undefined;
+      }
       state.prefecture = prefecture;
     }
-    if (area && !PREFECTURE.test(area)) state.area = area;
+    if (cityWard) {
+      state.area = cityWard[1];
+      state.ward = cityWard[2];
+    } else if (area && !PREFECTURE.test(area)) {
+      const ward = wardFromMessage(area);
+      if (ward && GUIDED_WARD_CITY.test(state.area || '')) state.ward = ward;
+      else {
+        state.area = area;
+        state.ward = undefined;
+      }
+    }
     if (maxPriceYen) state.maxPriceYen = maxPriceYen;
     if (propertyType) {
       state.propertyType = propertyType;
@@ -243,11 +264,11 @@ export function evaluatePurchaseConsultation(
   if (!state.area) {
     return { active: true, response: `${state.prefecture}で購入物件を探すにゃん。次に、市区町村を選んでにゃん。` };
   }
-  if (!state.maxPriceYen) {
-    return { active: true, response: '購入予算の上限を選んでにゃん。諸費用を除いた物件価格の目安で大丈夫にゃん。' };
-  }
   if (!state.propertyTypeSet) {
     return { active: true, response: '購入する物件の種類を選んでにゃん。まだ決まっていなければ、こだわりなしでも探せるにゃん。' };
+  }
+  if (!state.maxPriceYen) {
+    return { active: true, response: '購入予算の上限を選んでにゃん。諸費用を除いた物件価格の目安で大丈夫にゃん。' };
   }
   if (!state.layoutSet && state.propertyType !== '土地') {
     return { active: true, response: '購入物件の希望間取りを選んでにゃん。決まっていなければ、こだわりなしで大丈夫にゃん。' };

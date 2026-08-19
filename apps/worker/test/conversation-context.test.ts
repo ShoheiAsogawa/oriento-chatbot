@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildSearchMessages, loadConversationContext } from '../src/conversation-context';
+import {
+  buildSearchMessages,
+  INTAKE_HISTORY_MESSAGE_LIMIT,
+  loadConversationContext,
+} from '../src/conversation-context';
 
 describe('conversation context', () => {
   it('loads only the requested conversation and returns chronological redacted history', async () => {
@@ -23,6 +27,20 @@ describe('conversation context', () => {
       { role: 'user', content: 'この物件の価格は？' },
       { role: 'assistant', content: '価格は5,899万円ですにゃん。' },
     ]);
+  });
+
+  it('allows the bounded intake window required by a full custom-home consultation', async () => {
+    const all = vi.fn().mockResolvedValue({ results: [] });
+    const bind = vi.fn().mockReturnValue({ all });
+    const prepare = vi.fn().mockReturnValue({ bind });
+
+    await loadConversationContext(
+      { prepare } as unknown as D1Database,
+      'conversation-custom-home',
+      INTAKE_HISTORY_MESSAGE_LIMIT,
+    );
+
+    expect(bind).toHaveBeenCalledWith('conversation-custom-home', 48);
   });
 
   it('uses the latest three turns for conversational search', () => {

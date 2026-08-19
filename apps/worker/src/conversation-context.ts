@@ -3,9 +3,11 @@ export type ConversationContextMessage = {
   content: string;
 };
 
-// Eight short turns cover multi-step property consultations. Search and
-// generation apply their own smaller windows so payloads remain bounded.
+// Eight short turns cover multi-step property consultations. The default stays
+// deliberately small; longer deterministic intake flows can opt in to a
+// bounded larger window without increasing the AI-generation context.
 const HISTORY_MESSAGE_LIMIT = 16;
+export const INTAKE_HISTORY_MESSAGE_LIMIT = 48;
 const HISTORY_MESSAGE_CHAR_LIMIT = 300;
 const SEARCH_HISTORY_MESSAGE_LIMIT = 6;
 
@@ -24,6 +26,7 @@ function sanitizeHistoryContent(content: string) {
 export async function loadConversationContext(
   database: D1Database,
   conversationId: string,
+  messageLimit = HISTORY_MESSAGE_LIMIT,
 ): Promise<ConversationContextMessage[]> {
   const result = await database.prepare(`
     SELECT role, content_redacted
@@ -33,7 +36,7 @@ export async function loadConversationContext(
       AND policy_action = 'allow'
     ORDER BY rowid DESC
     LIMIT ?
-  `).bind(conversationId, HISTORY_MESSAGE_LIMIT).all<StoredMessage>();
+  `).bind(conversationId, Math.max(1, Math.min(INTAKE_HISTORY_MESSAGE_LIMIT, messageLimit))).all<StoredMessage>();
 
   return (result.results || [])
     .reverse()

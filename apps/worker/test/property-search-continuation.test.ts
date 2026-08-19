@@ -71,6 +71,18 @@ describe('property search conversation routing', () => {
     expect(scoped).toEqual([{ role: 'user', content: '賃貸に変更したい' }]);
   });
 
+  it.each(['購入物件を探したい', '賃貸物件を探したい'])('drops custom-home criteria when switching to %s', (message) => {
+    const scoped = scopePropertySearchMessages([
+      { role: 'user', content: '注文住宅を建てたい' },
+      { role: 'assistant', content: '土地を持っているか教えてにゃん。' },
+      { role: 'user', content: '土地を持っている' },
+      { role: 'assistant', content: '土地の所在地を教えてにゃん。' },
+      { role: 'user', content: '大阪市北区' },
+    ], message);
+
+    expect(scoped).toEqual([{ role: 'user', content: message }]);
+  });
+
   it('recognizes search-again phrasing as an explicit mode switch', () => {
     expect(scopePropertySearchMessages([
       { role: 'user', content: '購入' },

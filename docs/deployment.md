@@ -18,9 +18,20 @@ pnpm --filter @orient/worker exec wrangler whoami
 pnpm --filter @orient/worker exec wrangler d1 create orient-chat --binding DB --update-config
 pnpm --filter @orient/worker exec wrangler r2 bucket create orient-chat-audit
 pnpm --filter @orient/worker exec wrangler queues create orient-chat-audit
+pnpm --filter @orient/worker exec wrangler queues create orient-chat-custom-home-leads
 ```
 
 AI SearchはCloudflareダッシュボードまたはnamespace bindingで `orient-knowledge` を作成する。built-in storage、vector+keyword、RRF、query rewrite、rerankingを有効にする。Workerデプロイ後はAccess認証済みで `POST /api/admin/knowledge/bootstrap` を1回呼ぶことでも同じ初期化ができる。
+
+## 注文住宅のテスト通知
+
+注文住宅のヒアリング完了時は、氏名・電話番号を会話履歴へ残さず暗号化してD1へ保存し、`orient-chat-custom-home-leads` Queueから通知を送る。テスト期間の通知先は `uken.shohei@gmail.com` に固定されている。
+
+1. Cloudflare Email Serviceで `orijyu.com` を送信ドメインとしてオンボードし、`no-reply@orijyu.com` を送信元として認証する。
+2. テスト通知先のGmailアドレスをCloudflare Email Routingで確認済みの宛先として登録する。
+3. `wrangler.jsonc` の `CUSTOM_HOME_LEAD_EMAIL` binding をデプロイする。
+
+送信失敗時はQueueが最大5回再試行する。Queue・監査ログには問い合わせIDだけを入れ、氏名・電話番号・相談内容は入れない。
 
 ## シークレット
 

@@ -175,12 +175,15 @@ const styles = `
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
   .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .choice-button { min-width: 0; min-height: 40px; padding: 8px 9px; border: 1px solid #ffc49f; border-radius: 10px; color: #5a3522; background: #fffaf7; font-size: 12px; font-weight: 800; line-height: 1.35; cursor: pointer; transition: transform 120ms ease, border-color 120ms ease, background 120ms ease; }
+  .choice-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .choice-grid[data-count="1"] { grid-template-columns: minmax(0, 1fr); }
+  .choice-button { min-width: 0; min-height: 40px; padding: 8px 9px; border: 1px solid #ffc49f; border-radius: 10px; color: #5a3522; background: #fffaf7; font-size: 12px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; cursor: pointer; transition: transform 120ms ease, border-color 120ms ease, background 120ms ease; }
   .choice-button[data-tone="primary"] { border-color: var(--orient-primary); color: var(--orient-primary-strong); background: #fff3eb; }
   .choice-button:hover, .choice-button:focus-visible { transform: translateY(-1px); border-color: var(--orient-primary); background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
   .choice-button:active { transform: translateY(0); }
   .choice-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .choice-button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .choice-grid[data-count="3"] .choice-button:last-child:nth-child(odd) { grid-column: auto; }
   .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
   .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
   .suggestions button span { display: block; color: var(--orient-primary); font-size: 17px; line-height: 1; }
@@ -246,7 +249,8 @@ const styles = `
     .launcher-label { right: 64px; bottom: 10px; }
     .suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .suggestions button { font-size: 10px; }
-    .choice-button { min-height: 42px; font-size: 12px; }
+    .choice-grid[data-count="3"] { gap: 5px; }
+    .choice-button { min-height: 42px; padding-inline: 6px; font-size: 12px; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
@@ -496,7 +500,8 @@ class OrientChat extends HTMLElement {
     this.sending = true;
     this.messages.forEach((message) => { message.choices = []; });
     this.root.querySelectorAll('.message-choices').forEach((element) => element.remove());
-    this.messages.push({ id: crypto.randomUUID(), role: 'user', content });
+    const userMessageId = crypto.randomUUID();
+    this.messages.push({ id: userMessageId, role: 'user', content });
     const pendingId = crypto.randomUUID();
     this.messages.push({ id: pendingId, role: 'assistant', content: '', pending: true });
     const input = this.root.querySelector<HTMLTextAreaElement>('textarea');
@@ -508,6 +513,10 @@ class OrientChat extends HTMLElement {
     try {
       await this.ensureSession();
       const result = this.demoMode ? await this.demoResponse(content) : await this.remoteResponse(content);
+      if (result.redactUserMessage) {
+        const userMessage = this.messages.find((item) => item.id === userMessageId);
+        if (userMessage) userMessage.content = '（連絡先を送信しました）';
+      }
       const message = this.messages.find((item) => item.id === pendingId);
       if (message) {
         message.pending = false;
@@ -540,10 +549,16 @@ class OrientChat extends HTMLElement {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ conversationId: this.conversationId, sessionToken: this.sessionToken, message: content }),
     }, 30_000);
-    const data = await response.json() as { answer?: string; sources?: Source[]; choices?: ChatChoice[]; policy?: string; error?: string };
+    const data = await response.json() as { answer?: string; sources?: Source[]; choices?: ChatChoice[]; policy?: string; error?: string; redactUserMessage?: boolean };
     if (response.status === 401) this.clearStoredSession();
     if (!response.ok) throw new Error(data.error || '回答を取得できませんでした');
-    return { answer: data.answer || '', sources: data.sources || [], choices: data.choices || [], policy: data.policy || 'allow' };
+    return {
+      answer: data.answer || '',
+      sources: data.sources || [],
+      choices: data.choices || [],
+      policy: data.policy || 'allow',
+      redactUserMessage: data.redactUserMessage === true,
+    };
   }
 
   private async fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
@@ -564,13 +579,20 @@ class OrientChat extends HTMLElement {
   private async demoResponse(content: string) {
     await new Promise((resolve) => window.setTimeout(resolve, 650));
     if (/値引|価格交渉|法的|重要事項/u.test(content)) {
-      return { answer: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。', sources: [], choices: [], policy: 'out_of_scope' };
+      return {
+        answer: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
+        sources: [],
+        choices: [],
+        policy: 'out_of_scope',
+        redactUserMessage: false,
+      };
     }
     return {
       answer: 'オリにゃんは、物件探し・住まい・店舗のことを案内できるにゃん。気になるエリアや条件を教えてね。[1]',
       sources: [{ index: 1, title: 'オリエントホールディングス 公式サイト', url: 'https://orijyu.com/' }],
       choices: [],
       policy: 'allow',
+      redactUserMessage: false,
     };
   }
 
@@ -674,12 +696,16 @@ class OrientChat extends HTMLElement {
 
     const section = document.createElement('div');
     section.className = 'message-choices';
+    section.setAttribute('role', 'group');
     section.setAttribute('aria-label', '回答候補');
     const label = document.createElement('p');
     label.className = 'choice-label';
     label.textContent = 'タップして選べるにゃん';
     const grid = document.createElement('div');
     grid.className = 'choice-grid';
+    grid.dataset.count = String(choices.length);
+    grid.setAttribute('role', 'group');
+    grid.setAttribute('aria-label', '回答候補の選択肢');
     choices.forEach((choice) => {
       const button = document.createElement('button');
       button.className = 'choice-button';

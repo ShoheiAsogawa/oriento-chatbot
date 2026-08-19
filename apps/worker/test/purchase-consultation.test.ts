@@ -31,7 +31,7 @@ describe('purchase consultation', () => {
     expect(evaluatePurchaseConsultation([
       { role: 'user', content: '購入' },
       { role: 'assistant', content: '希望エリアを選んでにゃん。' },
-    ], '堺市')).toMatchObject({ response: expect.stringContaining('購入予算の上限') });
+    ], '堺市')).toMatchObject({ response: expect.stringContaining('購入する物件の種類') });
   });
 
   it('skips layout when the visitor chooses land', () => {

@@ -16,11 +16,24 @@ const PREFECTURE_CHOICES = [
   choice('和歌山県'),
   choice('京都府'),
   choice('奈良県'),
+  // This is a resilience fallback for when the inventory-backed selector is
+  // temporarily unavailable. It covers every prefecture represented by the
+  // checked-in catalog; the normal guided path still hides empty regions.
+  choice('滋賀県'),
+  choice('茨城県'),
+  choice('千葉県'),
+  choice('広島県'),
+  choice('高知県'),
+  choice('福岡県'),
 ];
 
 export function choicesForChatAnswer(answer: string): ChatChoice[] {
-  if (/賃貸(?:と|か)購入.*(?:教えて|選んで)/u.test(answer)) {
-    return [choice('賃貸', '賃貸', 'primary'), choice('購入', '購入', 'primary')];
+  if (/(?:賃貸(?:・|と|か)購入(?:・|と|か)?(?:注文住宅)?|賃貸.*購入.*注文住宅|注文住宅.*賃貸.*購入).*(?:教えて|選んで)/u.test(answer)) {
+    return [
+      choice('賃貸', '賃貸', 'primary'),
+      choice('購入', '購入', 'primary'),
+      choice('注文住宅', '注文住宅', 'primary'),
+    ];
   }
   if (/(?:住みたい|希望の)(?:都道府県|地域)|都道府県を選んで/u.test(answer)) {
     return PREFECTURE_CHOICES;

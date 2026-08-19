@@ -20,6 +20,7 @@ export type SaleProperty = {
 export type SaleCriteria = {
   prefecture?: string;
   area?: string;
+  ward?: string;
   maxPriceYen?: number;
   propertyType?: string;
   layout?: string;
@@ -39,6 +40,7 @@ export function extractSaleCriteria(
   return {
     prefecture: state.prefecture,
     area: state.area,
+    ...(state.ward ? { ward: state.ward } : {}),
     maxPriceYen: state.maxPriceYen,
     propertyType: state.propertyType,
     layout: state.layout,
@@ -120,6 +122,7 @@ export function recommendSaleProperties(
     if (criteria.prefecture && listedPrefecture && listedPrefecture !== criteria.prefecture) return false;
     if (criteria.area) {
       if (!location.includes(criteria.area)) return false;
+      if (criteria.ward && !location.includes(criteria.ward)) return false;
     }
     if (criteria.maxPriceYen != null && property.price_yen > criteria.maxPriceYen) return false;
     if (criteria.propertyType && !matchesPropertyType(property.property_type, criteria.propertyType)) return false;

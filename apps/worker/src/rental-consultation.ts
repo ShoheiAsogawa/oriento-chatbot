@@ -14,6 +14,7 @@ export type RentalConsultationState = {
   householdSize?: number;
   prefecture?: string;
   area?: string;
+  ward?: string;
   maxRentYen?: number;
   includeCommonFee?: boolean;
   layout?: string;
@@ -34,6 +35,8 @@ const COMPACT_LAYOUT_CONFIRMATION = /(?:かなり手狭|ワンルームのまま
 const KEEP_COMPACT_LAYOUT = /(?:そのまま|ワンルーム(?:のまま|でいい)|1R(?:のまま|でいい)|1K(?:のまま|でいい))/iu;
 const AREA_WITH_SUFFIX = /([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,18}(?:都|道|府|県|市|区|町|村)|[\p{Script=Han}々ヶケァ-ヶー]{1,18}駅)/gu;
 const PREFECTURE = /([\p{Script=Han}々ヶケ]{2,8}(?:都|道|府|県))/u;
+const CITY_WARD = /(大阪市|堺市)\s*([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,10}区)/u;
+const GUIDED_WARD_CITY = /^(?:大阪市|堺市)$/u;
 const PREFERENCE = /(?:ワンルーム|\d+[SLDKR]+|駅近|徒歩\s*\d+分|ペット|築浅|駐車|オートロック|バス・トイレ|こだわり.*(?:なし|ない))/iu;
 const NO_PREFERENCE = /^(?:特に)?(?:なし|ない|ありません|こだわり(?:は)?なし|指定(?:は)?なし|なんでも(?:いい|大丈夫)|問わない|未定)(?:です)?[。！!？?]?$/u;
 const CLEAR_LAYOUT_PREFERENCE = /(?:間取り|部屋数).*(?:こだわり|指定).*(?:なし|ない)|(?:間取り|部屋数).*(?:なんでも|問わない|未定)/u;
@@ -130,6 +133,10 @@ function prefectureFromMessage(content: string) {
   return content.match(PREFECTURE)?.[1];
 }
 
+function wardFromMessage(content: string) {
+  return content.match(/^[\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,10}区$/u)?.[0];
+}
+
 function budgetFromMessage(content: string, answeredBudgetPrompt: boolean) {
   if (UNLIMITED_BUDGET.test(content)) return Number.MAX_SAFE_INTEGER;
 
@@ -223,6 +230,7 @@ export function extractRentalConsultationState(
     const previousAssistant = previous?.role === 'assistant' ? previous.content : '';
     const normalizedContent = message.content.normalize('NFKC');
     const prefecture = prefectureFromMessage(normalizedContent);
+    const cityWard = normalizedContent.match(CITY_WARD);
     const householdSize = householdSizeFromMessage(normalizedContent);
     const area = areaFromMessage(normalizedContent, AREA_PROMPT.test(previousAssistant));
     const maxRentYen = budgetFromMessage(normalizedContent, BUDGET_PROMPT.test(previousAssistant));
@@ -238,9 +246,20 @@ export function extractRentalConsultationState(
     if (householdSize) state.householdSize = householdSize;
     if (prefecture) {
       if (!area) state.area = undefined;
+      if (state.prefecture && state.prefecture !== prefecture) state.ward = undefined;
       state.prefecture = prefecture;
     }
-    if (area && !PREFECTURE.test(area)) state.area = area;
+    if (cityWard) {
+      state.area = cityWard[1];
+      state.ward = cityWard[2];
+    } else if (area && !PREFECTURE.test(area)) {
+      const ward = wardFromMessage(area);
+      if (ward && GUIDED_WARD_CITY.test(state.area || '')) state.ward = ward;
+      else {
+        state.area = area;
+        state.ward = undefined;
+      }
+    }
     if (maxRentYen) state.maxRentYen = maxRentYen;
     if (includeCommonFee != null) state.includeCommonFee = includeCommonFee;
     if (clearsLayout) state.layout = undefined;
@@ -277,7 +296,7 @@ export function evaluateRentalConsultation(
   if (PROPERTY_SEARCH_STARTER.test(currentMessage.trim())) {
     return {
       active: false,
-      response: '物件探しだね。まず、賃貸と購入のどちらを探しているか選んでにゃん。',
+      response: '住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
     };
   }
 
@@ -301,7 +320,7 @@ export function evaluateRentalConsultation(
     }
     return {
       active: false,
-      response: 'まず、賃貸か購入か教えてにゃん。',
+      response: 'まず、賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
     };
   }
 

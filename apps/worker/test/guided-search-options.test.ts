@@ -79,6 +79,40 @@ describe('guided search availability choices', () => {
     ).map((item) => item.value)).toEqual(['堺市', '大阪市']);
   });
 
+  it('offers Osaka and Sakai wards from represented inventory', () => {
+    const wardOptions = buildGuidedSearchOptions([
+      { id: 'r1', title: '大阪市港区', url: 'https://orijyu.com/rent/r1.html', property_type: 'マンション', rent_yen: 80_000, common_fee: '', address: '大阪市港区波除', transport: [], layout: '1K', walk_minutes: null, status: '' },
+      { id: 'r2', title: '堺市西区', url: 'https://orijyu.com/rent/r2.html', property_type: 'マンション', rent_yen: 70_000, common_fee: '', address: '大阪府堺市西区浜寺', transport: [], layout: '1LDK', walk_minutes: null, status: '' },
+    ], [
+      { id: 's1', title: '大阪市北区', url: 'https://orijyu.com/buy/s1.html', property_type: '新築一戸建て', price_yen: 50_000_000, address: '大阪市北区中崎', transport: [], layout: '3LDK', walk_minutes: null, status: '' },
+      { id: 's2', title: '堺市中区', url: 'https://orijyu.com/buy/s2.html', property_type: '中古一戸建て', price_yen: 30_000_000, address: '大阪府堺市中区深井', transport: [], layout: '4LDK', walk_minutes: null, status: '' },
+    ]);
+
+    expect(rentalChoicesForAvailability(
+      '次に、家賃の上限を教えてにゃん。',
+      wardOptions,
+      { area: '大阪市', prefecture: '大阪府' },
+    ).map((item) => item.value)).toEqual(['港区']);
+    expect(purchaseChoicesForAvailability(
+      '購入する物件の種類を選んでにゃん。',
+      wardOptions,
+      { area: '堺市', prefecture: '大阪府' },
+    ).map((item) => item.value)).toEqual(['中区']);
+  });
+
+  it('asks purchase type before budget and filters the later budget by type', () => {
+    expect(purchaseChoicesForAvailability(
+      '購入する物件の種類を選んでにゃん。',
+      options,
+      { area: '岸和田市', prefecture: '大阪府' },
+    ).map((item) => item.value)).toEqual(['新築戸建て', '中古戸建て', '土地', '物件種別はこだわりなし']);
+    expect(purchaseChoicesForAvailability(
+      '購入予算の上限を選んでにゃん。',
+      options,
+      { area: '岸和田市', propertyType: '新築戸建て' },
+    ).map((item) => item.value)).toEqual(['購入予算3000万円まで', '購入予算4000万円まで', '購入予算5000万円まで', '購入予算6000万円まで']);
+  });
+
   it('hides rental budgets and layouts that cannot return inventory', () => {
     expect(rentalChoicesForAvailability(
       '次に、家賃の上限を教えてにゃん。',

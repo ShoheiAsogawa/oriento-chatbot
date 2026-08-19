@@ -20,6 +20,7 @@ export type RentalProperty = {
 export type RentalCriteria = {
   prefecture?: string;
   area?: string;
+  ward?: string;
   maxRentYen?: number;
   includeCommonFee?: boolean;
   layout?: string;
@@ -37,6 +38,7 @@ export function extractRentalCriteria(
   return {
     prefecture: state.prefecture,
     area: state.area,
+    ...(state.ward ? { ward: state.ward } : {}),
     maxRentYen: state.maxRentYen,
     ...(state.includeCommonFee == null ? {} : { includeCommonFee: state.includeCommonFee }),
     layout: state.layout,
@@ -100,6 +102,7 @@ export function recommendRentalProperties(
     if (criteria.area) {
       const location = `${property.title}\n${property.address}\n${property.transport.join('\n')}`;
       if (!location.includes(criteria.area)) return false;
+      if (criteria.ward && !location.includes(criteria.ward)) return false;
     }
     const commonFeeYen = criteria.includeCommonFee ? (yenFromText(property.common_fee) || 0) : 0;
     if (criteria.maxRentYen != null && property.rent_yen + commonFeeYen > criteria.maxRentYen) return false;

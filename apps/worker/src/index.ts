@@ -10,6 +10,18 @@ import {
 import { appendAudit, archiveAuditBatch, AuditLedger, verifyAuditEvent } from './audit';
 import { choicesForChatAnswer } from './chat-choices';
 import {
+  customHomeChoicesForResponse,
+  evaluateCustomHomeConsultation,
+  extractCustomHomeConsultationState,
+} from './custom-home-consultation';
+import {
+  persistCustomHomeDraft,
+  persistCustomHomeLead,
+  type CustomHomeLeadQueuePayload,
+} from './custom-home-leads';
+import { customHomeIntakeFromState, redactCustomHomeContactTurn } from './custom-home-chat';
+import { processCustomHomeNotification, type CustomHomeNotificationPayload } from './custom-home-notifications';
+import {
   guidedAnswerForAvailability,
   loadGuidedSearchOptions,
   purchaseChoicesForAvailability,
@@ -17,7 +29,12 @@ import {
 } from './guided-search-options';
 import { consumeDailyAllowance, japanDay } from './cost-controls';
 import { loadOverview, normalizeTrackedPropertyUrl, type PropertyCatalogItem } from './overview';
-import { buildContextualQuestion, buildSearchMessages, loadConversationContext } from './conversation-context';
+import {
+  buildContextualQuestion,
+  buildSearchMessages,
+  INTAKE_HISTORY_MESSAGE_LIMIT,
+  loadConversationContext,
+} from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
 import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
 import { directConversationAnswer, ensureOrinyanEnding, evaluatePolicy, isPropertyKnowledgeQuestion, noGroundingDecision, SYSTEM_PROMPT } from './policy';
@@ -1027,7 +1044,16 @@ app.post('/api/chat/message', async (context) => {
   const rate = await context.env.CHAT_RATE_LIMITER.limit({ key: input.conversationId });
   if (!rate.success) return context.json({ error: '少し時間をおいてからお試しください' }, 429);
 
-  const redacted = redactPII(input.message);
+  // A complete custom-home intake has more than the normal 16-message
+  // property-search window. Load the bounded intake window here; downstream
+  // AI calls still receive their own small context window.
+  const conversationHistory = await loadConversationContext(
+    context.env.DB,
+    input.conversationId,
+    INTAKE_HISTORY_MESSAGE_LIMIT,
+  );
+  const customHomeContactTurn = redactCustomHomeContactTurn(conversationHistory, input.message);
+  const redacted = customHomeContactTurn.redacted;
   const policy = evaluatePolicy(redacted);
   if (!policy.allowed) {
     const messageId = await recordTurn(
@@ -1077,7 +1103,118 @@ app.post('/api/chat/message', async (context) => {
     });
   }
 
-  const conversationHistory = await loadConversationContext(context.env.DB, input.conversationId);
+  const customHomeConsultation = evaluateCustomHomeConsultation(conversationHistory, redacted);
+  if (customHomeConsultation.active) {
+    const customHomeState = extractCustomHomeConsultationState(conversationHistory, redacted);
+    const intake = customHomeIntakeFromState(customHomeState);
+
+    if (customHomeConsultation.leadReady) {
+      const contactPhone = customHomeContactTurn.contact.phone;
+      if (!contactPhone) {
+        const answer = 'お電話番号を確認できなかったにゃん。数字を続けてもう一度入力してにゃん。';
+        const messageId = await recordTurn(
+          context.env,
+          input.conversationId,
+          redacted,
+          answer,
+          'allow',
+          null,
+          Date.now() - startedAt,
+        );
+        await appendAudit(context.env, {
+          eventType: 'chat.clarification_requested',
+          actorType: 'visitor',
+          subjectType: 'message',
+          subjectId: messageId,
+          metadata: { flow: 'custom_home', reason: 'phone_not_extractable' },
+        });
+        return context.json({ answer, sources: [], choices: [], action: 'none', policy: 'allow', messageId, redactUserMessage: true });
+      }
+
+      const lead = await persistCustomHomeLead(context.env.DB, context.env, {
+        conversationId: input.conversationId,
+        contact: { ...customHomeContactTurn.contact, phone: contactPhone },
+        intake,
+      });
+      let notificationQueued = false;
+      if (lead.queueRequired) {
+        try {
+          await context.env.CUSTOM_HOME_LEAD_QUEUE.send(lead.queue);
+          notificationQueued = true;
+        } catch {
+          // The encrypted lead remains pending in D1. Never log contact data.
+          await appendAudit(context.env, {
+            eventType: 'custom_home.notification_enqueue_failed',
+            actorType: 'system',
+            subjectType: 'custom_home_lead',
+            subjectId: lead.leadId,
+          });
+        }
+      }
+      const answer = notificationQueued || !lead.queueRequired
+        ? 'ご相談を受け付けたにゃん。担当者からご連絡するので、少し待っていてにゃん。'
+        : 'ご相談は受け付けたにゃん。確認のため、公式LINEからもお問い合わせ内容を送ってにゃん。';
+      const messageId = await recordTurn(
+        context.env,
+        input.conversationId,
+        redacted,
+        answer,
+        'allow',
+        'custom-home-intake-v1',
+        Date.now() - startedAt,
+      );
+      await appendAudit(context.env, {
+        eventType: 'custom_home.lead_accepted',
+        actorType: 'visitor',
+        subjectType: 'custom_home_lead',
+        subjectId: lead.leadId,
+        metadata: { created: lead.created, notificationQueued, flow: 'custom_home' },
+      });
+      return context.json({ answer, sources: [], choices: [], action: 'none', policy: 'allow', messageId, redactUserMessage: true });
+    }
+
+    if (customHomeContactTurn.contact.name) {
+      await persistCustomHomeDraft(context.env.DB, context.env, {
+        conversationId: input.conversationId,
+        name: customHomeContactTurn.contact.name,
+        intake,
+      });
+    }
+
+    if (customHomeConsultation.response) {
+      const answer = customHomeConsultation.response;
+      const messageId = await recordTurn(
+        context.env,
+        input.conversationId,
+        redacted,
+        answer,
+        'allow',
+        'custom-home-intake-v1',
+        Date.now() - startedAt,
+      );
+      await appendAudit(context.env, {
+        eventType: 'chat.clarification_requested',
+        actorType: 'visitor',
+        subjectType: 'message',
+        subjectId: messageId,
+        metadata: {
+          flow: 'custom_home',
+          step: customHomeConsultation.step,
+          contactDraftSaved: Boolean(customHomeContactTurn.contact.name),
+        },
+      });
+      return context.json({
+        answer,
+        sources: [],
+        choices: customHomeChoicesForResponse(answer),
+        action: 'none',
+        policy: 'allow',
+        messageId,
+        redactUserMessage: Boolean(customHomeContactTurn.contact.name || customHomeContactTurn.contact.phone),
+      });
+    }
+  }
+
   const propertyKnowledgeQuestion = isPropertyKnowledgeQuestion(
     redacted,
     conversationHistory.map((message) => message.content),
@@ -2388,7 +2525,50 @@ app.get('/api/admin/maintenance/status', async (context) => {
   return context.json(result);
 });
 
+type WorkerQueuePayload = AuditArchiveEvent | CustomHomeLeadQueuePayload | CustomHomeNotificationPayload;
+
+async function consumeCustomHomeLeadBatch(
+  batch: MessageBatch<CustomHomeLeadQueuePayload>,
+  env: Env,
+) {
+  for (const message of batch.messages) {
+    const result = await processCustomHomeNotification(env.DB, env, message.body, {
+      sender: 'no-reply@orijyu.com',
+      recipient: 'uken.shohei@gmail.com',
+      send: (email) => env.CUSTOM_HOME_LEAD_EMAIL.send(email),
+    });
+    if (result.disposition === 'retry') {
+      message.retry({ delaySeconds: Math.min(60, Math.max(10, result.attempt * 10)) });
+      continue;
+    }
+    message.ack();
+    if (result.status === 'sent' || result.status === 'failed') {
+      await appendAudit(env, {
+        eventType: result.status === 'sent'
+          ? 'custom_home.notification_sent'
+          : 'custom_home.notification_failed',
+        actorType: 'system',
+        subjectType: 'custom_home_lead',
+        subjectId: message.body.leadId,
+        metadata: { attempt: result.attempt },
+      });
+    }
+  }
+}
+
+async function consumeWorkerQueue(batch: MessageBatch<WorkerQueuePayload>, env: Env) {
+  if (batch.queue === 'orient-chat-audit') {
+    await archiveAuditBatch(batch as MessageBatch<AuditArchiveEvent>, env);
+    return;
+  }
+  if (batch.queue === 'orient-chat-custom-home-leads') {
+    await consumeCustomHomeLeadBatch(batch as MessageBatch<CustomHomeLeadQueuePayload>, env);
+    return;
+  }
+  batch.ackAll();
+}
+
 export default {
   fetch: app.fetch,
-  queue: archiveAuditBatch,
-} satisfies ExportedHandler<Env, AuditArchiveEvent>;
+  queue: consumeWorkerQueue,
+} satisfies ExportedHandler<Env, WorkerQueuePayload>;

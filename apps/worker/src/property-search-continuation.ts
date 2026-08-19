@@ -1,8 +1,9 @@
 import type { ConversationContextMessage } from './conversation-context';
 
 const PROPERTY_SEARCH_STARTER = /^(?:物件を探す|物件を探したい|物件探し(?:をしたい|したい)?)(?:[。！!？?])?$/u;
-const EXPLICIT_RENTAL_MODE = /(?:一人暮らし|ひとり暮らし|単身|二人暮らし|部屋を借り|借りたい|部屋探し(?:を)?したい|引っ越(?:したい|しをしたい)|賃貸(?:物件)?(?:$|を探|で(?:探|検索)|に変更|がいい|を希望|にしたい))/u;
-const EXPLICIT_PURCHASE_MODE = /(?:購入(?:$|したい|で(?:探|検索)|に変更|がいい|を希望|にしたい)|買いたい|家を買|物件を買|戸建てを買|土地を買)/u;
+const EXPLICIT_RENTAL_MODE = /(?:一人暮らし|ひとり暮らし|単身|二人暮らし|部屋を借り|借りたい|部屋探し(?:を)?したい|引っ越(?:したい|しをしたい)|賃貸(?:物件)?(?:$|を?(?:探(?:す|したい)|検索)|で(?:探|検索)|に変更|がいい|を希望|にしたい))/u;
+const EXPLICIT_PURCHASE_MODE = /(?:購入(?:物件)?(?:$|を?(?:探(?:す|したい)|検索)|したい|で(?:探|検索)|に変更|がいい|を希望|にしたい)|買いたい|家を買|物件を買|戸建てを買|土地を買)/u;
+const EXPLICIT_CUSTOM_HOME_MODE = /(?:注文住宅|注文建築|自由設計|マイホームを建て|家を建て(?:たい|る|よう))/u;
 const COMPLETED_PROPERTY_SEARCH = /条件に合う.*(?:賃貸|購入物件).*(?:見つかった|見つからなかった)/u;
 const PROPERTY_FOLLOW_UP = /(?:物件|候補|部屋|住まい|賃貸|購入|買う|借りる|内見|詳細|リンク|URL|問い合わせ|ほか|他|別|もっと|おすすめ|どれ|どちら|この中|一番|家賃|予算|価格|万円?|円|安い|高い|広い|狭い|新築|中古|戸建|マンション|土地|間取り|ワンルーム|\d+[SLDKR]+|駅|徒歩|沿線|地域|エリア|都|道|府|県|市|区|町|村|ペット|駐車|築|家族|一人暮らし|二人暮らし|条件|こだわり)/iu;
 const CONVERSATION_DETOUR = /(?:(?:あなた|君|きみ|オリにゃん).*(?:誰|だれ|何者|なに|何ですか)|^(?:誰|だれ)(?:なの|ですか)?|おなか|お腹|腹が?(?:すい|減)|ごはん|ご飯|食べたい|眠い|疲れた|元気(?:ですか|？|\?)?|おはよう|こんにちは|こんばんは|ありがとう|雑談)/u;
@@ -36,15 +37,17 @@ export function scopePropertySearchMessages(
   });
 
   const searchMessages = allMessages.slice(scopeStart);
-  let latestMode: 'rental' | 'purchase' | undefined;
+  let latestMode: 'rental' | 'purchase' | 'custom_home' | undefined;
   let latestModeStart = 0;
   searchMessages.forEach((message, index) => {
     if (message.role !== 'user') return;
     const content = message.content.normalize('NFKC').trim();
     const rental = EXPLICIT_RENTAL_MODE.test(content);
     const purchase = EXPLICIT_PURCHASE_MODE.test(content);
-    if (rental === purchase) return;
-    const mode = rental ? 'rental' : 'purchase';
+    const customHome = EXPLICIT_CUSTOM_HOME_MODE.test(content);
+    const activeModes = [rental, purchase, customHome].filter(Boolean);
+    if (activeModes.length !== 1) return;
+    const mode = rental ? 'rental' : purchase ? 'purchase' : 'custom_home';
     if (latestMode && latestMode !== mode) latestModeStart = index;
     latestMode = mode;
   });

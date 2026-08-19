@@ -39,7 +39,11 @@ export function propertyArea(address: string) {
   const municipality = municipalityFromText(address);
   if (!municipality) return null;
   const prefecture = prefectureFromText(address) || prefectureForMunicipality(municipality);
-  return prefecture ? { prefecture, municipality } : null;
+  if (!prefecture) return null;
+  const ward = municipality === '大阪市' || municipality === '堺市'
+    ? address.normalize('NFKC').match(/(?:大阪市|堺市)\s*([\p{Script=Han}々ヶケぁ-んァ-ヶー]{1,10}区)/u)?.[1]
+    : undefined;
+  return ward ? { prefecture, municipality, ward } : { prefecture, municipality };
 }
 
 export function sortPrefectures(values: string[]) {

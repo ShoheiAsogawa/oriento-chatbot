@@ -2,14 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { choicesForChatAnswer } from '../src/chat-choices';
 
 describe('chat choices', () => {
-  it('offers rental and purchase after starting property search', () => {
-    expect(choicesForChatAnswer('物件探しだね。賃貸と購入のどちらを探しているか教えてにゃん。'))
-      .toMatchObject([{ label: '賃貸', value: '賃貸' }, { label: '購入', value: '購入' }]);
+  it('offers rental, purchase, and custom-home paths after starting a home search', () => {
+    expect(choicesForChatAnswer('住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。'))
+      .toMatchObject([
+        { label: '賃貸', value: '賃貸' },
+        { label: '購入', value: '購入' },
+        { label: '注文住宅', value: '注文住宅' },
+      ]);
   });
 
   it('offers button-only rental criteria in response to each prompt', () => {
     expect(choicesForChatAnswer('住みたい都道府県を選んでにゃん。').map((item) => item.value))
       .toContain('和歌山県');
+    expect(choicesForChatAnswer('住みたい都道府県を選んでにゃん。').map((item) => item.value))
+      .toContain('広島県');
     expect(choicesForChatAnswer('家賃の上限を教えてにゃん。').map((item) => item.value))
       .toContain('家賃10万円まで');
     expect(choicesForChatAnswer('希望の間取りや条件を教えてにゃん。').map((item) => item.value))
