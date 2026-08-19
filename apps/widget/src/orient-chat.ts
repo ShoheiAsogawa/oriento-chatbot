@@ -24,6 +24,7 @@ interface ChatMessage {
   choices?: ChatChoice[];
   lineLink?: boolean;
   pending?: boolean;
+  moreResults?: boolean;
 }
 
 interface TurnstileApi {
@@ -175,6 +176,11 @@ const styles = `
   .answer-url:hover, .answer-url:focus-visible { color: var(--orient-primary); outline: 2px solid rgba(255,104,11,.18); outline-offset: 1px; }
   .message-line-link { display: inline-block; margin-top: 7px; color: #237a46; font-size: 11px; font-weight: 700; line-height: 1.5; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
   .message-line-link:hover, .message-line-link:focus-visible { color: #05ae4a; outline: 2px solid rgba(6,199,85,.16); outline-offset: 2px; }
+  .more-results { margin-top: 9px; }
+  .more-results-button { min-height: 36px; padding: 7px 14px; border: 1px solid #ffc49f; border-radius: 999px; color: var(--orient-primary-strong); background: #fffaf7; font-size: 12px; font-weight: 800; cursor: pointer; transition: transform 120ms ease, border-color 120ms ease, background 120ms ease; }
+  .more-results-button:hover, .more-results-button:focus-visible { transform: translateY(-1px); border-color: var(--orient-primary); background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
+  .more-results-button:active { transform: translateY(0); }
+  .more-results-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
@@ -502,8 +508,14 @@ class OrientChat extends HTMLElement {
   private async sendMessage(content: string) {
     if (this.sending) return;
     this.sending = true;
-    this.messages.forEach((message) => { message.choices = []; });
-    this.root.querySelectorAll('.message-choices').forEach((element) => element.remove());
+    // Only the latest answer can remain actionable.  Older guided-search and
+    // pagination controls would otherwise let a visitor submit stale choices
+    // while a newer turn is in progress.
+    this.messages.forEach((message) => {
+      message.choices = [];
+      message.moreResults = false;
+    });
+    this.root.querySelectorAll('.message-choices, .more-results').forEach((element) => element.remove());
     const userMessageId = crypto.randomUUID();
     this.messages.push({ id: userMessageId, role: 'user', content });
     const pendingId = crypto.randomUUID();
@@ -527,6 +539,7 @@ class OrientChat extends HTMLElement {
         message.content = this.displayAnswer(result.answer).slice(0, 1);
         message.sources = result.sources;
         message.choices = result.choices;
+        message.moreResults = this.shouldShowMoreResults(result.answer);
         message.lineLink = this.shouldShowLineLink(content, result.answer, result.choices, result.policy);
       }
       this.renderMessages();
@@ -609,6 +622,16 @@ class OrientChat extends HTMLElement {
     return /(?:物件|住まい|賃貸|購入|戸建|マンション|土地|家づくり|住宅|店舗|テナント|内見|見学|空室|申込|売却|査定|担当者|専門家|確認できない|価格交渉|重要事項)/u.test(answer);
   }
 
+  private shouldShowMoreResults(answer: string) {
+    // Catalog responses are capped at three listings. Offer the next page only
+    // when the current answer actually contains three property candidates.
+    const candidateLines = this.displayAnswer(answer)
+      .split(/\r?\n/u)
+      .filter((line) => /^\s*-\s+.+(?:販売価格|物件価格|賃料|家賃).+にゃん。?\s*$/u.test(line));
+    return candidateLines.length >= 3
+      && /条件に合う.*(?:賃貸|購入物件).*(?:見つかった|候補)/u.test(answer);
+  }
+
   private displayAnswer(answer: string) {
     return answer.replace(/\s*(?:\[\d+\]|【\d+】)/gu, '').trim();
   }
@@ -647,6 +670,7 @@ class OrientChat extends HTMLElement {
       if (item) {
         this.renderLineLink(item, Boolean(message.lineLink));
         this.renderChoices(item, message.choices || []);
+        this.renderMoreResults(item, Boolean(message.moreResults));
       }
       return;
     }
@@ -675,6 +699,7 @@ class OrientChat extends HTMLElement {
     if (item) {
       this.renderLineLink(item, Boolean(message.lineLink));
       this.renderChoices(item, message.choices || []);
+      this.renderMoreResults(item, Boolean(message.moreResults));
     }
   }
 
@@ -720,6 +745,24 @@ class OrientChat extends HTMLElement {
       grid.append(button);
     });
     section.append(label, grid);
+    messageContent.append(section);
+    const container = this.root.querySelector<HTMLElement>('.messages');
+    if (container) this.revealMessageChoices(item, container);
+  }
+
+  private renderMoreResults(item: HTMLElement, visible: boolean) {
+    item.querySelector('.more-results')?.remove();
+    if (!visible) return;
+    const messageContent = item.querySelector<HTMLElement>('.message-content');
+    if (!messageContent) return;
+    const section = document.createElement('div');
+    section.className = 'more-results';
+    const button = document.createElement('button');
+    button.className = 'more-results-button';
+    button.type = 'button';
+    button.textContent = 'もっと見たい';
+    button.addEventListener('click', () => { void this.sendMessage('もっと見たい'); });
+    section.append(button);
     messageContent.append(section);
     const container = this.root.querySelector<HTMLElement>('.messages');
     if (container) this.revealMessageChoices(item, container);
@@ -869,7 +912,7 @@ class OrientChat extends HTMLElement {
   }
 
   private setDisabled(disabled: boolean) {
-    this.root.querySelectorAll<HTMLButtonElement>('.suggestions button, .choice-button, .send').forEach((button) => { button.disabled = disabled; });
+    this.root.querySelectorAll<HTMLButtonElement>('.suggestions button, .choice-button, .more-results-button, .send').forEach((button) => { button.disabled = disabled; });
   }
 
   private renderMessages() {
@@ -912,6 +955,7 @@ class OrientChat extends HTMLElement {
     if (message.role === 'assistant' && !message.pending && message.rawContent) {
       this.renderLineLink(item, Boolean(message.lineLink));
       if (message.choices?.length) this.renderChoices(item, message.choices);
+      if (message.moreResults) this.renderMoreResults(item, true);
     }
     return item;
   }

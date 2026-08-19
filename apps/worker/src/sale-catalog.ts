@@ -32,6 +32,22 @@ export type SaleRecommendationExclusions = {
   urls?: Iterable<string>;
 };
 
+/**
+ * Some imported listing pages repeat the Osaka/Sakai ward prefix, e.g.
+ * `大阪市天王寺区大阪市天王寺区小橋町`. Keep the catalog source untouched,
+ * but present and filter on a clean address at the application boundary.
+ */
+export function normalizeSaleAddress(value: string) {
+  let normalized = value.normalize('NFKC').replace(/\s+/gu, ' ').trim();
+  const match = normalized.match(/((?:大阪市|堺市)[^区]{1,10}区)/u);
+  if (!match || match.index == null) return normalized;
+  const prefix = match[1]!;
+  const before = normalized.slice(0, match.index);
+  let after = normalized.slice(match.index + prefix.length);
+  while (after.startsWith(prefix)) after = after.slice(prefix.length);
+  return `${before}${prefix}${after}`;
+}
+
 export function extractSaleCriteria(
   history: ConversationContextMessage[],
   currentMessage: string,
@@ -64,7 +80,7 @@ export async function loadSaleCatalog(env: Env): Promise<SaleProperty[]> {
       url: row.source_url,
       property_type: row.building_type || '売買物件',
       price_yen: price,
-      address: row.address,
+      address: normalizeSaleAddress(row.address),
       transport: transportFromText(row.line_station),
       layout: row.layout,
       walk_minutes: walkMinutesFromText(row.line_station),
@@ -73,7 +89,10 @@ export async function loadSaleCatalog(env: Env): Promise<SaleProperty[]> {
   });
   const managedUrls = new Set(managed.map((property) => property.url));
   return [
-    ...(catalog.properties || []).filter((property) => (
+    ...(catalog.properties || []).map((property) => ({
+      ...property,
+      address: normalizeSaleAddress(property.address),
+    })).filter((property) => (
       !inventory.excludedUrls.has(property.url) && !managedUrls.has(property.url)
     )),
     ...managed,

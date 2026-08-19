@@ -110,9 +110,18 @@ describe('property search conversation routing', () => {
     ];
     expect(shouldContinueCompletedPropertySearch(messages, 'ほかの物件も見たい')).toBe(true);
     expect(shouldContinueCompletedPropertySearch(messages, 'あなたはだれ？')).toBe(false);
+    expect(shouldContinueCompletedPropertySearch(messages, 'おすすめの病院を教えて')).toBe(false);
     expect(shouldContinueCompletedPropertySearch(messages, 'どれがおすすめ？')).toBe(false);
     expect(shouldContinueCompletedPropertySearch(messages, 'この物件を内見したい')).toBe(false);
     expect(shouldContinueCompletedPropertySearch(messages, '問い合わせしたい')).toBe(false);
+  });
+
+  it('continues an exact area refinement without treating every city suffix as a follow-up', () => {
+    const messages = [
+      { role: 'assistant' as const, content: '田辺市で条件に合う購入物件が見つかったにゃん。' },
+    ];
+    expect(shouldContinueCompletedPropertySearch(messages, '大阪市')).toBe(true);
+    expect(shouldContinueCompletedPropertySearch(messages, 'おすすめの病院を教えて')).toBe(false);
   });
 
   it('recognizes a natural property-search starter as a fresh scope', () => {

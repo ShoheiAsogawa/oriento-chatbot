@@ -80,6 +80,17 @@ describe('purchase consultation', () => {
     ], 'あなたはだれ？')).toEqual({ active: false });
   });
 
+  it('does not replay purchase results for an unrelated health-care question', () => {
+    expect(evaluatePurchaseConsultation([
+      { role: 'user', content: '購入' },
+      { role: 'assistant', content: '希望エリアを選んでにゃん。' },
+      { role: 'user', content: '大阪市' },
+      { role: 'assistant', content: '購入する物件の種類を選んでにゃん。' },
+      { role: 'user', content: '中古マンション' },
+      { role: 'assistant', content: '大阪市で条件に合う購入物件が見つかったにゃん。' },
+    ], 'おすすめの病院を教えて')).toEqual({ active: false });
+  });
+
   it('continues the completed purchase flow for a property follow-up', () => {
     expect(evaluatePurchaseConsultation([
       { role: 'user', content: '購入' },

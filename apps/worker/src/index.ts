@@ -2301,7 +2301,9 @@ app.get('/api/admin/conversations', async (context) => {
         SELECT mu.content_redacted
         FROM messages mu
         WHERE mu.conversation_id = c.id AND mu.role = 'user'
-        ORDER BY mu.created_at DESC, mu.id DESC
+        -- D1's CURRENT_TIMESTAMP has second-level precision.  rowid is the
+        -- insertion-order tie breaker for legacy rows and same-second turns.
+        ORDER BY mu.created_at DESC, mu.rowid DESC
         LIMIT 1
       ), '') AS latest_message
      FROM conversations c LEFT JOIN messages m ON m.conversation_id = c.id
@@ -2319,7 +2321,7 @@ app.get('/api/admin/conversations/export.csv', async (context) => {
     `SELECT m.id AS message_id, m.conversation_id, m.role, m.content_redacted, m.model,
       m.latency_ms, m.policy_action, m.created_at, c.source_page, c.marketing_consent
      FROM messages m JOIN conversations c ON c.id = m.conversation_id
-     ORDER BY m.created_at DESC LIMIT 10001`,
+     ORDER BY m.created_at DESC, m.rowid DESC LIMIT 10001`,
   ).all();
   const truncated = result.results.length > 10000;
   const header = ['message_id', 'conversation_id', 'role', 'content_redacted', 'model', 'latency_ms', 'policy_action', 'created_at', 'source_page', 'marketing_consent'];
@@ -2349,7 +2351,7 @@ app.get('/api/admin/conversations/:id', async (context) => {
     context.env.DB.prepare(
       `SELECT m.*, json_group_array(json_object('title', c.source_title, 'url', c.source_url, 'score', c.score)) AS citations
        FROM messages m LEFT JOIN citations c ON c.message_id = m.id
-       WHERE m.conversation_id = ? GROUP BY m.id ORDER BY m.created_at ASC`,
+       WHERE m.conversation_id = ? GROUP BY m.id ORDER BY m.created_at ASC, m.rowid ASC`,
     ).bind(id).all(),
   ]);
   if (!conversation) return context.json({ error: 'Not found' }, 404);

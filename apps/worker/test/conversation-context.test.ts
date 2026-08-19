@@ -23,6 +23,7 @@ describe('conversation context', () => {
 
     expect(bind).toHaveBeenCalledWith('conversation-a', 16);
     expect(prepare.mock.calls[0]?.[0]).toContain('WHERE conversation_id = ?');
+    expect(prepare.mock.calls[0]?.[0]).toContain('ORDER BY created_at DESC, rowid DESC');
     expect(history).toEqual([
       { role: 'user', content: 'この物件の価格は？' },
       { role: 'assistant', content: '価格は5,899万円ですにゃん。' },

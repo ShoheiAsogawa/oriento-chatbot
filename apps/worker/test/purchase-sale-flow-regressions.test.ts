@@ -4,6 +4,7 @@ import {
   extractSaleCriteria,
   formatSaleAnswer,
   recommendSaleProperties,
+  normalizeSaleAddress,
   salePropertyChunk,
   type SaleProperty,
 } from '../src/sale-catalog';
@@ -33,6 +34,31 @@ const throughTanabeBudget = [
 ] as const;
 
 describe('purchase-to-sale catalog regressions', () => {
+  it('normalizes duplicated Osaka ward prefixes without changing the source catalog', () => {
+    expect(normalizeSaleAddress('大阪市天王寺区大阪市天王寺区小橋町'))
+      .toBe('大阪市天王寺区小橋町');
+    const duplicated = {
+      ...tanabeHouse,
+      address: normalizeSaleAddress('大阪市天王寺区大阪市天王寺区小橋町'),
+    };
+    const answer = formatSaleAnswer([duplicated], { area: '大阪市', ward: '天王寺区' });
+    expect(answer).toContain('大阪市天王寺区小橋町');
+    expect(answer).not.toContain('大阪市天王寺区大阪市天王寺区');
+  });
+
+  it('parses a ward button value that contains a repeated city/ward label', () => {
+    const history = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '次に、市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '次に区を選んでにゃん。' },
+    ];
+    expect(extractPurchaseConsultationState(history, '天王寺区大阪市天王寺区'))
+      .toMatchObject({ prefecture: '大阪府', area: '大阪市', ward: '天王寺区' });
+  });
+
   it('returns the reported Tanabe used house immediately after the final no-layout selection', () => {
     const history = [
       ...throughTanabeBudget,

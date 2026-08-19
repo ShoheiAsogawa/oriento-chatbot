@@ -71,6 +71,21 @@ describe('evaluatePolicy', () => {
     expect(evaluatePolicy('飲食店向けの店舗物件を探したい').code).toBe('allow');
   });
 
+  it.each([
+    'おなかいたい',
+    'おすすめの病院を教えて',
+    '近くのクリニックを探して',
+  ])('does not answer health-care questions: %s', (question) => {
+    expect(evaluatePolicy(question)).toMatchObject({
+      allowed: false,
+      code: 'out_of_scope',
+    });
+  });
+
+  it('keeps a hospital-nearby property search in scope', () => {
+    expect(evaluatePolicy('病院の近くで物件を探したい').code).toBe('allow');
+  });
+
   it('uses a concise, in-character message when knowledge is unavailable', () => {
     expect(noGroundingDecision().response).toBe(
       'ごめんね、そのことは登録されている物件情報では分からないにゃん。公式LINEから担当者に聞いてみてにゃん。',

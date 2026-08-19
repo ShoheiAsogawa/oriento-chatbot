@@ -34,7 +34,9 @@ export async function loadConversationContext(
     WHERE conversation_id = ?
       AND role IN ('user', 'assistant')
       AND policy_action = 'allow'
-    ORDER BY rowid DESC
+    -- created_at is second-granularity in the legacy schema; rowid preserves
+    -- insertion order when a user/assistant pair shares the same timestamp.
+    ORDER BY created_at DESC, rowid DESC
     LIMIT ?
   `).bind(conversationId, Math.max(1, Math.min(INTAKE_HISTORY_MESSAGE_LIMIT, messageLimit))).all<StoredMessage>();
 

@@ -35,6 +35,16 @@ const foodTopicPatterns = [
   /(?:こってり|あっさり|家系|二郎系|豚骨|味噌ラーメン)/u,
 ];
 
+// Keep health-care requests outside the real-estate conversation.  The same
+// words are allowed when the visitor is explicitly searching for a property
+// near a hospital (handled together with the real-estate context below).
+const healthcareTopicPatterns = [
+  /(?:おなか|お腹|腹)(?:が)?(?:痛|いた)/u,
+  /(?:頭|のど|喉)(?:が)?痛/u,
+  /(?:発熱|熱が|吐き気|嘔吐|下痢|体調不良|けが|怪我|症状|病気|薬|診断|治療)/u,
+  /(?:病院|医院|クリニック|診療所|救急|医師|医者|受診)/u,
+];
+
 const outOfScopePatterns = [
   /(?:今日|明日|週間)の天気/u,
   /(?:政治|選挙|政党|首相|大統領)/u,
@@ -99,6 +109,13 @@ export function evaluatePolicy(input: string): PolicyDecision {
       allowed: false,
       code: 'out_of_scope',
       response: 'お腹がすいたんだね。ごめんね、飲食店やグルメの案内はできないにゃん。お部屋探しや住まいのことなら手伝えるにゃん。',
+    };
+  }
+  if (matchesAny(input, healthcareTopicPatterns) && !hasRealEstateContext) {
+    return {
+      allowed: false,
+      code: 'out_of_scope',
+      response: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
     };
   }
   if (matchesAny(input, outOfScopePatterns)) {
