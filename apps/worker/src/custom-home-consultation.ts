@@ -141,6 +141,23 @@ function flowMessages(history: ConversationContextMessage[], currentMessage: str
   return messages.slice(start);
 }
 
+/**
+ * A visitor can change their mind in the same conversation (for example,
+ * "注文住宅" -> "物件を探す" -> "購入").  The old custom-home intent must
+ * not keep the intake active after that later property-search mode switch.
+ */
+function customHomeSupersededByModeSwitch(messages: ConversationContextMessage[]) {
+  let lastCustomHomeIntent = -1;
+  let lastPropertyModeSwitch = -1;
+  messages.forEach((message, index) => {
+    if (message.role !== 'user') return;
+    const content = normalize(message.content);
+    if (isCustomHomeIntent(content)) lastCustomHomeIntent = index;
+    else if (MODE_SWITCH.test(content)) lastPropertyModeSwitch = index;
+  });
+  return lastPropertyModeSwitch > lastCustomHomeIntent;
+}
+
 function previousAssistant(messages: ConversationContextMessage[], index: number) {
   for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
     const candidate = messages[cursor];
@@ -598,6 +615,7 @@ export function evaluateCustomHomeConsultation(
   const normalizedCurrent = stripAnswer(currentMessage);
   if (MODE_SWITCH.test(normalizedCurrent)) return { active: false };
   const messages = flowMessages(history, currentMessage);
+  if (customHomeSupersededByModeSwitch(messages)) return { active: false };
   const lastAssistant = [...messages].reverse().find((message) => (
     message.role === 'assistant' && isCustomHomePrompt(message.content)
   ))?.content || '';

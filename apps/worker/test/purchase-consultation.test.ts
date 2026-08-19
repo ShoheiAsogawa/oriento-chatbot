@@ -91,6 +91,24 @@ describe('purchase consultation', () => {
     ], 'おすすめの病院を教えて')).toEqual({ active: false });
   });
 
+  it('continues purchase after an older custom-home consultation was explicitly replaced', () => {
+    const history = [
+      { role: 'user' as const, content: '注文住宅' },
+      { role: 'assistant' as const, content: '土地を持っているか教えてにゃん。' },
+      { role: 'user' as const, content: '土地を持っていない' },
+      { role: 'assistant' as const, content: '建てたいエリアを教えてにゃん。' },
+      { role: 'user' as const, content: '物件を探す' },
+      { role: 'assistant' as const, content: '住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。' },
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。' },
+    ];
+
+    expect(evaluatePurchaseConsultation(history, '広島県')).toEqual({
+      active: true,
+      response: '広島県で購入物件を探すにゃん。次に、市区町村を選んでにゃん。',
+    });
+  });
+
   it('continues the completed purchase flow for a property follow-up', () => {
     expect(evaluatePurchaseConsultation([
       { role: 'user', content: '購入' },

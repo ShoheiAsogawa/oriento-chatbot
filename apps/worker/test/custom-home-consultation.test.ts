@@ -370,6 +370,21 @@ describe('custom home consultation', () => {
     expect(evaluateCustomHomeConsultation(purchaseHistory, '物件種別はこだわりなし')).toEqual({ active: false });
   });
 
+  it('stops the old custom-home intake after switching to property purchase', () => {
+    const history = [
+      user('注文住宅'),
+      assistant('まず、土地を持っているか教えてにゃん。'),
+      user('土地を持っていない'),
+      assistant('建てたいエリアを教えてにゃん。'),
+      user('物件を探す'),
+      assistant('住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。'),
+      user('購入'),
+      assistant('購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。'),
+    ];
+
+    expect(evaluateCustomHomeConsultation(history, '広島県')).toEqual({ active: false });
+  });
+
   it('resumes after a harmless identity detour using the latest custom-home prompt', () => {
     const history = [
       user('注文住宅'),
