@@ -9,6 +9,7 @@
     "knowledge:scrape": "python scripts/scrape-orient-knowledge.py",
     "knowledge:properties": "python scripts/scrape-orient-knowledge.py --property-only --individual-properties",
     "knowledge:catalog": "python scripts/build-rental-catalog.py && python scripts/build-sale-catalog.py && python scripts/build-guided-search-options.py",
+    "privacy:pdf": "python scripts/render-privacy-policy-pdf.py",
     "knowledge:validate": "python scripts/validate-orient-knowledge.py",
     "knowledge:refresh:properties": "pnpm knowledge:properties && pnpm knowledge:catalog && pnpm knowledge:validate",
     "check": "pnpm -r check",

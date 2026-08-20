@@ -84,6 +84,7 @@ template.innerHTML = `
         </button>
       </form>
       <p class="privacy">
+        会話は品質管理のため記録されます。
         <a class="privacy-link" target="_blank" rel="noopener">プライバシーポリシー・免責事項</a>
       </p>
       <div class="escalation">
@@ -206,9 +207,9 @@ const styles = `
   .send { width: 42px; height: 42px; display: grid; place-items: center; align-self: end; border: 0; border-radius: 9px; color: #fff; background: var(--orient-primary); cursor: pointer; }
   .send:disabled { opacity: .45; cursor: not-allowed; }
   .send svg { width: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .privacy { margin: 7px 18px 10px; color: var(--orient-muted); font-size: 10px; }
+  .privacy { margin: 7px 18px 10px; color: var(--orient-muted); font-size: 10px; line-height: 1.55; }
   .privacy::before { content: "▣"; margin-right: 5px; }
-  .privacy-link { color: var(--orient-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--orient-primary); text-underline-offset: 2px; }
+  .privacy-link { color: var(--orient-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--orient-primary); text-underline-offset: 2px; margin-left: 2px; }
   .privacy-link:hover, .privacy-link:focus-visible { color: var(--orient-primary-strong); outline: none; }
   .escalation { padding: 10px 14px 14px; border-top: 1px solid var(--orient-border); }
   .escalation p { margin: 0 0 9px; text-align: center; color: var(--orient-muted); font-size: 10px; line-height: 1.45; }

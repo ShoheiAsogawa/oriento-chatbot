@@ -642,8 +642,8 @@ function responseForStep(step: CustomHomeStep, state?: CustomHomeConsultationSta
       : '土地と建物を含めた総予算の目安を教えてにゃん。例：4,000万円まで、未定、相談したいなどで大丈夫にゃん。';
     case 'timing': return 'いつ頃の完成・入居を希望しているか教えてにゃん。未定でも大丈夫にゃん。';
     case 'priorities': return '住まいで重視したいことを教えてにゃん。性能・デザイン・家事動線・収納など、複数あっても大丈夫にゃん。未定や相談したいでも大丈夫にゃん。';
-    case 'contact_name': return 'ここまでの内容を担当者に相談するため、お名前を教えてにゃん。入力内容はご相談対応のために利用するにゃん。';
-    case 'contact_phone': return '担当者からご連絡するため、お電話番号を教えてにゃん。';
+    case 'contact_name': return 'ここまでの内容を担当者に相談するため、お名前を教えてにゃん。入力は任意で、ご相談対応のために利用するにゃん。';
+    case 'contact_phone': return '担当者からご連絡するため、お電話番号を教えてにゃん。送信すると、この相談への連絡に使うことに同意したことになるにゃん。';
     case 'complete': return undefined;
   }
 }
