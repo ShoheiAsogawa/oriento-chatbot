@@ -49,6 +49,30 @@ function visitorProfileSummary(gender: VisitorGender, ageDecade: VisitorAgeDecad
   return `${visitorAgeLabels[ageDecade]}の${visitorGenderLabels[gender]}`;
 }
 
+const orinyanMonthlyGreetings = [
+  'あけましておめでとう、オリにゃんだよ！\n新しい一年も、住まい探しを一緒にがんばるにゃん。',
+  'こんにちは、オリにゃんだよ！\nまだ寒い日が続くけど、あたたかい住まいの話をするにゃん。',
+  'こんにちは、オリにゃんだよ！\n卒業・進学・転勤の季節、お部屋探しをお手伝いするにゃん。',
+  'こんにちは、オリにゃんだよ！\n新生活のスタート、住まいのこと気軽に聞いてにゃん。',
+  'こんにちは、オリにゃんだよ！\n連休明けの住まい探し、のんびり付き合うにゃん。',
+  'こんにちは、オリにゃんだよ！\n梅雨の季節も、居心地のいい部屋を一緒に探すにゃん。',
+  'こんにちは、オリにゃんだよ！\n夏本番だにゃん。涼しい住まいの相談に乗るにゃん。',
+  'こんにちは、オリにゃんだよ！\n暑い日が続くけど、お部屋の話でひと休みするにゃん。',
+  'こんにちは、オリにゃんだよ！\n秋の引っ越しシーズン、希望の住まいを探すにゃん。',
+  'こんにちは、オリにゃんだよ！\n秋も深まってきたにゃん。住まいのこと、聞いてにゃん。',
+  'こんにちは、オリにゃんだよ！\n年末に向けた住まいの相談、今から一緒に考えるにゃん。',
+  'こんにちは、オリにゃんだよ！\n今年もお疲れさまにゃん。来年の住まいも一緒に探すにゃん。',
+] as const;
+
+function japanCalendarMonth(now = new Date()) {
+  return new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCMonth();
+}
+
+function orinyanOpeningMessage(now = new Date()) {
+  const greeting = orinyanMonthlyGreetings[japanCalendarMonth(now)] || orinyanMonthlyGreetings[0];
+  return `${greeting}\nあなたに会えて、とってもうれしいにゃん。\nまずはあなたのことを教えてにゃん。`;
+}
+
 interface ChatMessage {
   id: string;
   role: ChatRole;
@@ -355,7 +379,7 @@ class OrientChat extends HTMLElement {
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'こんにちは、オリにゃんだよ！\nあなたに会えて、とってもうれしいにゃん。\nまずはあなたのことを教えてにゃん。',
+          content: orinyanOpeningMessage(),
         },
         {
           id: crypto.randomUUID(),
