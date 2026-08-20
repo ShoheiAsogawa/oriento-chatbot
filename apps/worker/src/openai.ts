@@ -1,11 +1,13 @@
 import type { SearchChunk } from './types';
 import type { ConversationContextMessage } from './conversation-context';
+import { commentaryPromptPayload, type MonthlyReport } from './monthly-report';
 
 // Keep grounded answers quick and concise: property answers do not need the full
 // search payload, and the catalog flow handles multi-property recommendations separately.
 const MAX_CONTEXT_CHARS = 6_000;
 const MAX_CHUNK_CHARS = 2_000;
 const MAX_COMPLETION_TOKENS = 280;
+const MONTHLY_COMMENTARY_TOKENS = 700;
 const GENERATION_HISTORY_MESSAGE_LIMIT = 8;
 const AI_GATEWAY_TIMEOUT_MS = 25_000;
 
@@ -122,6 +124,60 @@ export async function generateConversationAnswer(
         },
         ...history.slice(-GENERATION_HISTORY_MESSAGE_LIMIT),
         { role: 'user', content: question },
+      ],
+    }),
+  });
+
+  const result = await response.json<OpenAIChatCompletion>().catch(() => ({} as OpenAIChatCompletion));
+  if (!response.ok) {
+    throw new AiGatewayError(response.status, result.error?.type || result.error?.code || 'AI Gateway request failed');
+  }
+
+  const answer = result.choices?.[0]?.message?.content?.trim();
+  if (!answer) throw new AiGatewayError(502, 'OpenAI returned an empty response');
+  return { answer, model: result.model || env.GENERATION_MODEL };
+}
+
+const ORINYAN_MONTHLY_COMMENTARY_PROMPT = `あなたはオリエントグループの不動産案内AI「オリにゃん」です。管理画面の月次レポートを、店舗の担当者が翌日の接客や物件の打ち出しに使える総評として話します。
+
+口調:
+- 一人称は使わず、オリにゃんとして話す。語尾は自然な「にゃん」。
+- 明るく短い日本語。絵文字や過度な記号は使わない。
+- 「専門家じゃないから難しいところもあるけど」といった遠慮は1回まで。そのあと必ず現場で使える具体案を言う。
+
+内容:
+- 渡された集計だけを根拠にする。数字・物件名・年代・性別はデータにあるもの以外を作らない。
+- どの年代の、男／女／そのほかが、賃貸・購入・売却・注文住宅のどれをよく聞いていたかを述べる。
+- 人気の物件名があれば「20代の女の人にはこの物件がよく見られているにゃん」のように結びつける。
+- 担当者向けに、LINEや来店で声をかけるならどの層か、サイトで目立たせるとよい物件や相談テーマを1〜2個提案する。
+- 途中経過なら、月末までに数字が変わることを一言添える。
+- 件数が少ない月は無理に流行を語らず、まだ傾向が見えにくいことを正直に言う。
+- 個人が特定できる話、価格交渉、法令判断、重要事項説明には触れない。
+
+形式:
+- 3〜5段落。各段落は2文前後。見出しや箇条書き記号は使わない。
+- 出典番号は付けない。`;
+
+export async function generateOrinyanMonthlyCommentary(env: Env, report: MonthlyReport) {
+  const endpoint = `https://gateway.ai.cloudflare.com/v1/${encodeURIComponent(env.CLOUDFLARE_ACCOUNT_ID)}/${encodeURIComponent(env.AI_GATEWAY_ID)}/openai/chat/completions`;
+  const payload = commentaryPromptPayload(report);
+  const response = await fetchAiGateway(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'cf-aig-authorization': `Bearer ${env.AI_GATEWAY_TOKEN}`,
+    },
+    body: JSON.stringify({
+      model: env.GENERATION_MODEL,
+      store: false,
+      reasoning_effort: 'none',
+      max_completion_tokens: MONTHLY_COMMENTARY_TOKENS,
+      messages: [
+        { role: 'system', content: ORINYAN_MONTHLY_COMMENTARY_PROMPT },
+        {
+          role: 'user',
+          content: `次の月次集計だけを見て、オリにゃんとして総評を書いてください。\n\n${JSON.stringify(payload, null, 2)}`,
+        },
       ],
     }),
   });

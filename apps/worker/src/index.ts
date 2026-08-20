@@ -48,7 +48,17 @@ import {
   loadConversationContext,
 } from './conversation-context';
 import { MaintenanceScheduler } from './maintenance';
-import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer } from './openai';
+import {
+  attachOrinyanCommentary,
+  isReportMonth,
+  japanMonth,
+  listAvailableReportMonths,
+  listStoredReportMonths,
+  loadMonthlyReport,
+  readStoredMonthlyCommentary,
+  saveMonthlyReportSnapshot,
+} from './monthly-report';
+import { AiGatewayError, generateConversationAnswer, generateGroundedAnswer, generateOrinyanMonthlyCommentary } from './openai';
 import { directConversationAnswer, ensureOrinyanEnding, evaluatePolicy, isPropertyKnowledgeQuestion, noGroundingDecision, SYSTEM_PROMPT } from './policy';
 import { deleteManagedProperty, upsertManagedProperty } from './property-inventory';
 import { wantsOtherPropertyCandidates } from './property-search-continuation';
@@ -79,6 +89,10 @@ const sessionSchema = z.object({
   visitorGender: z.enum(VISITOR_GENDERS),
   visitorAgeDecade: z.enum(VISITOR_AGE_DECADES),
 });
+
+const monthlyCommentarySchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/u),
+}).strict();
 
 const propertyViewSchema = z.object({
   sourcePage: z.string().url().max(1000),
@@ -2658,21 +2672,52 @@ app.get('/api/admin/audit', async (context) => {
 });
 
 app.get('/api/admin/reports/monthly', async (context) => {
-  const listed = await context.env.AUDIT_ARCHIVE.list({ prefix: 'reports/', limit: 24 });
-  const reports = listed.objects
-    .filter((object) => /^reports\/\d{4}-\d{2}\.json$/.test(object.key))
-    .sort((a, b) => b.key.localeCompare(a.key));
+  const storedMonths = await listStoredReportMonths(context.env.AUDIT_ARCHIVE);
+  const availableMonths = listAvailableReportMonths(new Date(), storedMonths);
   const requestedMonth = context.req.query('month');
-  const key = requestedMonth && /^\d{4}-\d{2}$/.test(requestedMonth)
-    ? `reports/${requestedMonth}.json`
-    : reports[0]?.key;
-  if (!key) return Response.json({ availableMonths: [], report: null });
-  const object = await context.env.AUDIT_ARCHIVE.get(key);
-  if (!object) return Response.json({ error: 'Report not found' }, { status: 404 });
-  return Response.json({
-    availableMonths: reports.map((item) => item.key.slice(8, 15)),
-    report: await object.json(),
+  const month = requestedMonth && isReportMonth(requestedMonth) ? requestedMonth : japanMonth();
+  const [report, commentary] = await Promise.all([
+    loadMonthlyReport(context.env.DB, month),
+    readStoredMonthlyCommentary(context.env.AUDIT_ARCHIVE, month),
+  ]);
+  return context.json({
+    availableMonths,
+    report: attachOrinyanCommentary(report, commentary),
   });
+});
+
+app.post('/api/admin/reports/monthly/commentary', async (context) => {
+  const input = monthlyCommentarySchema.parse(await context.req.json().catch(() => ({})));
+  const month = input.month;
+  const [live, existing] = await Promise.all([
+    loadMonthlyReport(context.env.DB, month),
+    readStoredMonthlyCommentary(context.env.AUDIT_ARCHIVE, month),
+  ]);
+  let generated: { answer: string; model: string };
+  try {
+    generated = await generateOrinyanMonthlyCommentary(context.env, live);
+  } catch (error) {
+    if (error instanceof AiGatewayError) {
+      return context.json({ error: 'オリにゃん総評を生成できませんでした。少し時間をおいてからお試しください。' }, error.status === 429 ? 429 : 502);
+    }
+    throw error;
+  }
+  const commentary = {
+    text: generated.answer,
+    generatedAt: new Date().toISOString(),
+    model: generated.model,
+  };
+  const report = attachOrinyanCommentary(live, commentary);
+  await saveMonthlyReportSnapshot(context.env.AUDIT_ARCHIVE, report);
+  await appendAudit(context.env, {
+    eventType: 'report.orinyan_commentary_generated',
+    actorType: 'admin',
+    actorId: context.get('admin').loginId,
+    subjectType: 'report',
+    subjectId: `reports/${month}.json`,
+    metadata: { month, replaced: Boolean(existing) },
+  });
+  return context.json({ availableMonths: listAvailableReportMonths(new Date(), await listStoredReportMonths(context.env.AUDIT_ARCHIVE)), report });
 });
 
 app.get('/api/admin/audit/verify', async (context) => {

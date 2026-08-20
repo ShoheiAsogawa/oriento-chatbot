@@ -1,41 +1,16 @@
 import { DurableObject } from 'cloudflare:workers';
 import { appendAudit } from './audit';
 import { isMonthlyMaintenance, nextMaintenanceTime, previousJapanMonth } from './maintenance-schedule';
+import { attachOrinyanCommentary, loadMonthlyReport, readStoredMonthlyCommentary, saveMonthlyReportSnapshot } from './monthly-report';
 
 const RETRY_DELAY_MS = 15 * 60 * 1000;
 
 async function generateMonthlyReport(env: Env, scheduledTime: number) {
-  const [policySummary, questionTrends, funnel] = await Promise.all([
-    env.DB.prepare(
-      `SELECT policy_action, COUNT(*) AS count FROM messages
-       WHERE role = 'assistant' AND created_at >= datetime('now','start of month','-1 month')
-         AND created_at < datetime('now','start of month') GROUP BY policy_action ORDER BY count DESC`,
-    ).all(),
-    env.DB.prepare(
-      `SELECT substr(content_redacted, 1, 120) AS question, COUNT(*) AS count
-       FROM messages WHERE role = 'user'
-         AND created_at >= datetime('now','start of month','-1 month')
-         AND created_at < datetime('now','start of month')
-       GROUP BY substr(content_redacted, 1, 120) ORDER BY count DESC LIMIT 50`,
-    ).all(),
-    env.DB.prepare(
-      `SELECT COUNT(*) AS conversations,
-        SUM(CASE WHEN marketing_consent = 1 THEN 1 ELSE 0 END) AS consented_conversations
-       FROM conversations WHERE created_at >= datetime('now','start of month','-1 month')
-         AND created_at < datetime('now','start of month')`,
-    ).first(),
-  ]);
   const month = previousJapanMonth(scheduledTime);
   const key = `reports/${month}.json`;
-  await env.AUDIT_ARCHIVE.put(key, JSON.stringify({
-    month,
-    generatedAt: new Date().toISOString(),
-    policySummary: policySummary.results,
-    questionTrends: questionTrends.results,
-    funnel,
-  }, null, 2), {
-    httpMetadata: { contentType: 'application/json' },
-  });
+  const existing = await readStoredMonthlyCommentary(env.AUDIT_ARCHIVE, month);
+  const report = attachOrinyanCommentary(await loadMonthlyReport(env.DB, month, new Date(scheduledTime)), existing);
+  await saveMonthlyReportSnapshot(env.AUDIT_ARCHIVE, report);
   await appendAudit(env, {
     eventType: 'report.monthly_generated',
     actorType: 'system',

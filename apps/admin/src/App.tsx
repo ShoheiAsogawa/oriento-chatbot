@@ -1,6 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity, Archive, BookOpen, ChevronDown, ChevronLeft, ChevronRight,
+  Activity, Archive, BookOpen, ChevronLeft, ChevronRight,
   EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
   FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Plus, ClipboardList,
   RefreshCw, Search, ShieldCheck, Trash2, UploadCloud,
@@ -14,10 +14,10 @@ import {
   type CustomHomeInquiry,
   type CustomHomeInquiryIntake,
   type KnowledgeItem,
-  type MonthlyReport,
   type PropertyKnowledgeInput,
 } from './api';
 import { OverviewPage } from './OverviewPage';
+import { ReportsPage } from './ReportsPage';
 
 type PageKey = 'overview' | 'reports' | 'knowledge' | 'conversations' | 'inquiries';
 
@@ -183,43 +183,6 @@ function Sidebar({ page, onPage, collapsed, onToggle }: { page: PageKey; onPage:
 
 function PageHeader({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
   return <header className="page-header"><div><h1>{title}</h1><p>{description}</p></div>{action}</header>;
-}
-
-function ReportsPage() {
-  const [report, setReport] = useState<MonthlyReport | null>(null);
-  const [months, setMonths] = useState<string[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const requestSequence = useRef(0);
-  const loadMonth = useCallback(async (month?: string) => {
-    const sequence = requestSequence.current + 1;
-    requestSequence.current = sequence;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.monthlyReport(month);
-      if (requestSequence.current !== sequence) return;
-      setReport(data.report);
-      setMonths(data.availableMonths);
-      setSelectedMonth(data.report?.month || month || '');
-    } catch (reason) {
-      if (requestSequence.current !== sequence) return;
-      setError(reason instanceof Error ? reason.message : '月次レポートを読み込めませんでした。');
-    } finally {
-      if (requestSequence.current === sequence) setLoading(false);
-    }
-  }, []);
-  useEffect(() => { void loadMonth(); }, [loadMonth]);
-  if (!report) return <><PageHeader title="月次レポート" description="質問傾向、回答判定、会話状況を月ごとに確認します。" />{error ? <p className="knowledge-notice" role="alert">{error}</p> : null}<div className="surface report-empty"><Gauge /><p>{loading ? '月次レポートを読み込んでいます…' : '最初の月次集計後にレポートが表示されます。'}</p></div></>;
-  const conversations = Number(report.funnel?.conversations || 0);
-  const maxQuestionCount = Math.max(1, ...report.questionTrends.map((item) => Number(item.count)));
-  return <><PageHeader title="月次レポート" description="質問傾向、回答判定、会話状況を月ごとに確認します。" action={<label className="report-month-select"><span>対象月</span><select value={selectedMonth} onChange={(event) => void loadMonth(event.target.value)} disabled={loading}>{months.map((month) => <option value={month} key={month}>{month}</option>)}</select><ChevronDown /></label>} />
-    {error ? <p className="knowledge-notice" role="alert">{error}</p> : null}
-    <section className="metric-strip report-metrics"><div className="metric"><MessageSquareText /><p>会話</p><strong>{conversations.toLocaleString()}</strong><small>対象月の開始数</small></div><div className="metric"><History /><p>保存月</p><strong>{months.length}</strong><small>R2月次JSON</small></div></section>
-    <div className="report-grid"><section className="surface"><div className="section-heading"><div><h2>よくある質問</h2><p>PIIマスク後の質問文を集計</p></div></div><div className="trend-list">{report.questionTrends.slice(0, 10).map((item, index) => <div key={`${item.question}-${index}`}><span>{index + 1}</span><p>{item.question}</p><i style={{ width: `${Math.max(8, (Number(item.count) / maxQuestionCount) * 100)}%` }} /><strong>{Number(item.count).toLocaleString()}件</strong></div>)}</div></section></div>
-    <p className="report-generated">生成日時: {formatDate(report.generatedAt)} / 保存先: R2 reports/{report.month}.json</p>
-  </>;
 }
 
 function KnowledgePage() {

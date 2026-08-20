@@ -105,8 +105,46 @@ export interface ConversationMessage {
 export interface MonthlyReport {
   month: string;
   generatedAt: string;
+  status: 'in_progress' | 'final';
+  conversations: number;
+  questions: number;
+  visitors: number;
+  consentedConversations: number;
+  policySummary: Array<{ action: string; count: number }>;
   questionTrends: Array<{ question: string; count: number }>;
-  funnel: { conversations?: number } | null;
+  intents: MonthlyIntentCount[];
+  intentsByDemographic: Array<{
+    gender: OverviewGender;
+    ageDecade: OverviewAgeDecade;
+    intent: MonthlyIntentCount['intent'];
+    count: number;
+  }>;
+  genders: OverviewGenderCount[];
+  ages: OverviewAgeCount[];
+  demographics: OverviewDemographicCount[];
+  propertyInterests: MonthlyPropertyInterest[];
+  funnel: { conversations?: number; consented_conversations?: number } | null;
+  orinyanCommentary?: OrinyanCommentary | null;
+}
+
+export interface MonthlyIntentCount {
+  intent: 'rent' | 'buy' | 'sell' | 'build' | 'other';
+  count: number;
+}
+
+export interface MonthlyPropertyInterest {
+  gender: OverviewGender;
+  ageDecade: OverviewAgeDecade;
+  title: string;
+  sourceUrl?: string;
+  category?: 'properties_for_sale' | 'properties_for_rent';
+  count: number;
+}
+
+export interface OrinyanCommentary {
+  text: string;
+  generatedAt: string;
+  model: string;
 }
 
 export interface OverviewDailyPoint {
@@ -373,6 +411,64 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
   };
 }
 
+function mockMonthlyReport(month = '2026-08'): MonthlyReport {
+  const inProgress = month === '2026-08';
+  return {
+    month,
+    generatedAt: inProgress ? '2026-08-20T08:10:00Z' : '2026-08-01T18:27:00Z',
+    status: inProgress ? 'in_progress' : 'final',
+    conversations: inProgress ? 84 : 486,
+    questions: inProgress ? 191 : 980,
+    visitors: inProgress ? 61 : 352,
+    consentedConversations: inProgress ? 4 : 18,
+    policySummary: [{ action: 'allow', count: 170 }],
+    questionTrends: [
+      { question: '堺市の賃貸を探しています', count: 28 },
+      { question: '店舗の営業時間を教えてください', count: 17 },
+      { question: '資料請求をしたいです', count: 15 },
+    ],
+    intents: [
+      { intent: 'rent', count: 46 },
+      { intent: 'buy', count: 21 },
+      { intent: 'sell', count: 7 },
+      { intent: 'build', count: 4 },
+      { intent: 'other', count: 6 },
+    ],
+    intentsByDemographic: [
+      { gender: 'female', ageDecade: '20s', intent: 'rent', count: 13 },
+      { gender: 'male', ageDecade: '30s', intent: 'buy', count: 9 },
+    ],
+    genders: [
+      { gender: 'male', count: 38 },
+      { gender: 'female', count: 42 },
+      { gender: 'other', count: 4 },
+    ],
+    ages: [
+      { ageDecade: 'teens', count: 4 },
+      { ageDecade: '20s', count: 21 },
+      { ageDecade: '30s', count: 28 },
+      { ageDecade: '40s', count: 18 },
+      { ageDecade: '50s', count: 9 },
+      { ageDecade: '60s_plus', count: 4 },
+    ],
+    demographics: [
+      { gender: 'female', ageDecade: '20s', count: 13 },
+      { gender: 'male', ageDecade: '30s', count: 12 },
+      { gender: 'female', ageDecade: '30s', count: 14 },
+    ],
+    propertyInterests: [
+      { gender: 'female', ageDecade: '20s', title: '堺市のワンルーム', sourceUrl: 'https://orijyu.com/rent/post-12.html', category: 'properties_for_rent', count: 8 },
+      { gender: 'male', ageDecade: '30s', title: '和泉市の中古戸建', sourceUrl: 'https://orijyu.com/buy/post-88.html', category: 'properties_for_sale', count: 5 },
+    ],
+    funnel: { conversations: inProgress ? 84 : 486, consented_conversations: inProgress ? 4 : 18 },
+    orinyanCommentary: inProgress ? null : {
+      text: '7月は30代の相談が多かったにゃん。男の人は購入、女の人は賃貸をよく聞いていたにゃん。\n\n専門家じゃないから市場全体までは言い切れないけど、20代の女の人には賃貸のワンルームを先に見せると話が早いにゃん。',
+      generatedAt: '2026-08-01T18:40:00Z',
+      model: 'gpt-5.4-nano',
+    },
+  };
+}
+
 const demoMode = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 export const ADMIN_SESSION_EXPIRED_EVENT = 'orient-admin-session-expired';
 
@@ -559,14 +655,24 @@ export const api = {
     ],
   }),
   monthlyReport: (month?: string) => request<{ availableMonths: string[]; report: MonthlyReport | null }>(`/api/admin/reports/monthly${month ? `?month=${encodeURIComponent(month)}` : ''}`, undefined, {
-    availableMonths: ['2026-07'],
-    report: {
-      month: '2026-07',
-      generatedAt: '2026-08-01T18:27:00Z',
-      questionTrends: [{ question: '物件を探す方法を教えてください', count: 28 }, { question: '店舗の営業時間を教えてください', count: 17 }, { question: '資料請求をしたいです', count: 15 }],
-      funnel: { conversations: 486 },
-    },
+    availableMonths: ['2026-08', '2026-07'],
+    report: mockMonthlyReport(month || '2026-08'),
   }),
+  orinyanCommentary: (month: string) => request<{ availableMonths: string[]; report: MonthlyReport | null }>(
+    '/api/admin/reports/monthly/commentary',
+    { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ month }) },
+    {
+      availableMonths: ['2026-08', '2026-07'],
+      report: {
+        ...mockMonthlyReport(month),
+        orinyanCommentary: {
+          text: 'いまのところ20代の女の人が賃貸をよく見ているにゃん。堺市のワンルームが特に反応いいにゃん。\n\n専門家じゃないから断定はできないけど、この層には家賃の目安と駅徒歩を先に出すと会話が続きやすいにゃん。30代の男の人は購入相談が多めだから、中古戸建をトップ付近に置いてみるにゃん。\n\nまだ月の途中だから、数字はこれから変わるにゃん。気になる層が来たら公式LINEへつなぐ準備をしておくとにゃん。',
+          generatedAt: '2026-08-20T08:12:00Z',
+          model: 'gpt-5.4-nano',
+        },
+      },
+    },
+  ),
   downloadConversations: async () => {
     const response = await fetch('/api/admin/conversations/export.csv', { headers: adminHeaders(), credentials: 'same-origin' });
     if (response.status === 401) window.dispatchEvent(new Event(ADMIN_SESSION_EXPIRED_EVENT));
