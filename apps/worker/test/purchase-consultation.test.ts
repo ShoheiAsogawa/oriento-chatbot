@@ -299,6 +299,38 @@ describe('purchase consultation', () => {
     expect(evaluatePurchaseConsultation(cityHistory, answer).response).toContain('市区町村を選んで');
   });
 
+  it('re-asks the current purchase step when a leftover guided button is tapped', () => {
+    const history = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '大阪府で購入物件を探すにゃん。次に、市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '茨木市' },
+      { role: 'assistant' as const, content: '購入する物件の種類を選んでにゃん。まだ決まっていなければ、こだわりなしでも探せるにゃん。' },
+      { role: 'user' as const, content: '物件種別はこだわりなし' },
+      { role: 'assistant' as const, content: '購入予算の上限を選んでにゃん。諸費用を除いた物件価格の目安で大丈夫にゃん。' },
+    ];
+    expect(evaluatePurchaseConsultation(history, '物件種別はこだわりなし')).toEqual({
+      active: true,
+      response: '購入予算の上限を選んでにゃん。諸費用を除いた物件価格の目安で大丈夫にゃん。',
+    });
+  });
+
+  it('re-asks the Osaka ward step instead of dropping a leftover city button to the model', () => {
+    const history = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '大阪市で購入物件を探すにゃん。次に区を選んでにゃん。' },
+    ];
+    expect(evaluatePurchaseConsultation(history, '大阪市')).toEqual({
+      active: true,
+      response: '大阪市で購入物件を探すにゃん。次に区を選んでにゃん。',
+    });
+  });
+
   it('repeats represented wards when the ward is unknown', () => {
     const history = [
       { role: 'user' as const, content: '購入' },

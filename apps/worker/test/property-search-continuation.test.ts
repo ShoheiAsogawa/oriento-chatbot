@@ -1,12 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import {
   isObviousConversationDetour,
+  looksLikeGuidedSearchSelection,
   scopePropertySearchMessages,
   shouldContinueCompletedPropertySearch,
   wantsOtherPropertyCandidates,
 } from '../src/property-search-continuation';
 
 describe('property search conversation routing', () => {
+  it.each([
+    '物件種別はこだわりなし',
+    '購入予算5000万円まで',
+    '大阪府',
+    '天王寺区',
+    '3LDK',
+  ])('recognizes a leftover guided-search button: %s', (message) => {
+    expect(looksLikeGuidedSearchSelection(message)).toBe(true);
+  });
+
   it.each([
     'あなたはだれ？',
     'おなかすいた',
