@@ -338,12 +338,19 @@ class OrientChat extends HTMLElement {
       // stored credentials so a page reload cannot resume hidden server state.
       this.clearStoredSession();
       this.bindEvents();
-      this.messages = [{
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: 'こんにちは、オリにゃんだよ！\nあなたのことを教えてにゃん。',
-        choices: visitorGenderChoices,
-      }];
+      this.messages = [
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: 'こんにちは、オリにゃんだよ！\nあなたに会えて、とってもうれしいにゃん。\nまずはあなたのことを教えてにゃん。',
+        },
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: 'まずは性別を教えてにゃん。',
+          choices: visitorGenderChoices,
+        },
+      ];
       this.renderMessages();
       this.syncComposerLock();
     }
