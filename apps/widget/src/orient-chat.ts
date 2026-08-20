@@ -106,9 +106,9 @@ template.innerHTML = `
         </button>
       </header>
       <div class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
-      <div class="suggestions" hidden aria-label="よくある質問">
-        <button type="button" data-question="物件を探す"><span>⌕</span>物件を探す</button>
-        <button type="button" data-question="オリエントホームのこだわり"><span>⌂</span>オリエントホームのこだわり</button>
+      <div class="suggestions locked" aria-label="よくある質問">
+        <button type="button" data-question="物件を探す" disabled title="はじめに性別と年代を選んでにゃん"><span>⌕</span>物件を探す</button>
+        <button type="button" data-question="オリエントホームのこだわり" disabled title="はじめに性別と年代を選んでにゃん"><span>⌂</span>オリエントホームのこだわり</button>
       </div>
       <form class="composer">
         <label class="sr-only" for="orient-chat-input">メッセージを入力</label>
@@ -231,11 +231,24 @@ const styles = `
   .choice-grid[data-count="3"] .choice-button:last-child:nth-child(odd),
   .choice-grid[data-count="6"] .choice-button:last-child:nth-child(odd) { grid-column: auto; }
   .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
-  .suggestions[hidden] { display: none; }
   .composer.locked { opacity: .55; }
   .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
   .suggestions button span { display: block; color: var(--orient-primary); font-size: 17px; line-height: 1; }
   .suggestions button:hover, .suggestions button:focus-visible { background: #fff5ef; outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
+  .suggestions button:disabled {
+    color: #8d8e96;
+    border-color: #d8d9df;
+    background: #f3f3f5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+    opacity: .72;
+  }
+  .suggestions button:disabled span { color: #9a9ba3; }
+  .suggestions button:disabled:hover, .suggestions button:disabled:focus-visible {
+    background: #f3f3f5;
+    outline: none;
+    transform: none;
+  }
   .composer { display: grid; grid-template-columns: 1fr 44px; gap: 8px; margin: 0 14px; padding: 5px 5px 5px 13px; border: 2px solid var(--orient-primary); border-radius: 12px; background: #fff; }
   .composer:focus-within { box-shadow: 0 0 0 3px rgba(255,104,11,.15); }
   textarea { width: 100%; max-height: 92px; resize: none; padding: 8px 0; border: 0; outline: 0; color: var(--orient-ink); background: transparent; line-height: 1.5; }
@@ -493,7 +506,15 @@ class OrientChat extends HTMLElement {
     const composer = this.root.querySelector<HTMLElement>('.composer');
     const input = this.root.querySelector<HTMLTextAreaElement>('textarea');
     const send = this.root.querySelector<HTMLButtonElement>('.send');
-    if (suggestions) suggestions.hidden = !ready;
+    if (suggestions) {
+      suggestions.hidden = false;
+      suggestions.classList.toggle('locked', !ready);
+      suggestions.querySelectorAll<HTMLButtonElement>('button').forEach((button) => {
+        button.disabled = !ready || this.sending;
+        if (ready) button.removeAttribute('title');
+        else button.title = 'はじめに性別と年代を選んでにゃん';
+      });
+    }
     composer?.classList.toggle('locked', !ready);
     if (input) {
       input.disabled = !ready;
