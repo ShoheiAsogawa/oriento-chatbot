@@ -60,6 +60,7 @@ describe('overview series helpers', () => {
     expect(fillGenderSeries([{ gender: 'female', count: 9 }])).toEqual([
       { gender: 'male', count: 0 },
       { gender: 'female', count: 9 },
+      { gender: 'other', count: 0 },
     ]);
     expect(fillAgeSeries([{ ageDecade: '30s', count: 4 }]).map((item) => item.count)).toEqual([0, 0, 4, 0, 0, 0]);
     expect(fillDemographicSeries([
@@ -213,6 +214,7 @@ describe('loadOverview', () => {
     expect(overview.genders).toEqual([
       { gender: 'male', count: 5 },
       { gender: 'female', count: 7 },
+      { gender: 'other', count: 0 },
     ]);
     expect(overview.ages.find((item) => item.ageDecade === '30s')).toEqual({ ageDecade: '30s', count: 8 });
     expect(overview.demographics.find((item) => item.gender === 'female' && item.ageDecade === '30s'))

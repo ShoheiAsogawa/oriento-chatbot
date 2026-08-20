@@ -175,7 +175,7 @@ export interface OverviewHourCount {
   count: number;
 }
 
-export type OverviewGender = 'male' | 'female';
+export type OverviewGender = 'male' | 'female' | 'other';
 export type OverviewAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
 
 export interface OverviewGenderCount {
@@ -334,7 +334,8 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
     hours,
     genders: [
       { gender: 'male', count: 38 },
-      { gender: 'female', count: 46 },
+      { gender: 'female', count: 42 },
+      { gender: 'other', count: 4 },
     ],
     ages: [
       { ageDecade: 'teens', count: 4 },
@@ -348,11 +349,14 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
       { gender: 'male', ageDecade: 'teens', count: 1 },
       { gender: 'female', ageDecade: 'teens', count: 3 },
       { gender: 'male', ageDecade: '20s', count: 8 },
-      { gender: 'female', ageDecade: '20s', count: 13 },
+      { gender: 'female', ageDecade: '20s', count: 12 },
+      { gender: 'other', ageDecade: '20s', count: 1 },
       { gender: 'male', ageDecade: '30s', count: 12 },
-      { gender: 'female', ageDecade: '30s', count: 16 },
+      { gender: 'female', ageDecade: '30s', count: 14 },
+      { gender: 'other', ageDecade: '30s', count: 2 },
       { gender: 'male', ageDecade: '40s', count: 10 },
-      { gender: 'female', ageDecade: '40s', count: 8 },
+      { gender: 'female', ageDecade: '40s', count: 7 },
+      { gender: 'other', ageDecade: '40s', count: 1 },
       { gender: 'male', ageDecade: '50s', count: 5 },
       { gender: 'female', ageDecade: '50s', count: 4 },
       { gender: 'male', ageDecade: '60s_plus', count: 2 },

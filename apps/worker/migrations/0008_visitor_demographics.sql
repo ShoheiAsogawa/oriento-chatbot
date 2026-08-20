@@ -1,5 +1,5 @@
 ALTER TABLE conversations ADD COLUMN visitor_gender TEXT
-  CHECK (visitor_gender IS NULL OR visitor_gender IN ('male', 'female'));
+  CHECK (visitor_gender IS NULL OR visitor_gender IN ('male', 'female', 'other'));
 
 ALTER TABLE conversations ADD COLUMN visitor_age_decade TEXT
   CHECK (visitor_age_decade IS NULL OR visitor_age_decade IN ('teens', '20s', '30s', '40s', '50s', '60s_plus'));

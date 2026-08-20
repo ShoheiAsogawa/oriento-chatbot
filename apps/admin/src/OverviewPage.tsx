@@ -33,7 +33,11 @@ const emptyOverview: OverviewData = {
   policy: [],
   intents: [],
   hours: Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 })),
-  genders: [{ gender: 'male', count: 0 }, { gender: 'female', count: 0 }],
+  genders: [
+    { gender: 'male', count: 0 },
+    { gender: 'female', count: 0 },
+    { gender: 'other', count: 0 },
+  ],
   ages: [
     { ageDecade: 'teens', count: 0 },
     { ageDecade: '20s', count: 0 },
@@ -48,9 +52,12 @@ const emptyOverview: OverviewData = {
 };
 
 const genderLabels: Record<OverviewGenderCount['gender'], string> = {
-  male: '男性',
-  female: '女性',
+  male: '男',
+  female: '女',
+  other: 'そのほか',
 };
+
+const genderOrder: OverviewGenderCount['gender'][] = ['male', 'female', 'other'];
 
 const ageLabels: Record<OverviewAgeCount['ageDecade'], string> = {
   teens: '10代',
@@ -244,44 +251,38 @@ function DemographicStats({
   const genderCounts = new Map(genders.map((item) => [item.gender, item.count]));
   const ageCounts = new Map(ages.map((item) => [item.ageDecade, item.count]));
   const cell = new Map(demographics.map((item) => [`${item.gender}:${item.ageDecade}`, item.count]));
-  const maleTotal = genderCounts.get('male') || 0;
-  const femaleTotal = genderCounts.get('female') || 0;
-  const total = maleTotal + femaleTotal;
+  const total = genderOrder.reduce((sum, gender) => sum + (genderCounts.get(gender) || 0), 0);
   if (!total) return <p className="chart-empty">性別と年代を選んだ相談が集まると、ここに表示します。</p>;
 
   const countAt = (gender: OverviewGenderCount['gender'], age: OverviewAgeCount['ageDecade']) => cell.get(`${gender}:${age}`) || 0;
+  const rowTotal = (age: OverviewAgeCount['ageDecade']) => genderOrder.reduce((sum, gender) => sum + countAt(gender, age), 0);
 
   return <div className="demographic-stats">
     <div className="demographic-split">
-      <span>男性 {maleTotal.toLocaleString()}件（{percent(maleTotal, total)}%）</span>
-      <span>女性 {femaleTotal.toLocaleString()}件（{percent(femaleTotal, total)}%）</span>
+      {genderOrder.map((gender) => {
+        const count = genderCounts.get(gender) || 0;
+        return <span key={gender}>{genderLabels[gender]} {count.toLocaleString()}件（{percent(count, total)}%）</span>;
+      })}
     </div>
     <table className="demographic-matrix">
       <thead>
         <tr>
           <th>年代</th>
-          <th>男性</th>
-          <th>女性</th>
+          {genderOrder.map((gender) => <th key={gender}>{genderLabels[gender]}</th>)}
           <th>合計</th>
         </tr>
       </thead>
       <tbody>
-        {ageOrder.map((age) => {
-          const male = countAt('male', age);
-          const female = countAt('female', age);
-          return <tr key={age}>
-            <th>{ageLabels[age]}</th>
-            <td>{male.toLocaleString()}</td>
-            <td>{female.toLocaleString()}</td>
-            <td>{(male + female).toLocaleString()}</td>
-          </tr>;
-        })}
+        {ageOrder.map((age) => <tr key={age}>
+          <th>{ageLabels[age]}</th>
+          {genderOrder.map((gender) => <td key={gender}>{countAt(gender, age).toLocaleString()}</td>)}
+          <td>{rowTotal(age).toLocaleString()}</td>
+        </tr>)}
       </tbody>
       <tfoot>
         <tr>
           <th>合計</th>
-          <td>{maleTotal.toLocaleString()}</td>
-          <td>{femaleTotal.toLocaleString()}</td>
+          {genderOrder.map((gender) => <td key={gender}>{(genderCounts.get(gender) || 0).toLocaleString()}</td>)}
           <td>{total.toLocaleString()}</td>
         </tr>
       </tfoot>

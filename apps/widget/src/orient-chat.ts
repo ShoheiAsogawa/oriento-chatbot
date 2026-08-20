@@ -15,12 +15,13 @@ interface ChatChoice {
   tone?: 'primary' | 'default';
 }
 
-type VisitorGender = 'male' | 'female';
+type VisitorGender = 'male' | 'female' | 'other';
 type VisitorAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
 
 const visitorGenderChoices: ChatChoice[] = [
-  { label: '男性', value: 'male', tone: 'primary' },
-  { label: '女性', value: 'female', tone: 'primary' },
+  { label: '男', value: 'male', tone: 'primary' },
+  { label: '女', value: 'female', tone: 'primary' },
+  { label: 'そのほか', value: 'other' },
 ];
 const visitorAgeChoices: ChatChoice[] = [
   { label: '10代', value: 'teens' },
@@ -30,17 +31,22 @@ const visitorAgeChoices: ChatChoice[] = [
   { label: '50代', value: '50s' },
   { label: '60代以上', value: '60s_plus' },
 ];
-const visitorGenderLabels: Record<VisitorGender, string> = { male: '男性', female: '女性' };
+const visitorGenderLabels: Record<VisitorGender, string> = { male: '男', female: '女', other: 'そのほか' };
 const visitorAgeLabels: Record<VisitorAgeDecade, string> = {
   teens: '10代', '20s': '20代', '30s': '30代', '40s': '40代', '50s': '50代', '60s_plus': '60代以上',
 };
 
 function isVisitorGender(value: string): value is VisitorGender {
-  return value === 'male' || value === 'female';
+  return value in visitorGenderLabels;
 }
 
 function isVisitorAgeDecade(value: string): value is VisitorAgeDecade {
   return value in visitorAgeLabels;
+}
+
+function visitorProfileSummary(gender: VisitorGender, ageDecade: VisitorAgeDecade) {
+  if (gender === 'other') return `${visitorAgeLabels[ageDecade]}・そのほか`;
+  return `${visitorAgeLabels[ageDecade]}の${visitorGenderLabels[gender]}`;
 }
 
 interface ChatMessage {
@@ -335,7 +341,7 @@ class OrientChat extends HTMLElement {
       this.messages = [{
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: 'こんにちは、オリにゃんだよ！\n質問の前に、男性か女性か選んでにゃん。',
+        content: 'こんにちは、オリにゃんだよ！\nあなたのことを教えてにゃん。',
         choices: visitorGenderChoices,
       }];
       this.renderMessages();
@@ -512,7 +518,7 @@ class OrientChat extends HTMLElement {
     this.messages.push({
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: `${visitorAgeLabels[value]}の${visitorGenderLabels[this.visitorGender]}だね！\nお部屋探しや住まいのこと、気軽に聞いてにゃん。`,
+      content: `${visitorProfileSummary(this.visitorGender, value)}だね！\nお部屋探しや住まいのこと、気軽に聞いてにゃん。`,
     });
     this.renderMessages();
     this.syncComposerLock();
