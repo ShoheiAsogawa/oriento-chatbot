@@ -186,7 +186,10 @@ export interface OverviewData {
   conversationsToday: number;
   conversationsYesterday: number;
   visitors30d: number;
+  visitorsToday: number;
   questions30d: number;
+  questionsToday: number;
+  inquiriesToday: number;
   refused30d: number;
   consented30d: number;
   knowledgeItems: number;
@@ -197,6 +200,7 @@ export interface OverviewData {
   policy: OverviewPolicyCount[];
   intents: OverviewIntentCount[];
   hours: OverviewHourCount[];
+  hoursToday: OverviewHourCount[];
   usage: OverviewUsagePoint[];
   costGuard: {
     day: string;
@@ -269,7 +273,10 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
     conversationsToday: last?.conversations || 0,
     conversationsYesterday: daily.at(-2)?.conversations || 0,
     visitors30d: daily.reduce((sum, point) => sum + point.visitors, 0),
+    visitorsToday: last?.visitors || 0,
     questions30d: 3482,
+    questionsToday: 11,
+    inquiriesToday: 2,
     refused30d: 39,
     consented30d: 86,
     knowledgeItems: 28,
@@ -310,6 +317,7 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
       { intent: 'other', count: 14 },
     ],
     hours,
+    hoursToday: hours.map((item) => ({ hour: item.hour, count: item.hour >= 9 && item.hour <= 21 ? Math.max(0, item.count - 8) : 0 })),
     usage,
     costGuard: {
       day: today,
