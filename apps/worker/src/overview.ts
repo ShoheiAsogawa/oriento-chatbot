@@ -59,7 +59,10 @@ export interface OverviewData {
   conversationsToday: number;
   conversationsYesterday: number;
   visitors30d: number;
+  visitorsToday: number;
   questions30d: number;
+  questionsToday: number;
+  inquiriesToday: number;
   refused30d: number;
   consented30d: number;
   knowledgeItems: number;
@@ -70,6 +73,7 @@ export interface OverviewData {
   policy: OverviewPolicyCount[];
   intents: OverviewIntentCount[];
   hours: OverviewHourCount[];
+  hoursToday: OverviewHourCount[];
   usage: OverviewUsagePoint[];
   costGuard: {
     day: string;
@@ -236,6 +240,8 @@ export async function loadOverview(
     policyRows,
     intentRows,
     hourRows,
+    hourTodayRows,
+    inquiryToday,
     usageRows,
     propertyViewRows,
     managedPropertyRows,
@@ -247,6 +253,7 @@ export async function loadOverview(
         COUNT(DISTINCT visitor_hash) AS visitors30d,
         SUM(CASE WHEN date(created_at, '+9 hours') = date('now', '+9 hours') THEN 1 ELSE 0 END) AS conversationsToday,
         SUM(CASE WHEN date(created_at, '+9 hours') = date('now', '+9 hours', '-1 day') THEN 1 ELSE 0 END) AS conversationsYesterday,
+        COUNT(DISTINCT CASE WHEN date(created_at, '+9 hours') = date('now', '+9 hours') THEN visitor_hash END) AS visitorsToday,
         SUM(CASE WHEN marketing_consent = 1 THEN 1 ELSE 0 END) AS consented30d
        FROM conversations
        WHERE created_at >= datetime('now', '-30 days') -- overview.summary`,
@@ -255,6 +262,7 @@ export async function loadOverview(
       visitors30d: number;
       conversationsToday: number | null;
       conversationsYesterday: number | null;
+      visitorsToday: number | null;
       consented30d: number | null;
     }>(),
     db.prepare(
@@ -263,9 +271,11 @@ export async function loadOverview(
          AND created_at >= datetime('now', '-30 days') -- overview.refused`,
     ).first<{ count: number }>(),
     db.prepare(
-      `SELECT COUNT(*) AS count FROM messages
+      `SELECT COUNT(*) AS count,
+        SUM(CASE WHEN date(created_at, '+9 hours') = date('now', '+9 hours') THEN 1 ELSE 0 END) AS today
+       FROM messages
        WHERE role = 'user' AND created_at >= datetime('now', '-30 days') -- overview.questions`,
-    ).first<{ count: number }>(),
+    ).first<{ count: number; today: number | null }>(),
     db.prepare(
       `SELECT date(created_at, '+9 hours') AS day,
         COUNT(*) AS conversations,
@@ -325,6 +335,19 @@ export async function loadOverview(
        ORDER BY hour`,
     ).all<{ hour: number; count: number }>(),
     db.prepare(
+      `SELECT CAST(strftime('%H', datetime(created_at, '+9 hours')) AS INTEGER) AS hour,
+        COUNT(*) AS count
+       FROM conversations
+       WHERE date(created_at, '+9 hours') = date('now', '+9 hours') -- overview.today_hours
+       GROUP BY hour
+       ORDER BY hour`,
+    ).all<{ hour: number; count: number }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM custom_home_leads
+       WHERE customer_id IS NOT NULL AND notification_status != 'collecting'
+         AND date(created_at, '+9 hours') = date('now', '+9 hours') -- overview.inquiriesToday`,
+    ).first<{ count: number }>(),
+    db.prepare(
       `SELECT day, metric, count FROM usage_counters
        WHERE day >= ? -- overview.usage
        ORDER BY day`,
@@ -359,7 +382,10 @@ export async function loadOverview(
     conversationsToday: asCount(summary?.conversationsToday),
     conversationsYesterday: asCount(summary?.conversationsYesterday),
     visitors30d: asCount(summary?.visitors30d),
+    visitorsToday: asCount(summary?.visitorsToday),
     questions30d: asCount(questions?.count),
+    questionsToday: asCount(questions?.today),
+    inquiriesToday: asCount(inquiryToday?.count),
     refused30d: asCount(unanswered?.count),
     consented30d: asCount(summary?.consented30d),
     knowledgeItems: asCount(options.knowledgeItems),
@@ -378,6 +404,7 @@ export async function loadOverview(
       count: asCount(row.count),
     })),
     hours: fillHourlySeries(hourRows.results || []),
+    hoursToday: fillHourlySeries(hourTodayRows.results || []),
     usage: fillUsageSeries(today, usageRows.results || []),
     costGuard: {
       day: dailyUsage.day,

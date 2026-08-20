@@ -104,12 +104,13 @@ describe('loadOverview', () => {
             visitors30d: 28,
             conversationsToday: 6,
             conversationsYesterday: 4,
+            visitorsToday: 5,
             consented30d: 3,
           },
         },
       },
       { match: 'overview.refused', result: { first: { count: 5 } } },
-      { match: 'overview.questions', result: { first: { count: 91 } } },
+      { match: 'overview.questions', result: { first: { count: 91, today: 14 } } },
       {
         match: 'overview.daily',
         result: { all: [{ day: '2026-08-13', conversations: 6, visitors: 5 }] },
@@ -127,6 +128,8 @@ describe('loadOverview', () => {
         result: { all: [{ intent: 'rent', count: 18 }, { intent: 'buy', count: 9 }] },
       },
       { match: 'overview.hours', result: { all: [{ hour: 10, count: 7 }] } },
+      { match: 'overview.today_hours', result: { all: [{ hour: 14, count: 3 }] } },
+      { match: 'overview.inquiriesToday', result: { first: { count: 2 } } },
       {
         match: 'overview.usage',
         result: { all: [{ day: '2026-08-13', metric: 'chat_sessions', count: 6 }] },
@@ -160,8 +163,11 @@ describe('loadOverview', () => {
     expect(overview.conversations30d).toBe(40);
     expect(overview.conversationsToday).toBe(6);
     expect(overview.visitors30d).toBe(28);
+    expect(overview.visitorsToday).toBe(5);
     expect(overview.refused30d).toBe(5);
     expect(overview.questions30d).toBe(91);
+    expect(overview.questionsToday).toBe(14);
+    expect(overview.inquiriesToday).toBe(2);
     expect(overview.consented30d).toBe(3);
     expect(overview.knowledgeItems).toBe(28);
     expect(overview.daily).toHaveLength(30);
@@ -188,6 +194,7 @@ describe('loadOverview', () => {
       { intent: 'buy', count: 9 },
     ]);
     expect(overview.hours[10]).toEqual({ hour: 10, count: 7 });
+    expect(overview.hoursToday[14]).toEqual({ hour: 14, count: 3 });
     expect(overview.usage.at(-1)).toEqual({ day: '2026-08-13', sessions: 6, aiRequests: 0 });
     expect(overview.costGuard).toEqual({
       day: '2026-08-13',

@@ -19,7 +19,10 @@ const emptyOverview: OverviewData = {
   conversationsToday: 0,
   conversationsYesterday: 0,
   visitors30d: 0,
+  visitorsToday: 0,
   questions30d: 0,
+  questionsToday: 0,
+  inquiriesToday: 0,
   refused30d: 0,
   consented30d: 0,
   knowledgeItems: 0,
@@ -30,6 +33,7 @@ const emptyOverview: OverviewData = {
   policy: [],
   intents: [],
   hours: Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 })),
+  hoursToday: Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 })),
   usage: [],
   costGuard: { day: '', sessions: 0, sessionLimit: 500, aiRequests: 0, aiRequestLimit: 500 },
 };
@@ -221,25 +225,62 @@ function IntentBars({ intents }: { intents: OverviewIntentCount[] }) {
   </div>;
 }
 
+function formatJapanDay(value: string) {
+  const parts = value.split('-');
+  if (parts.length !== 3) return '本日';
+  return `${Number(parts[1])}月${Number(parts[2])}日`;
+}
+
+function busiestHour(hours: OverviewHourCount[]) {
+  return hours.reduce((best, item) => item.count > best.count ? item : best, { hour: 0, count: 0 });
+}
+
+function receptionStatus(data: OverviewData) {
+  if (data.conversationsToday > 0) {
+    const questions = data.questionsToday > 0 ? `、質問 ${data.questionsToday.toLocaleString()}件` : '';
+    return `本日 ${data.conversationsToday.toLocaleString()}件の相談を受け付けています${questions}`;
+  }
+  if (data.inquiriesToday > 0) {
+    return `本日 ${data.inquiriesToday.toLocaleString()}件のお問い合わせがあります`;
+  }
+  return '本日の相談はまだありません';
+}
+
 function ReceptionSummary({ data }: { data: OverviewData }) {
-  const usageRate = percent(data.costGuard.sessions, data.costGuard.sessionLimit);
   const delta = dayDelta(data.conversationsToday, data.conversationsYesterday);
-  const busiest = data.hours.reduce((best, item) => item.count > best.count ? item : best, { hour: 0, count: 0 });
-  const normal = usageRate < 80;
+  const busiest = busiestHour(data.hoursToday);
+  const hasToday = data.conversationsToday > 0 || data.inquiriesToday > 0;
   return <section className="surface reception-summary">
-    <div className="section-heading"><div><h2>本日の受付状況</h2><p>{data.costGuard.day || '本日'}の相談受付</p></div><CheckCircle2 /></div>
-    <div className={`reception-health ${normal ? 'ok' : 'warning'}`}>
+    <div className="section-heading">
+      <div>
+        <h2>本日の受付状況</h2>
+        <p>{formatJapanDay(data.costGuard.day)}の相談・お問い合わせ</p>
+      </div>
+      <CheckCircle2 />
+    </div>
+    <div className={`reception-health ${hasToday ? 'ok' : 'idle'}`}>
       <span />
-      <strong>{normal ? '正常に受付中' : '受付数が上限に近づいています'}</strong>
+      <strong>{receptionStatus(data)}</strong>
     </div>
     <div className="reception-stats">
-      <div><small>本日の相談</small><strong>{data.conversationsToday.toLocaleString()}件</strong></div>
-      <div><small>前日比</small><strong className={`delta ${delta.tone}`}>{delta.label.replace(' 前日比', '')}</strong></div>
-      <div><small>相談が多い時間</small><strong>{busiest.count ? `${busiest.hour}時台` : '—'}</strong></div>
-    </div>
-    <div className="reception-capacity">
-      <div><span>受付上限の使用状況</span><strong>{data.costGuard.sessions.toLocaleString()} / {data.costGuard.sessionLimit.toLocaleString()}件</strong></div>
-      <b><i style={{ width: `${Math.min(100, usageRate)}%` }} /></b>
+      <div>
+        <small>本日の相談</small>
+        <strong>{data.conversationsToday.toLocaleString()}件</strong>
+        <em className={`delta ${delta.tone}`}>{delta.label}</em>
+      </div>
+      <div>
+        <small>本日の相談者</small>
+        <strong>{data.visitorsToday.toLocaleString()}人</strong>
+      </div>
+      <div>
+        <small>本日のお問い合わせ</small>
+        <strong>{data.inquiriesToday.toLocaleString()}件</strong>
+      </div>
+      <div>
+        <small>相談が多い時間</small>
+        <strong>{busiest.count ? `${busiest.hour}時台` : '—'}</strong>
+        <em>本日</em>
+      </div>
     </div>
   </section>;
 }
