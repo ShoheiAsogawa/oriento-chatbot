@@ -20,6 +20,7 @@ import {
 } from './chat-http';
 import { appendRateLimitAudit } from './rate-limit-audit';
 import { choicesForChatAnswer } from './chat-choices';
+import { VISITOR_AGE_DECADES, VISITOR_GENDERS } from './visitor-profile';
 import {
   customHomeChoicesForResponse,
   evaluateCustomHomeConsultation,
@@ -75,6 +76,8 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 const sessionSchema = z.object({
   sourcePage: z.string().url().max(1000).optional(),
   turnstileToken: z.string().max(2048).optional(),
+  visitorGender: z.enum(VISITOR_GENDERS),
+  visitorAgeDecade: z.enum(VISITOR_AGE_DECADES),
 });
 
 const propertyViewSchema = z.object({
@@ -361,15 +364,16 @@ app.post('/api/chat/session', async (context) => {
     return context.json({ error: '本日のチャット受付上限に達しました。公式LINEをご利用ください。' }, 429);
   }
   await context.env.DB.prepare(
-    `INSERT INTO conversations (id, visitor_hash, source_page, operational_consent) VALUES (?, ?, ?, 1)`,
-  ).bind(id, visitorHash, sourcePage || null).run();
+    `INSERT INTO conversations (id, visitor_hash, source_page, operational_consent, visitor_gender, visitor_age_decade)
+     VALUES (?, ?, ?, 1, ?, ?)`,
+  ).bind(id, visitorHash, sourcePage || null, input.visitorGender, input.visitorAgeDecade).run();
   await appendAudit(context.env, {
     eventType: 'conversation.created',
     actorType: 'visitor',
     actorId: visitorHash,
     subjectType: 'conversation',
     subjectId: id,
-    metadata: { sourcePage: sourcePage || null },
+    metadata: { sourcePage: sourcePage || null, visitorGender: input.visitorGender, visitorAgeDecade: input.visitorAgeDecade },
   });
   return context.json({
     conversationId: id,

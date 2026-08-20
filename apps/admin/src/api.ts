@@ -175,6 +175,25 @@ export interface OverviewHourCount {
   count: number;
 }
 
+export type OverviewGender = 'male' | 'female';
+export type OverviewAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
+
+export interface OverviewGenderCount {
+  gender: OverviewGender;
+  count: number;
+}
+
+export interface OverviewAgeCount {
+  ageDecade: OverviewAgeDecade;
+  count: number;
+}
+
+export interface OverviewDemographicCount {
+  gender: OverviewGender;
+  ageDecade: OverviewAgeDecade;
+  count: number;
+}
+
 export interface OverviewUsagePoint {
   day: string;
   sessions: number;
@@ -197,6 +216,9 @@ export interface OverviewData {
   policy: OverviewPolicyCount[];
   intents: OverviewIntentCount[];
   hours: OverviewHourCount[];
+  genders: OverviewGenderCount[];
+  ages: OverviewAgeCount[];
+  demographics: OverviewDemographicCount[];
   usage: OverviewUsagePoint[];
   costGuard: {
     day: string;
@@ -310,6 +332,32 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
       { intent: 'other', count: 14 },
     ],
     hours,
+    genders: [
+      { gender: 'male', count: 38 },
+      { gender: 'female', count: 46 },
+    ],
+    ages: [
+      { ageDecade: 'teens', count: 4 },
+      { ageDecade: '20s', count: 21 },
+      { ageDecade: '30s', count: 28 },
+      { ageDecade: '40s', count: 18 },
+      { ageDecade: '50s', count: 9 },
+      { ageDecade: '60s_plus', count: 4 },
+    ],
+    demographics: [
+      { gender: 'male', ageDecade: 'teens', count: 1 },
+      { gender: 'female', ageDecade: 'teens', count: 3 },
+      { gender: 'male', ageDecade: '20s', count: 8 },
+      { gender: 'female', ageDecade: '20s', count: 13 },
+      { gender: 'male', ageDecade: '30s', count: 12 },
+      { gender: 'female', ageDecade: '30s', count: 16 },
+      { gender: 'male', ageDecade: '40s', count: 10 },
+      { gender: 'female', ageDecade: '40s', count: 8 },
+      { gender: 'male', ageDecade: '50s', count: 5 },
+      { gender: 'female', ageDecade: '50s', count: 4 },
+      { gender: 'male', ageDecade: '60s_plus', count: 2 },
+      { gender: 'female', ageDecade: '60s_plus', count: 2 },
+    ],
     usage,
     costGuard: {
       day: today,

@@ -375,6 +375,15 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .intent-bars i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ffb27f, #ff680b); }
 .intent-bars strong, .intent-bars small { text-align: right; font-size: 9px; }
 .intent-bars small { color: var(--muted); }
+.demographic-stats { display: grid; gap: 16px; padding: 16px 18px 18px; }
+.demographic-split { display: flex; flex-wrap: wrap; gap: 10px; }
+.demographic-split span { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 8px; background: #fff6ef; color: #8a4a00; font-size: 11px; font-weight: 800; }
+.demographic-matrix { width: 100%; border-collapse: collapse; font-size: 11px; }
+.demographic-matrix th, .demographic-matrix td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: right; }
+.demographic-matrix thead th, .demographic-matrix tbody th { color: var(--muted); font-size: 10px; font-weight: 800; }
+.demographic-matrix tbody th, .demographic-matrix thead th:first-child, .demographic-matrix tfoot th { text-align: left; }
+.demographic-matrix tfoot td, .demographic-matrix tfoot th { border-bottom: 0; font-weight: 800; }
+.demographic-age-bars { padding: 4px 0 0; }
 .property-legend { display: flex !important; justify-content: flex-end; gap: 13px !important; min-height: 14px; }
 .property-legend span { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 9px; }
 .property-legend span::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--orange); }

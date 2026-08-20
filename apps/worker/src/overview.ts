@@ -1,4 +1,10 @@
 import { japanDay, parseDailyLimit, readDailyUsage } from './cost-controls';
+import {
+  VISITOR_AGE_DECADES,
+  VISITOR_GENDERS,
+  type VisitorAgeDecade,
+  type VisitorGender,
+} from './visitor-profile';
 
 export interface OverviewDailyPoint {
   day: string;
@@ -48,6 +54,22 @@ export interface OverviewHourCount {
   count: number;
 }
 
+export interface OverviewGenderCount {
+  gender: VisitorGender;
+  count: number;
+}
+
+export interface OverviewAgeCount {
+  ageDecade: VisitorAgeDecade;
+  count: number;
+}
+
+export interface OverviewDemographicCount {
+  gender: VisitorGender;
+  ageDecade: VisitorAgeDecade;
+  count: number;
+}
+
 export interface OverviewUsagePoint {
   day: string;
   sessions: number;
@@ -70,6 +92,9 @@ export interface OverviewData {
   policy: OverviewPolicyCount[];
   intents: OverviewIntentCount[];
   hours: OverviewHourCount[];
+  genders: OverviewGenderCount[];
+  ages: OverviewAgeCount[];
+  demographics: OverviewDemographicCount[];
   usage: OverviewUsagePoint[];
   costGuard: {
     day: string;
@@ -191,6 +216,31 @@ export function fillHourlySeries(
   return Array.from({ length: 24 }, (_, hour) => ({ hour, count: counts.get(hour) || 0 }));
 }
 
+export function fillGenderSeries(
+  rows: Array<{ gender?: string | null; count?: number | string | null }>,
+): OverviewGenderCount[] {
+  const counts = new Map(rows.map((row) => [row.gender || '', Number(row.count || 0)]));
+  return VISITOR_GENDERS.map((gender) => ({ gender, count: counts.get(gender) || 0 }));
+}
+
+export function fillAgeSeries(
+  rows: Array<{ ageDecade?: string | null; count?: number | string | null }>,
+): OverviewAgeCount[] {
+  const counts = new Map(rows.map((row) => [row.ageDecade || '', Number(row.count || 0)]));
+  return VISITOR_AGE_DECADES.map((ageDecade) => ({ ageDecade, count: counts.get(ageDecade) || 0 }));
+}
+
+export function fillDemographicSeries(
+  rows: Array<{ gender?: string | null; ageDecade?: string | null; count?: number | string | null }>,
+): OverviewDemographicCount[] {
+  const counts = new Map(rows.map((row) => [`${row.gender}:${row.ageDecade}`, Number(row.count || 0)]));
+  return VISITOR_GENDERS.flatMap((gender) => VISITOR_AGE_DECADES.map((ageDecade) => ({
+    gender,
+    ageDecade,
+    count: counts.get(`${gender}:${ageDecade}`) || 0,
+  })));
+}
+
 export function fillUsageSeries(
   today: string,
   rows: Array<{ day: string; metric: string; count?: number | string | null }>,
@@ -236,6 +286,9 @@ export async function loadOverview(
     policyRows,
     intentRows,
     hourRows,
+    genderRows,
+    ageRows,
+    demographicRows,
     usageRows,
     propertyViewRows,
     managedPropertyRows,
@@ -325,6 +378,27 @@ export async function loadOverview(
        ORDER BY hour`,
     ).all<{ hour: number; count: number }>(),
     db.prepare(
+      `SELECT visitor_gender AS gender, COUNT(*) AS count
+       FROM conversations
+       WHERE created_at >= datetime('now', '-30 days')
+         AND visitor_gender IS NOT NULL -- overview.genders
+       GROUP BY visitor_gender`,
+    ).all<{ gender: VisitorGender; count: number }>(),
+    db.prepare(
+      `SELECT visitor_age_decade AS ageDecade, COUNT(*) AS count
+       FROM conversations
+       WHERE created_at >= datetime('now', '-30 days')
+         AND visitor_age_decade IS NOT NULL -- overview.age_decades
+       GROUP BY visitor_age_decade`,
+    ).all<{ ageDecade: VisitorAgeDecade; count: number }>(),
+    db.prepare(
+      `SELECT visitor_gender AS gender, visitor_age_decade AS ageDecade, COUNT(*) AS count
+       FROM conversations
+       WHERE created_at >= datetime('now', '-30 days')
+         AND visitor_gender IS NOT NULL AND visitor_age_decade IS NOT NULL -- overview.demographic_matrix
+       GROUP BY visitor_gender, visitor_age_decade`,
+    ).all<{ gender: VisitorGender; ageDecade: VisitorAgeDecade; count: number }>(),
+    db.prepare(
       `SELECT day, metric, count FROM usage_counters
        WHERE day >= ? -- overview.usage
        ORDER BY day`,
@@ -378,6 +452,9 @@ export async function loadOverview(
       count: asCount(row.count),
     })),
     hours: fillHourlySeries(hourRows.results || []),
+    genders: fillGenderSeries(genderRows.results || []),
+    ages: fillAgeSeries(ageRows.results || []),
+    demographics: fillDemographicSeries(demographicRows.results || []),
     usage: fillUsageSeries(today, usageRows.results || []),
     costGuard: {
       day: dailyUsage.day,

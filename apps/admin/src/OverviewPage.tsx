@@ -7,7 +7,10 @@ import {
   api,
   type ConversationSummary,
   type OverviewDailyPoint,
+  type OverviewAgeCount,
   type OverviewData,
+  type OverviewDemographicCount,
+  type OverviewGenderCount,
   type OverviewHourCount,
   type OverviewIntentCount,
   type OverviewPrefectureCount,
@@ -30,9 +33,35 @@ const emptyOverview: OverviewData = {
   policy: [],
   intents: [],
   hours: Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 })),
+  genders: [{ gender: 'male', count: 0 }, { gender: 'female', count: 0 }],
+  ages: [
+    { ageDecade: 'teens', count: 0 },
+    { ageDecade: '20s', count: 0 },
+    { ageDecade: '30s', count: 0 },
+    { ageDecade: '40s', count: 0 },
+    { ageDecade: '50s', count: 0 },
+    { ageDecade: '60s_plus', count: 0 },
+  ],
+  demographics: [],
   usage: [],
   costGuard: { day: '', sessions: 0, sessionLimit: 500, aiRequests: 0, aiRequestLimit: 500 },
 };
+
+const genderLabels: Record<OverviewGenderCount['gender'], string> = {
+  male: '男性',
+  female: '女性',
+};
+
+const ageLabels: Record<OverviewAgeCount['ageDecade'], string> = {
+  teens: '10代',
+  '20s': '20代',
+  '30s': '30代',
+  '40s': '40代',
+  '50s': '50代',
+  '60s_plus': '60代以上',
+};
+
+const ageOrder: OverviewAgeCount['ageDecade'][] = ['teens', '20s', '30s', '40s', '50s', '60s_plus'];
 
 const intentLabels: Record<OverviewIntentCount['intent'], string> = {
   rent: '賃貸探し',
@@ -203,6 +232,74 @@ function PropertyRanking({ items }: { items: OverviewPropertyView[] }) {
   </ol>;
 }
 
+function DemographicStats({
+  genders,
+  ages,
+  demographics,
+}: {
+  genders: OverviewGenderCount[];
+  ages: OverviewAgeCount[];
+  demographics: OverviewDemographicCount[];
+}) {
+  const genderCounts = new Map(genders.map((item) => [item.gender, item.count]));
+  const ageCounts = new Map(ages.map((item) => [item.ageDecade, item.count]));
+  const cell = new Map(demographics.map((item) => [`${item.gender}:${item.ageDecade}`, item.count]));
+  const maleTotal = genderCounts.get('male') || 0;
+  const femaleTotal = genderCounts.get('female') || 0;
+  const total = maleTotal + femaleTotal;
+  if (!total) return <p className="chart-empty">性別と年代を選んだ相談が集まると、ここに表示します。</p>;
+
+  const countAt = (gender: OverviewGenderCount['gender'], age: OverviewAgeCount['ageDecade']) => cell.get(`${gender}:${age}`) || 0;
+
+  return <div className="demographic-stats">
+    <div className="demographic-split">
+      <span>男性 {maleTotal.toLocaleString()}件（{percent(maleTotal, total)}%）</span>
+      <span>女性 {femaleTotal.toLocaleString()}件（{percent(femaleTotal, total)}%）</span>
+    </div>
+    <table className="demographic-matrix">
+      <thead>
+        <tr>
+          <th>年代</th>
+          <th>男性</th>
+          <th>女性</th>
+          <th>合計</th>
+        </tr>
+      </thead>
+      <tbody>
+        {ageOrder.map((age) => {
+          const male = countAt('male', age);
+          const female = countAt('female', age);
+          return <tr key={age}>
+            <th>{ageLabels[age]}</th>
+            <td>{male.toLocaleString()}</td>
+            <td>{female.toLocaleString()}</td>
+            <td>{(male + female).toLocaleString()}</td>
+          </tr>;
+        })}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>合計</th>
+          <td>{maleTotal.toLocaleString()}</td>
+          <td>{femaleTotal.toLocaleString()}</td>
+          <td>{total.toLocaleString()}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div className="intent-bars demographic-age-bars">
+      {ageOrder.map((age) => {
+        const count = ageCounts.get(age) || 0;
+        return <div key={age}>
+          <span>{ageLabels[age]}</span>
+          <b><i style={{ width: `${Math.max(count ? 7 : 0, percent(count, total))}%` }} /></b>
+          <strong>{count.toLocaleString()}件</strong>
+          <small>{percent(count, total)}%</small>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
 function IntentBars({ intents }: { intents: OverviewIntentCount[] }) {
   const counts = new Map(intents.map((item) => [item.intent, item.count]));
   const ordered = (Object.keys(intentLabels) as OverviewIntentCount['intent'][]).map((intent) => ({
@@ -324,6 +421,10 @@ export function OverviewPage({ onOpenConversations }: { onOpenConversations: () 
     </div>
 
     <div className="overview-grid">
+      <section className="surface">
+        <div className="section-heading"><div><h2>相談者の年代・性別</h2><p>会話開始前に選んだ年代と性別（過去30日）</p></div><UsersRound /></div>
+        <DemographicStats genders={data.genders} ages={data.ages} demographics={data.demographics} />
+      </section>
       <section className="surface activity-list">
         <div className="section-heading">
           <div><h2>最近の相談</h2><p>直近に寄せられた相談内容</p></div>

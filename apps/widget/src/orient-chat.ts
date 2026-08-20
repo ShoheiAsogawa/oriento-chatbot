@@ -15,6 +15,34 @@ interface ChatChoice {
   tone?: 'primary' | 'default';
 }
 
+type VisitorGender = 'male' | 'female';
+type VisitorAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
+
+const visitorGenderChoices: ChatChoice[] = [
+  { label: '男性', value: 'male', tone: 'primary' },
+  { label: '女性', value: 'female', tone: 'primary' },
+];
+const visitorAgeChoices: ChatChoice[] = [
+  { label: '10代', value: 'teens' },
+  { label: '20代', value: '20s' },
+  { label: '30代', value: '30s' },
+  { label: '40代', value: '40s' },
+  { label: '50代', value: '50s' },
+  { label: '60代以上', value: '60s_plus' },
+];
+const visitorGenderLabels: Record<VisitorGender, string> = { male: '男性', female: '女性' };
+const visitorAgeLabels: Record<VisitorAgeDecade, string> = {
+  teens: '10代', '20s': '20代', '30s': '30代', '40s': '40代', '50s': '50代', '60s_plus': '60代以上',
+};
+
+function isVisitorGender(value: string): value is VisitorGender {
+  return value === 'male' || value === 'female';
+}
+
+function isVisitorAgeDecade(value: string): value is VisitorAgeDecade {
+  return value in visitorAgeLabels;
+}
+
 interface ChatMessage {
   id: string;
   role: ChatRole;
@@ -72,14 +100,14 @@ template.innerHTML = `
         </button>
       </header>
       <div class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
-      <div class="suggestions" aria-label="よくある質問">
+      <div class="suggestions" hidden aria-label="よくある質問">
         <button type="button" data-question="物件を探す"><span>⌕</span>物件を探す</button>
         <button type="button" data-question="オリエントホームのこだわり"><span>⌂</span>オリエントホームのこだわり</button>
       </div>
       <form class="composer">
         <label class="sr-only" for="orient-chat-input">メッセージを入力</label>
-        <textarea id="orient-chat-input" rows="1" maxlength="2000" placeholder="メッセージを入力"></textarea>
-        <button class="send" type="submit" aria-label="送信">
+        <textarea id="orient-chat-input" rows="1" maxlength="2000" placeholder="はじめに性別と年代を選んでにゃん" disabled></textarea>
+        <button class="send" type="submit" aria-label="送信" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11.5 17-8-6.5 17-2.8-6.2L3 11.5Z"/><path d="m10.7 14.3 4-4"/></svg>
         </button>
       </form>
@@ -186,7 +214,7 @@ const styles = `
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
   .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .choice-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .choice-grid[data-count="3"], .choice-grid[data-count="6"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .choice-grid[data-count="1"] { grid-template-columns: minmax(0, 1fr); }
   .choice-button { min-width: 0; min-height: 40px; padding: 8px 9px; border: 1px solid #ffc49f; border-radius: 10px; color: #5a3522; background: #fffaf7; font-size: 12px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; cursor: pointer; transition: transform 120ms ease, border-color 120ms ease, background 120ms ease; }
   .choice-button[data-tone="primary"] { border-color: var(--orient-primary); color: var(--orient-primary-strong); background: #fff3eb; }
@@ -194,8 +222,11 @@ const styles = `
   .choice-button:active { transform: translateY(0); }
   .choice-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .choice-button:last-child:nth-child(odd) { grid-column: 1 / -1; }
-  .choice-grid[data-count="3"] .choice-button:last-child:nth-child(odd) { grid-column: auto; }
+  .choice-grid[data-count="3"] .choice-button:last-child:nth-child(odd),
+  .choice-grid[data-count="6"] .choice-button:last-child:nth-child(odd) { grid-column: auto; }
   .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
+  .suggestions[hidden] { display: none; }
+  .composer.locked { opacity: .55; }
   .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
   .suggestions button span { display: block; color: var(--orient-primary); font-size: 17px; line-height: 1; }
   .suggestions button:hover, .suggestions button:focus-visible { background: #fff5ef; outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
@@ -261,6 +292,7 @@ const styles = `
     .suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .suggestions button { font-size: 10px; }
     .choice-grid[data-count="3"] { gap: 5px; }
+    .choice-grid[data-count="6"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .choice-button { min-height: 42px; padding-inline: 6px; font-size: 12px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -276,6 +308,8 @@ class OrientChat extends HTMLElement {
   private catState: CatState = 'idle';
   private sending = false;
   private initialized = false;
+  private visitorGender: VisitorGender | '' = '';
+  private visitorAgeDecade: VisitorAgeDecade | '' = '';
   private turnstileWidgetId = '';
   private turnstilePromise: Promise<string> | null = null;
 
@@ -301,9 +335,11 @@ class OrientChat extends HTMLElement {
       this.messages = [{
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: 'こんにちは、オリにゃんだよ！\nお部屋探しや住まいのこと、気軽に聞いてにゃん。',
+        content: 'こんにちは、オリにゃんだよ！\n質問の前に、男性か女性か選んでにゃん。',
+        choices: visitorGenderChoices,
       }];
       this.renderMessages();
+      this.syncComposerLock();
     }
     if (this.hasAttribute('open')) this.open();
   }
@@ -389,6 +425,7 @@ class OrientChat extends HTMLElement {
     const input = this.root.querySelector<HTMLTextAreaElement>('textarea');
     form?.addEventListener('submit', (event) => {
       event.preventDefault();
+      if (!this.profileReady) return;
       const value = input?.value.trim() || '';
       if (value) void this.sendMessage(value);
     });
@@ -433,15 +470,69 @@ class OrientChat extends HTMLElement {
     this.root.querySelectorAll<HTMLElement>('[data-cat-state]').forEach((cat) => { cat.dataset.catState = state; });
   }
 
+  private get profileReady() {
+    return Boolean(this.visitorGender && this.visitorAgeDecade);
+  }
+
+  private syncComposerLock() {
+    const ready = this.profileReady;
+    const suggestions = this.root.querySelector<HTMLElement>('.suggestions');
+    const composer = this.root.querySelector<HTMLElement>('.composer');
+    const input = this.root.querySelector<HTMLTextAreaElement>('textarea');
+    const send = this.root.querySelector<HTMLButtonElement>('.send');
+    if (suggestions) suggestions.hidden = !ready;
+    composer?.classList.toggle('locked', !ready);
+    if (input) {
+      input.disabled = !ready;
+      input.placeholder = ready ? 'メッセージを入力' : 'はじめに性別と年代を選んでにゃん';
+    }
+    if (send && !this.sending) send.disabled = !ready;
+  }
+
+  private selectVisitorProfile(value: string) {
+    if (this.profileReady || this.sending) return;
+    if (!this.visitorGender) {
+      if (!isVisitorGender(value)) return;
+      this.visitorGender = value;
+      this.messages = this.messages.map((message) => ({ ...message, choices: [] }));
+      this.messages.push({ id: crypto.randomUUID(), role: 'user', content: visitorGenderLabels[value] });
+      this.messages.push({
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: 'ありがとう！つづいて年代を選んでにゃん。',
+        choices: visitorAgeChoices,
+      });
+      this.renderMessages();
+      return;
+    }
+    if (!isVisitorAgeDecade(value)) return;
+    this.visitorAgeDecade = value;
+    this.messages = this.messages.map((message) => ({ ...message, choices: [] }));
+    this.messages.push({ id: crypto.randomUUID(), role: 'user', content: visitorAgeLabels[value] });
+    this.messages.push({
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content: `${visitorAgeLabels[value]}の${visitorGenderLabels[this.visitorGender]}だね！\nお部屋探しや住まいのこと、気軽に聞いてにゃん。`,
+    });
+    this.renderMessages();
+    this.syncComposerLock();
+  }
+
   private async ensureSession() {
     if (this.demoMode || this.conversationId) return;
+    if (!this.profileReady) throw new Error('はじめに性別と年代を選んでにゃん。');
     const turnstileToken = await this.getTurnstileToken();
     let response: Response;
     try {
       response = await this.fetchWithTimeout(`${this.apiUrl}/api/chat/session`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ sourcePage: location.href, turnstileToken }),
+        body: JSON.stringify({
+          sourcePage: location.href,
+          turnstileToken,
+          visitorGender: this.visitorGender,
+          visitorAgeDecade: this.visitorAgeDecade,
+        }),
       }, 15_000);
     } catch (error) {
       this.disposeTurnstileWidget();
@@ -537,7 +628,7 @@ class OrientChat extends HTMLElement {
   }
 
   private async sendMessage(content: string) {
-    if (this.sending) return;
+    if (this.sending || !this.profileReady) return;
     this.sending = true;
     // Only the latest answer can remain actionable.  Older guided-search and
     // pagination controls would otherwise let a visitor submit stale choices
@@ -808,7 +899,13 @@ class OrientChat extends HTMLElement {
       button.type = 'button';
       button.dataset.tone = choice.tone || 'default';
       button.textContent = choice.label;
-      button.addEventListener('click', () => { void this.sendMessage(choice.value); });
+      button.addEventListener('click', () => {
+        if (!this.profileReady) {
+          this.selectVisitorProfile(choice.value);
+          return;
+        }
+        void this.sendMessage(choice.value);
+      });
       grid.append(button);
     });
     section.append(label, grid);
@@ -980,6 +1077,7 @@ class OrientChat extends HTMLElement {
 
   private setDisabled(disabled: boolean) {
     this.root.querySelectorAll<HTMLButtonElement>('.suggestions button, .choice-button, .more-results-button, .send').forEach((button) => { button.disabled = disabled; });
+    if (!disabled) this.syncComposerLock();
   }
 
   private renderMessages() {
@@ -1019,8 +1117,8 @@ class OrientChat extends HTMLElement {
     messageContent.className = 'message-content';
     messageContent.append(bubble);
     item.append(messageContent);
-    if (message.role === 'assistant' && !message.pending && message.rawContent) {
-      this.renderLineLink(item, Boolean(message.lineLink));
+    if (message.role === 'assistant' && !message.pending) {
+      if (message.rawContent) this.renderLineLink(item, Boolean(message.lineLink));
       if (message.choices?.length) this.renderChoices(item, message.choices);
       if (message.moreResults) this.renderMoreResults(item, true);
     }

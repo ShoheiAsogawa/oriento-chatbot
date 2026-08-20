@@ -3,7 +3,10 @@ import {
   addCalendarDays,
   buildPropertyAnalytics,
   fillDailySeries,
+  fillDemographicSeries,
+  fillGenderSeries,
   fillHourlySeries,
+  fillAgeSeries,
   fillUsageSeries,
   inferPropertyPrefecture,
   loadOverview,
@@ -52,6 +55,19 @@ describe('overview series helpers', () => {
       { hour: 21, count: 7 },
       { hour: 22, count: 0 },
       { hour: 23, count: 0 },
+    ]);
+
+    expect(fillGenderSeries([{ gender: 'female', count: 9 }])).toEqual([
+      { gender: 'male', count: 0 },
+      { gender: 'female', count: 9 },
+    ]);
+    expect(fillAgeSeries([{ ageDecade: '30s', count: 4 }]).map((item) => item.count)).toEqual([0, 0, 4, 0, 0, 0]);
+    expect(fillDemographicSeries([
+      { gender: 'male', ageDecade: '20s', count: 3 },
+      { gender: 'female', ageDecade: '40s', count: 2 },
+    ]).filter((item) => item.count > 0)).toEqual([
+      { gender: 'male', ageDecade: '20s', count: 3 },
+      { gender: 'female', ageDecade: '40s', count: 2 },
     ]);
 
     const usage = fillUsageSeries('2026-08-13', [
@@ -127,6 +143,12 @@ describe('loadOverview', () => {
         result: { all: [{ intent: 'rent', count: 18 }, { intent: 'buy', count: 9 }] },
       },
       { match: 'overview.hours', result: { all: [{ hour: 10, count: 7 }] } },
+      { match: 'overview.genders', result: { all: [{ gender: 'male', count: 5 }, { gender: 'female', count: 7 }] } },
+      { match: 'overview.age_decades', result: { all: [{ ageDecade: '20s', count: 4 }, { ageDecade: '30s', count: 8 }] } },
+      {
+        match: 'overview.demographic_matrix',
+        result: { all: [{ gender: 'female', ageDecade: '30s', count: 6 }, { gender: 'male', ageDecade: '20s', count: 3 }] },
+      },
       {
         match: 'overview.usage',
         result: { all: [{ day: '2026-08-13', metric: 'chat_sessions', count: 6 }] },
@@ -188,6 +210,13 @@ describe('loadOverview', () => {
       { intent: 'buy', count: 9 },
     ]);
     expect(overview.hours[10]).toEqual({ hour: 10, count: 7 });
+    expect(overview.genders).toEqual([
+      { gender: 'male', count: 5 },
+      { gender: 'female', count: 7 },
+    ]);
+    expect(overview.ages.find((item) => item.ageDecade === '30s')).toEqual({ ageDecade: '30s', count: 8 });
+    expect(overview.demographics.find((item) => item.gender === 'female' && item.ageDecade === '30s'))
+      .toEqual({ gender: 'female', ageDecade: '30s', count: 6 });
     expect(overview.usage.at(-1)).toEqual({ day: '2026-08-13', sessions: 6, aiRequests: 0 });
     expect(overview.costGuard).toEqual({
       day: '2026-08-13',
