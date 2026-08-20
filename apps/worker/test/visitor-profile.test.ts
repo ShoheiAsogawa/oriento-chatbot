@@ -12,7 +12,7 @@ describe('visitor profile', () => {
       gender: 'female',
       ageDecade: '30s',
     });
-    expect(visitorProfileLabel({ gender: 'male', ageDecade: '20s' })).toBe('20代の男');
+    expect(visitorProfileLabel({ gender: 'male', ageDecade: '20s' })).toBe('20代の男性');
     expect(parseVisitorProfile({ visitorGender: 'other', visitorAgeDecade: '40s' })).toEqual({
       gender: 'other',
       ageDecade: '40s',

@@ -10,8 +10,8 @@ import {
 const orinyanSpriteStyle = { backgroundImage: "url('/assets/orinyan-states.png')" };
 
 const genderLabels: Record<MonthlyReport['genders'][number]['gender'], string> = {
-  male: '男',
-  female: '女',
+  male: '男性',
+  female: '女性',
   other: 'そのほか',
 };
 const genderOrder: Array<MonthlyReport['genders'][number]['gender']> = ['male', 'female', 'other'];

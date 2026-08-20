@@ -110,7 +110,7 @@ describe('generateOrinyanMonthlyCommentary', () => {
   it('asks Orinyan to review monthly demographics without inventing facts', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
       model: 'gpt-5.4-nano',
-      choices: [{ message: { content: '20代の女の人は賃貸が人気にゃん。堺のワンルームをよく見ているにゃん。' } }],
+      choices: [{ message: { content: '20代の女性は賃貸が人気にゃん。堺のワンルームをよく見ているにゃん。' } }],
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
 
     const result = await generateOrinyanMonthlyCommentary(env, {
@@ -158,7 +158,7 @@ describe('generateOrinyanMonthlyCommentary', () => {
     expect(body.max_completion_tokens).toBe(700);
     expect(body.messages[0].content).toContain('オリにゃん');
     expect(body.messages[0].content).toContain('データにあるもの以外を作らない');
-    expect(body.messages[1].content).toContain('20代の女');
+    expect(body.messages[1].content).toContain('20代の女性');
     expect(body.messages[1].content).toContain('堺のワンルーム');
     expect(body.messages[1].content).toContain('"status": "in_progress"');
   });

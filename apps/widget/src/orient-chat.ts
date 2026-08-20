@@ -19,8 +19,8 @@ type VisitorGender = 'male' | 'female' | 'other';
 type VisitorAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
 
 const visitorGenderChoices: ChatChoice[] = [
-  { label: '男', value: 'male', tone: 'primary' },
-  { label: '女', value: 'female', tone: 'primary' },
+  { label: '男性', value: 'male', tone: 'primary' },
+  { label: '女性', value: 'female', tone: 'primary' },
   { label: 'そのほか', value: 'other' },
 ];
 const visitorAgeChoices: ChatChoice[] = [
@@ -31,7 +31,7 @@ const visitorAgeChoices: ChatChoice[] = [
   { label: '50代', value: '50s' },
   { label: '60代以上', value: '60s_plus' },
 ];
-const visitorGenderLabels: Record<VisitorGender, string> = { male: '男', female: '女', other: 'そのほか' };
+const visitorGenderLabels: Record<VisitorGender, string> = { male: '男性', female: '女性', other: 'そのほか' };
 const visitorAgeLabels: Record<VisitorAgeDecade, string> = {
   teens: '10代', '20s': '20代', '30s': '30代', '40s': '40代', '50s': '50代', '60s_plus': '60代以上',
 };

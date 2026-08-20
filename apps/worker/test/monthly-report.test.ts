@@ -100,13 +100,13 @@ describe('monthly report insights', () => {
     expect(report.orinyanCommentary).toBeNull();
 
     const withCommentary = attachOrinyanCommentary(report, {
-      text: '20代の女の人は賃貸が人気にゃん。',
+      text: '20代の女性は賃貸が人気にゃん。',
       generatedAt: '2026-08-20T03:00:00.000Z',
       model: 'gpt-5.4-nano',
     });
     const payload = commentaryPromptPayload(withCommentary);
     expect(payload.status).toBe('in_progress');
-    expect(payload.topDemographics[0]).toEqual({ label: '20代の女', count: 5 });
+    expect(payload.topDemographics[0]).toEqual({ label: '20代の女性', count: 5 });
     expect(payload.popularPropertiesByDemographic[0]?.properties[0]?.title).toBe('堺のワンルーム');
   });
 

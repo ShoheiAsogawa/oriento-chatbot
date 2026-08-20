@@ -5,8 +5,8 @@ export type VisitorGender = (typeof VISITOR_GENDERS)[number];
 export type VisitorAgeDecade = (typeof VISITOR_AGE_DECADES)[number];
 
 export const VISITOR_GENDER_LABELS: Record<VisitorGender, string> = {
-  male: '男',
-  female: '女',
+  male: '男性',
+  female: '女性',
   other: 'そのほか',
 };
 

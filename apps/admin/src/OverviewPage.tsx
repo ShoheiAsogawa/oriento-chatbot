@@ -52,8 +52,8 @@ const emptyOverview: OverviewData = {
 };
 
 const genderLabels: Record<OverviewGenderCount['gender'], string> = {
-  male: '男',
-  female: '女',
+  male: '男性',
+  female: '女性',
   other: 'そのほか',
 };
 
