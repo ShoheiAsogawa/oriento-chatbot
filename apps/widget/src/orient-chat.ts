@@ -433,7 +433,7 @@ class OrientChat extends HTMLElement {
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'まずはあなたのことを教えてにゃん。\n性別を教えてにゃん。',
+          content: 'まずはあなたのことを知りたいにゃん。\n性別を教えてにゃん。',
           choices: visitorGenderChoices,
         },
       ];
