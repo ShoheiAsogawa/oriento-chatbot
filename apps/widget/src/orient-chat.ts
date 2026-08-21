@@ -606,7 +606,7 @@ class OrientChat extends HTMLElement {
       this.messages.push({
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: 'ありがとう！つづいて年代を選んでにゃん。',
+        content: 'ありがとう！つづいて年代を教えてにゃん。',
         choices: visitorAgeChoices,
       });
       this.renderMessages();
