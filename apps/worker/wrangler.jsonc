@@ -65,6 +65,9 @@
   "send_email": [
     {
       "name": "CUSTOM_HOME_LEAD_EMAIL",
+      // Verified Cloudflare destination. Do not change to an unverified Orient
+      // mailbox or Email Sending will fail. Swap this only after Cloudflare
+      // Email Routing has confirmed the company inbox.
       "destination_address": "uken.shohei@gmail.com",
       "allowed_sender_addresses": ["no-reply@orijyu.com"]
     }

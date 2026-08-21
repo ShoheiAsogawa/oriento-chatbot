@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { encryptPII } from '../src/security';
-import { processCustomHomeNotification } from '../src/custom-home-notifications';
+import { formatCustomHomeLeadEmail, processCustomHomeNotification } from '../src/custom-home-notifications';
 
 const leadId = '11111111-1111-4111-8111-111111111111';
 const env = () => ({ PII_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' } as unknown as Env);
@@ -64,19 +64,38 @@ async function seededDb(options: { status?: string; attempts?: number; brokenPho
   return store;
 }
 
+describe('formatCustomHomeLeadEmail', () => {
+  it('writes Orient-facing copy with contact details and intake', () => {
+    const email = formatCustomHomeLeadEmail(
+      '山田 太郎',
+      '09012345678',
+      JSON.stringify({ desiredArea: '大阪市', layout: '4LDK' }),
+    );
+    expect(email.subject).toBe('【オリにゃん】注文住宅のご相談が届きました');
+    expect(email.text).toContain('オリエントグループ ご担当者様');
+    expect(email.text).toContain('お名前: 山田 太郎');
+    expect(email.text).toContain('電話番号: 09012345678');
+    expect(email.text).toContain('希望エリア: 大阪市');
+    expect(email.text).toContain('希望間取り: 4LDK');
+    expect(email.text).toContain('お客様への折り返し連絡をお願いします。');
+  });
+});
+
 describe('processCustomHomeNotification', () => {
   it('decrypts the lead and sends a plain Japanese email while keeping queue data opaque', async () => {
     const store = await seededDb();
-    let sent: { to: string; text: string } | undefined;
+    let sent: { to: string; subject?: string; text: string } | undefined;
     const result = await processCustomHomeNotification(store.db, env(), { leadId }, {
       sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com',
-      send: async (email) => { sent = { to: email.to, text: email.text }; },
+      send: async (email) => { sent = { to: email.to, subject: email.subject, text: email.text }; },
     });
     expect(result).toEqual({ disposition: 'ack', status: 'sent', attempt: 1 });
     expect(store.state.status).toBe('sent');
     expect(sent?.to).toBe('uken.shohei@gmail.com');
+    expect(sent?.subject).toBe('【オリにゃん】注文住宅のご相談が届きました');
     expect(sent?.text).toContain('山田 太郎');
     expect(sent?.text).toContain('大阪市');
+    expect(sent?.text).toContain('オリエントグループ ご担当者様');
     expect(JSON.stringify({ leadId })).not.toContain('山田');
   });
 

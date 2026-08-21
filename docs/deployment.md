@@ -25,7 +25,7 @@ AI SearchはCloudflareダッシュボードまたはnamespace bindingで `orient
 
 ## 注文住宅のテスト通知
 
-注文住宅のヒアリング完了時は、氏名・電話番号を会話履歴へ残さず暗号化してD1へ保存し、`orient-chat-custom-home-leads` Queueから通知を送る。テスト期間の通知先は `uken.shohei@gmail.com` に固定されている。
+注文住宅のヒアリング完了時は、氏名・電話番号を会話履歴へ残さず暗号化してD1へ保存し、`orient-chat-custom-home-leads` Queueから通知を送る。Cloudflare Email Sending の宛先は確認済みアドレスだけが使えるため、テスト期間の通知先は `uken.shohei@gmail.com` に固定する。未確認のオリエント社内アドレスへ変えると送信できなくなる。
 
 1. Cloudflare Email Serviceで `orijyu.com` を送信ドメインとしてオンボードし、`no-reply@orijyu.com` を送信元として認証する。
 2. テスト通知先のGmailアドレスをCloudflare Email Routingで確認済みの宛先として登録する。

@@ -78,6 +78,27 @@ function displayIntake(value: string) {
   }
 }
 
+export function formatCustomHomeLeadEmail(name: string, phone: string, intake: string) {
+  return {
+    subject: '【オリにゃん】注文住宅のご相談が届きました',
+    text: [
+      'オリエントグループ ご担当者様',
+      '',
+      '公式サイトのAIチャット「オリにゃん」から、注文住宅のご相談が届きました。',
+      '管理画面の「お問い合わせ」からも同じ内容を確認できます。',
+      '',
+      '■ ご連絡先',
+      `お名前: ${safeDisplay(name, 100)}`,
+      `電話番号: ${safeDisplay(phone, 30)}`,
+      '',
+      '■ ご相談内容',
+      displayIntake(intake),
+      '',
+      'このメールは自動送信です。お客様への折り返し連絡をお願いします。',
+    ].join('\n'),
+  };
+}
+
 function safeFailureCode(error: unknown): 'decrypt_failed' | 'send_failed' {
   // Never return or persist an exception message: it could contain contact data.
   return error instanceof Error && error.name === 'OperationError' ? 'decrypt_failed' : 'send_failed';
@@ -144,14 +165,12 @@ export async function processCustomHomeNotification(
       decryptPII(lead.intake_enc, env as Env),
     ]);
     if (!name || !phone || !intake) throw new Error('missing_encrypted_field');
+    const email = formatCustomHomeLeadEmail(name, phone, intake);
     await options.send({
       from: options.sender,
       to: options.recipient,
-      subject: '【注文住宅】新しいご相談が届きました',
-      text: [
-        '注文住宅のお問い合わせ', '', `お名前: ${safeDisplay(name, 100)}`,
-        `電話番号: ${safeDisplay(phone, 30)}`, '', 'ご相談内容:', displayIntake(intake),
-      ].join('\n'),
+      subject: email.subject,
+      text: email.text,
     });
     await db.prepare(
       `UPDATE custom_home_leads SET notification_status = 'sent', notified_at = CURRENT_TIMESTAMP,
