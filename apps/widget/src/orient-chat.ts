@@ -44,11 +44,6 @@ function isVisitorAgeDecade(value: string): value is VisitorAgeDecade {
   return value in visitorAgeLabels;
 }
 
-function visitorProfileSummary(gender: VisitorGender, ageDecade: VisitorAgeDecade) {
-  if (gender === 'other') return `${visitorAgeLabels[ageDecade]}・そのほか`;
-  return `${visitorAgeLabels[ageDecade]}の${visitorGenderLabels[gender]}`;
-}
-
 const orinyanMonthlyGreetings = [
   [
     'あけましておめでとう、オリにゃんだよ！\n今年もいいお部屋と、いい日なたに出会えますようにだにゃん。',
@@ -619,7 +614,7 @@ class OrientChat extends HTMLElement {
     this.messages.push({
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: `${visitorProfileSummary(this.visitorGender, value)}だね！\nお部屋探しや住まいのこと、気軽に聞いてにゃん。`,
+      content: 'ありがとうにゃん！\n住まいやお部屋探しのこと、気軽に聞いてにゃん。',
     });
     this.renderMessages();
     this.syncComposerLock();
