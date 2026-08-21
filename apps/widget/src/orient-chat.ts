@@ -119,7 +119,7 @@ function japanCalendarMonth(now = new Date()) {
 function orinyanOpeningMessage(now = new Date()) {
   const monthlyGreetings = orinyanMonthlyGreetings[japanCalendarMonth(now)] || orinyanMonthlyGreetings[0];
   const greeting = monthlyGreetings[Math.floor(Math.random() * monthlyGreetings.length)];
-  return `${greeting}\nあなたに会えて、とってもうれしいにゃん。\nまずはあなたのことを教えてにゃん。`;
+  return `${greeting}\nあなたに会えて、とってもうれしいにゃん。`;
 }
 
 interface ChatMessage {
@@ -433,7 +433,7 @@ class OrientChat extends HTMLElement {
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: '性別を教えてにゃん。',
+          content: 'まずはあなたのことを教えてにゃん。\n性別を教えてにゃん。',
           choices: visitorGenderChoices,
         },
       ];
