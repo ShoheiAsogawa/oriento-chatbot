@@ -1,6 +1,7 @@
 import type { ConversationContextMessage } from './conversation-context';
 import {
   isObviousConversationDetour,
+  looksLikeGuidedSearchSelection,
   scopePropertySearchMessages,
   shouldContinueCompletedPropertySearch,
 } from './property-search-continuation';
@@ -199,6 +200,9 @@ function unsupportedConditionFromMessage(content: string) {
 
 function isRentalCriterionReply(content: string, lastAssistant: string) {
   const normalized = content.normalize('NFKC');
+  if (WARD_PROMPT.test(lastAssistant)) {
+    return Boolean(wardFromMessage(normalized) || UNKNOWN_LOCATION.test(normalized.trim()));
+  }
   const answeredAreaPrompt = AREA_PROMPT.test(lastAssistant);
   const answeredBudgetPrompt = BUDGET_PROMPT.test(lastAssistant);
   return Boolean(
@@ -218,6 +222,7 @@ function isRentalCriterionReply(content: string, lastAssistant: string) {
 function isRentalFlowPrompt(content: string) {
   return PROPERTY_TYPE_QUESTION.test(content)
     || AREA_PROMPT.test(content)
+    || WARD_PROMPT.test(content)
     || BUDGET_PROMPT.test(content)
     || PREFERENCE_PROMPT.test(content)
     || COMPACT_LAYOUT_CONFIRMATION.test(content);
@@ -379,6 +384,9 @@ export function evaluateRentalConsultation(
   if (!startsRentalSearch
     && isRentalFlowPrompt(lastAssistant)
     && !isRentalCriterionReply(currentMessage, lastAssistant)) {
+    if (looksLikeGuidedSearchSelection(currentMessage)) {
+      return { active: true, response: lastAssistant };
+    }
     return { active: false };
   }
   if (!shouldContinueCompletedPropertySearch(currentSearchMessages, currentMessage)) {
