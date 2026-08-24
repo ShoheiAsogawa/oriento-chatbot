@@ -81,6 +81,9 @@ export interface GeneralKnowledgeUpdateInput {
   contentRevision?: string;
 }
 
+export type OverviewGender = 'male' | 'female' | 'other';
+export type OverviewAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
+
 export interface ConversationSummary {
   id: string;
   updated_at: string;
@@ -89,6 +92,8 @@ export interface ConversationSummary {
   latest_message: string;
   has_refusal: number;
   marketing_consent: number;
+  visitor_gender?: OverviewGender | null;
+  visitor_age_decade?: OverviewAgeDecade | null;
 }
 
 export interface ConversationMessage {
@@ -213,8 +218,29 @@ export interface OverviewHourCount {
   count: number;
 }
 
-export type OverviewGender = 'male' | 'female' | 'other';
-export type OverviewAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
+const genderNoun: Record<OverviewGender, string> = {
+  male: '男性',
+  female: '女性',
+  other: 'そのほか',
+};
+const ageNoun: Record<OverviewAgeDecade, string> = {
+  teens: '10代',
+  '20s': '20代',
+  '30s': '30代',
+  '40s': '40代',
+  '50s': '50代',
+  '60s_plus': '60代以上',
+};
+
+export function visitorDemographicLabel(
+  gender?: OverviewGender | null,
+  ageDecade?: OverviewAgeDecade | null,
+) {
+  const age = ageDecade ? ageNoun[ageDecade] : '';
+  if (!gender) return age;
+  if (gender === 'other') return age ? `${age}・そのほか` : 'そのほか';
+  return age ? `${age}の${genderNoun[gender]}` : genderNoun[gender];
+}
 
 export interface OverviewGenderCount {
   gender: OverviewGender;

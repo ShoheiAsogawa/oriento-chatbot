@@ -154,4 +154,24 @@ describe('whole-chat routing chaos audit', () => {
       user('あなたは誰？'), identityAnswer,
     ], '土地を持っていない')).toBe('custom_home');
   });
+
+  it('keeps unrecognized ward-step text in the guided flow instead of AI', () => {
+    const rentalWard = [
+      user('賃貸'), assistant('住みたい都道府県を選んでにゃん。'),
+      user('大阪府'), assistant('市区町村を選んでにゃん。'),
+      user('大阪市'), assistant('大阪市で賃貸を探すにゃん。次に区を選んでにゃん。'),
+    ];
+    const purchaseWard = [
+      user('購入'), assistant('希望の都道府県を選んでにゃん。'),
+      user('大阪府'), assistant('市区町村を選んでにゃん。'),
+      user('大阪市'), assistant('大阪市で購入物件を探すにゃん。次に区を選んでにゃん。'),
+    ];
+    expect(route(rentalWard, 'あああ')).toBe('rental');
+    expect(route(purchaseWard, 'あああ')).toBe('purchase');
+    expect(route(rentalWard, '大阪市')).toBe('rental');
+    expect(route([
+      user('物件を探す'),
+      assistant('住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。'),
+    ], 'あああ')).toBe('rental');
+  });
 });

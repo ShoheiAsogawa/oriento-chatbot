@@ -342,7 +342,7 @@ function ReceptionSummary({ data }: { data: OverviewData }) {
   </section>;
 }
 
-export function OverviewPage({ onOpenConversations }: { onOpenConversations: () => void }) {
+export function OverviewPage({ onOpenConversations }: { onOpenConversations: (conversationId?: string) => void }) {
   const [data, setData] = useState<OverviewData>(emptyOverview);
   const [recent, setRecent] = useState<ConversationSummary[]>([]);
   const [metric, setMetric] = useState<'conversations' | 'visitors'>('conversations');
@@ -429,9 +429,9 @@ export function OverviewPage({ onOpenConversations }: { onOpenConversations: () 
       <section className="surface activity-list">
         <div className="section-heading">
           <div><h2>最近の相談</h2><p>直近に寄せられた相談内容</p></div>
-          <button className="text-button" type="button" onClick={onOpenConversations}>すべて見る <ChevronRight /></button>
+          <button className="text-button" type="button" onClick={() => onOpenConversations()}>すべて見る <ChevronRight /></button>
         </div>
-        {recent.length ? recent.map((item) => <button className="activity-row" key={item.id} type="button" onClick={onOpenConversations}>
+        {recent.length ? recent.map((item) => <button className="activity-row" key={item.id} type="button" onClick={() => onOpenConversations(item.id)}>
           <span className="activity-icon"><MessageSquareText /></span>
           <span><strong>{item.latest_message}</strong><small>{shortenPage(item.source_page)}</small></span>
           <time>{formatDate(item.updated_at)}</time><ChevronRight />

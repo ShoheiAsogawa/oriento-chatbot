@@ -28,6 +28,12 @@ describe('custom home consultation', () => {
     });
     expect(customHomeChoicesForResponse('注文住宅の相談だね。まず、土地を持っているか教えてにゃん。'))
       .toEqual(customHomeChoicesForStep('land_ownership'));
+    expect(customHomeChoicesForStep('land_ownership').map((choice) => choice.value))
+      .toEqual(['土地を持っている', '土地を持っていない', '未定']);
+    expect(customHomeChoicesForResponse('ご家族の人数や構成を教えてにゃん。まだ決まっていなければ「未定」で大丈夫にゃん。')
+      .map((choice) => choice.value)).toContain('未定');
+    expect(customHomeChoicesForResponse('土地の所在地を市区町村まで教えてにゃん。分からなければ「未定」で大丈夫にゃん。'))
+      .toEqual([{ label: '未定', value: '未定' }]);
   });
 
   it('collects an owned-land path in the requested order and then asks for lead details', () => {

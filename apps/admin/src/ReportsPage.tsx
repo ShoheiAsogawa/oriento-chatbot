@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Building2, ChevronDown, Gauge, MessageSquareText, Sparkles, UsersRound } from 'lucide-react';
 import {
   api,
+  visitorDemographicLabel,
   type MonthlyIntentCount,
   type MonthlyPropertyInterest,
   type MonthlyReport,
@@ -58,7 +59,7 @@ function percent(value: number, total: number) {
 }
 
 function propertyLabel(item: MonthlyPropertyInterest) {
-  const who = `${ageLabels[item.ageDecade]}の${genderLabels[item.gender]}`;
+  const who = visitorDemographicLabel(item.gender, item.ageDecade);
   const kind = item.category ? categoryLabels[item.category] : '';
   return kind ? `${who} ／ ${kind}` : who;
 }

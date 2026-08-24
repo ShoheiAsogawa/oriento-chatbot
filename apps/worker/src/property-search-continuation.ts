@@ -16,6 +16,7 @@ const CONVERSATION_DETOUR = /(?:(?:あなた|君|きみ|オリにゃん).*(?:誰
 const SEARCH_CONTINUATION_SIGNAL = /(?:物件|候補|部屋探し|引っ越し|賃貸|購入|買いたい|借りたい|一人暮らし|二人暮らし|家族で住|ほか|他|別|もっと)/u;
 const COMPLETED_SEARCH_HANDOFF = /(?:(?:どれ|どちら|どの).*(?:おすすめ|良い|いい|向いて)|(?:内見|見学|問い合わせ|申込).*(?:したい|希望|お願い|進めたい))/u;
 const OTHER_PROPERTY_REQUEST = /(?:(?:ほか|他|別|追加|もっと).*(?:物件|候補|部屋|住まい)|^(?:ほか|他|別|もっと)(?:に|は|も|を)?(?:ありますか|ある|見たい|ください)?[。！!？?]?$)/u;
+const GUIDED_SELECTION = /^(?:(?:物件種別|間取り)は)?(?:特に)?(?:こだわり|指定)?(?:なし|ない)|^(?:家賃|購入予算).{0,12}\d|^(?:新築戸建て|中古戸建て|中古マンション|土地|その他・事業用|戸建て|マンション)|^(?:ワンルーム|\d+[SLDKR]+(?:以上)?)[。！!？?]*$|[\p{Script=Han}々ヶケぁ-んァ-ヶー]{2,18}(?:都|道|府|県|市|区|町|村)$/u;
 
 export function isObviousConversationDetour(input: string) {
   const normalized = input.normalize('NFKC').trim();
@@ -25,6 +26,10 @@ export function isObviousConversationDetour(input: string) {
 
 export function wantsOtherPropertyCandidates(input: string) {
   return OTHER_PROPERTY_REQUEST.test(input.normalize('NFKC').trim());
+}
+
+export function looksLikeGuidedSearchSelection(input: string) {
+  return GUIDED_SELECTION.test(input.normalize('NFKC').trim());
 }
 
 export function scopePropertySearchMessages(

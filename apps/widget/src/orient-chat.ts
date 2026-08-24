@@ -585,7 +585,7 @@ class OrientChat extends HTMLElement {
     }
     composer?.classList.toggle('locked', !ready);
     if (input) {
-      input.disabled = !ready;
+      input.disabled = !ready || this.sending;
       input.placeholder = ready ? 'メッセージを入力' : 'はじめに性別と年代を選んでにゃん';
     }
     if (send && !this.sending) send.disabled = !ready;
@@ -758,20 +758,39 @@ class OrientChat extends HTMLElement {
         if (userMessage) userMessage.content = '（連絡先を送信しました）';
       }
       const message = this.messages.find((item) => item.id === pendingId);
+      const incomingChoices = result.choices;
+      const incomingMoreResults = typeof result.hasMoreResults === 'boolean'
+        ? result.hasMoreResults
+        : this.shouldShowMoreResults(result.answer);
       if (message) {
         message.pending = false;
         message.content = this.displayAnswer(result.answer).slice(0, 1);
         message.sources = result.sources;
-        message.choices = result.choices;
-        message.moreResults = typeof result.hasMoreResults === 'boolean'
-          ? result.hasMoreResults
-          : this.shouldShowMoreResults(result.answer);
+        // Keep buttons off the DOM until typing finishes so they cannot be
+        // tapped while this.sending is still true.
+        message.choices = [];
+        message.moreResults = false;
         message.lineLink = this.shouldShowLineLink(content, result.answer, result.choices, result.policy);
       }
       this.renderMessages();
+      this.setDisabled(true);
       this.setCatState('speaking');
       await this.typeAnswer(pendingId, result.answer);
+      if (message) {
+        message.choices = incomingChoices;
+        message.moreResults = incomingMoreResults;
+      }
+      const typedItem = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
+        .find((candidate) => candidate.dataset.messageId === pendingId);
+      if (typedItem) {
+        this.renderChoices(typedItem, incomingChoices);
+        this.renderMoreResults(typedItem, incomingMoreResults);
+      }
     } catch (error) {
+      const expired = error instanceof Error && error.message.includes('有効期限');
+      if (expired) {
+        this.messages = this.messages.filter((item) => item.id === userMessageId || item.id === pendingId);
+      }
       const message = this.messages.find((item) => item.id === pendingId);
       if (message) {
         message.pending = false;
@@ -1179,7 +1198,12 @@ class OrientChat extends HTMLElement {
 
   private setDisabled(disabled: boolean) {
     this.root.querySelectorAll<HTMLButtonElement>('.suggestions button, .choice-button, .more-results-button, .send').forEach((button) => { button.disabled = disabled; });
-    if (!disabled) this.syncComposerLock();
+    const input = this.root.querySelector<HTMLTextAreaElement>('textarea');
+    if (disabled) {
+      if (input && this.profileReady) input.disabled = true;
+      return;
+    }
+    this.syncComposerLock();
   }
 
   private renderMessages() {

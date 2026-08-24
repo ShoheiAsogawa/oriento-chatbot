@@ -726,8 +726,12 @@ export function customHomeChoicesForStep(step: CustomHomeStep): CustomHomeChoice
     case 'land_ownership': return [
       { label: '土地を持っている', value: '土地を持っている' },
       { label: '土地を持っていない', value: '土地を持っていない' },
+      { label: '未定', value: '未定' },
     ];
-    case 'household': return ['1人', '2人', '3人', '4人', '5人以上'].map((value) => ({ label: value, value }));
+    case 'land_location':
+    case 'land_size':
+    case 'desired_area': return [{ label: '未定', value: '未定' }];
+    case 'household': return ['1人', '2人', '3人', '4人', '5人以上', '未定'].map((value) => ({ label: value, value }));
     case 'layout': return ['平屋', '2LDK', '3LDK', '4LDK', '二世帯住宅', 'こだわりなし'].map((value) => ({ label: value, value }));
     case 'budget': return ['3,000万円まで', '4,000万円まで', '5,000万円まで', '6,000万円まで', '相談したい'].map((value) => ({ label: value, value }));
     case 'timing': return ['できるだけ早く', '半年以内', '1年以内', '時期未定'].map((value) => ({ label: value, value }));
@@ -740,6 +744,9 @@ export function customHomeChoicesForStep(step: CustomHomeStep): CustomHomeChoice
 export function customHomeChoicesForResponse(response: string): CustomHomeChoice[] {
   const normalized = normalize(response);
   if (LAND_PROMPT.test(normalized)) return customHomeChoicesForStep('land_ownership');
+  if (LAND_LOCATION_PROMPT.test(normalized)) return customHomeChoicesForStep('land_location');
+  if (LAND_SIZE_PROMPT.test(normalized)) return customHomeChoicesForStep('land_size');
+  if (DESIRED_AREA_PROMPT.test(normalized)) return customHomeChoicesForStep('desired_area');
   if (HOUSEHOLD_PROMPT.test(normalized)) return customHomeChoicesForStep('household');
   if (LAYOUT_PROMPT.test(normalized)) return customHomeChoicesForStep('layout');
   if (BUDGET_PROMPT.test(normalized)) return customHomeChoicesForStep('budget');

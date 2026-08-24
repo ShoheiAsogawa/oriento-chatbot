@@ -130,6 +130,9 @@ function walkMinutesFromMessage(content: string) {
 
 function isPurchaseCriterionReply(content: string, lastAssistant: string) {
   const normalized = content.normalize('NFKC');
+  if (WARD_PROMPT.test(lastAssistant)) {
+    return Boolean(wardFromMessage(normalized) || UNKNOWN_LOCATION.test(normalized.trim()));
+  }
   return Boolean(
     prefectureFromMessage(normalized)
     || areaFromMessage(normalized, AREA_PROMPT.test(lastAssistant))
@@ -144,6 +147,7 @@ function isPurchaseCriterionReply(content: string, lastAssistant: string) {
 
 function isPurchaseFlowPrompt(content: string) {
   return AREA_PROMPT.test(content)
+    || WARD_PROMPT.test(content)
     || BUDGET_PROMPT.test(content)
     || TYPE_PROMPT.test(content)
     || LAYOUT_PROMPT.test(content);
@@ -266,7 +270,7 @@ export function evaluatePurchaseConsultation(
   if (!startsPurchaseSearch
     && isPurchaseFlowPrompt(lastAssistant)
     && !isPurchaseCriterionReply(currentMessage, lastAssistant)) {
-    return { active: false };
+    return { active: true, response: lastAssistant };
   }
   if (!shouldContinueCompletedPropertySearch(messages, currentMessage)) {
     return { active: false };

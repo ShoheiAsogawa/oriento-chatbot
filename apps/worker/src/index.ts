@@ -2407,6 +2407,7 @@ app.get('/api/admin/conversations', async (context) => {
   const search = (context.req.query('search') || '').trim().slice(0, 250);
   const result = await context.env.DB.prepare(
     `SELECT c.id, c.source_page, c.status, c.marketing_consent, c.created_at, c.updated_at,
+      c.visitor_gender, c.visitor_age_decade,
       COUNT(m.id) AS message_count,
       MAX(CASE WHEN m.policy_action != 'allow' THEN 1 ELSE 0 END) AS has_refusal,
       COALESCE((
@@ -2431,12 +2432,13 @@ app.get('/api/admin/conversations', async (context) => {
 app.get('/api/admin/conversations/export.csv', async (context) => {
   const result = await context.env.DB.prepare(
     `SELECT m.id AS message_id, m.conversation_id, m.role, m.content_redacted, m.model,
-      m.latency_ms, m.policy_action, m.created_at, c.source_page, c.marketing_consent
+      m.latency_ms, m.policy_action, m.created_at, c.source_page, c.marketing_consent,
+      c.visitor_gender, c.visitor_age_decade
      FROM messages m JOIN conversations c ON c.id = m.conversation_id
      ORDER BY m.created_at DESC, m.rowid DESC LIMIT 10001`,
   ).all();
   const truncated = result.results.length > 10000;
-  const header = ['message_id', 'conversation_id', 'role', 'content_redacted', 'model', 'latency_ms', 'policy_action', 'created_at', 'source_page', 'marketing_consent'];
+  const header = ['message_id', 'conversation_id', 'role', 'content_redacted', 'model', 'latency_ms', 'policy_action', 'created_at', 'source_page', 'marketing_consent', 'visitor_gender', 'visitor_age_decade'];
   const rows = result.results.slice(0, 10000).map((row) => header.map((key) => row[key]));
   const csv = `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n')}`;
   await appendAudit(context.env, {

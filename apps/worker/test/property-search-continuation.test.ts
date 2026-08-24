@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isObviousConversationDetour,
+  looksLikeGuidedSearchSelection,
   scopePropertySearchMessages,
   shouldContinueCompletedPropertySearch,
   wantsOtherPropertyCandidates,
@@ -173,6 +174,11 @@ describe('property search conversation routing', () => {
   it.each(['ほかの物件', '別の候補を見たい', 'もっとありますか', '他は？'])
   ('recognizes a request for unseen candidates: %s', (message) => {
     expect(wantsOtherPropertyCandidates(message)).toBe(true);
+  });
+
+  it.each(['大阪市', '物件種別はこだわりなし', '購入予算3000万円まで', '2LDK'])
+  ('recognizes leftover guided-search button values: %s', (message) => {
+    expect(looksLikeGuidedSearchSelection(message)).toBe(true);
   });
 
   it.each(['もっと安い', '駅に近い物件', '3LDKに変更'])

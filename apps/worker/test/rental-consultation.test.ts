@@ -525,4 +525,48 @@ describe('rental consultation', () => {
     ];
     expect(evaluateRentalConsultation(history, 'わからない').response).toContain('家賃の上限');
   });
+
+  it('re-asks the current rental step when a leftover guided button is tapped', () => {
+    const history = [
+      { role: 'user' as const, content: '賃貸' },
+      { role: 'assistant' as const, content: '住みたい都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '大阪府で賃貸を探すにゃん。次に、市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '羽曳野市' },
+      { role: 'assistant' as const, content: '次に、家賃の上限を教えてにゃん。共益費込みか別かも分かれば探しやすいにゃん。' },
+    ];
+    expect(evaluateRentalConsultation(history, '羽曳野市')).toEqual({
+      active: true,
+      response: '次に、家賃の上限を教えてにゃん。共益費込みか別かも分かれば探しやすいにゃん。',
+    });
+  });
+
+  it('re-asks the Osaka rental ward step instead of treating the city button as a new area', () => {
+    const history = [
+      { role: 'user' as const, content: '賃貸' },
+      { role: 'assistant' as const, content: '住みたい都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '大阪市で賃貸を探すにゃん。次に区を選んでにゃん。' },
+    ];
+    expect(evaluateRentalConsultation(history, '大阪市')).toEqual({
+      active: true,
+      response: '大阪市で賃貸を探すにゃん。次に区を選んでにゃん。',
+    });
+    expect(evaluateRentalConsultation(history, 'あああ')).toEqual({
+      active: true,
+      response: '大阪市で賃貸を探すにゃん。次に区を選んでにゃん。',
+    });
+  });
+
+  it('keeps the housing-type prompt when the visitor types unrelated text', () => {
+    expect(evaluateRentalConsultation([
+      { role: 'user', content: '物件を探す' },
+      { role: 'assistant', content: '住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。' },
+    ], 'あああ')).toEqual({
+      active: false,
+      response: 'まず、購入・注文住宅・賃貸のどれを考えているか選んでにゃん。',
+    });
+  });
 });

@@ -310,4 +310,40 @@ describe('purchase consultation', () => {
     ];
     expect(evaluatePurchaseConsultation(history, 'わからない').response).toContain('物件の種類');
   });
+
+  it('re-asks the current purchase step when a leftover guided button is tapped', () => {
+    const history = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '大阪府で購入物件を探すにゃん。次に、市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '大阪市で購入物件を探すにゃん。次に区を選んでにゃん。' },
+      { role: 'user' as const, content: '阿倍野区' },
+      { role: 'assistant' as const, content: '購入する物件の種類を選んでにゃん。まだ決まっていなければ、こだわりなしでも探せるにゃん。' },
+    ];
+    expect(evaluatePurchaseConsultation(history, '大阪市')).toEqual({
+      active: true,
+      response: '購入する物件の種類を選んでにゃん。まだ決まっていなければ、こだわりなしでも探せるにゃん。',
+    });
+  });
+
+  it('re-asks the Osaka purchase ward step for a stale city or unrecognized text', () => {
+    const history = [
+      { role: 'user' as const, content: '購入' },
+      { role: 'assistant' as const, content: '希望の都道府県を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪府' },
+      { role: 'assistant' as const, content: '市区町村を選んでにゃん。' },
+      { role: 'user' as const, content: '大阪市' },
+      { role: 'assistant' as const, content: '大阪市で購入物件を探すにゃん。次に区を選んでにゃん。' },
+    ];
+    expect(evaluatePurchaseConsultation(history, '大阪市')).toEqual({
+      active: true,
+      response: '大阪市で購入物件を探すにゃん。次に区を選んでにゃん。',
+    });
+    expect(evaluatePurchaseConsultation(history, 'あああ')).toEqual({
+      active: true,
+      response: '大阪市で購入物件を探すにゃん。次に区を選んでにゃん。',
+    });
+  });
 });

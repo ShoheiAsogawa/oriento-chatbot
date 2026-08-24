@@ -3,7 +3,7 @@ import {
   Activity, Archive, BookOpen, ChevronLeft, ChevronRight,
   EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
   FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Plus, ClipboardList,
-  RefreshCw, Search, ShieldCheck, Trash2, UploadCloud,
+  RefreshCw, Search, ShieldCheck, Trash2, UploadCloud, UsersRound,
   Pencil, X,
 } from 'lucide-react';
 import {
@@ -15,6 +15,7 @@ import {
   type CustomHomeInquiryIntake,
   type KnowledgeItem,
   type PropertyKnowledgeInput,
+  visitorDemographicLabel,
 } from './api';
 import { OverviewPage } from './OverviewPage';
 import { ReportsPage } from './ReportsPage';
@@ -763,7 +764,7 @@ function WidgetPreview() {
   return <section className="widget-preview"><div className="preview-title"><h3>ウィジェットプレビュー</h3><Eye /></div><div className="mini-widget"><header><span className="mini-cat" style={orinyanSpriteStyle}></span><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div></header><div className="mini-message"><span className="mini-cat" style={orinyanSpriteStyle}></span><p>こんにちは！<br />何かお困りのことはありますか？</p></div><div className="mini-input">メッセージを入力… <span>➤</span></div></div></section>;
 }
 
-function ConversationsPage() {
+function ConversationsPage({ initialConversationId }: { initialConversationId?: string }) {
   const [rows, setRows] = useState<ConversationSummary[]>([]);
   const [selected, setSelected] = useState<ConversationSummary | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -782,14 +783,19 @@ function ConversationsPage() {
       const data = await api.conversations(query);
       if (rowsRequestSequence.current !== sequence) return;
       setRows(data.result);
-      setSelected((current) => data.result.find((row) => row.id === current?.id) || data.result[0] || null);
+      setSelected((current) => (
+        data.result.find((row) => row.id === initialConversationId)
+        || data.result.find((row) => row.id === current?.id)
+        || data.result[0]
+        || null
+      ));
     } catch (reason) {
       if (rowsRequestSequence.current !== sequence) return;
       setError(reason instanceof Error ? reason.message : '会話ログを読み込めませんでした。');
     } finally {
       if (rowsRequestSequence.current === sequence) setLoading(false);
     }
-  }, []);
+  }, [initialConversationId]);
   useEffect(() => { void loadRows(deferredSearch); }, [deferredSearch, loadRows]);
   useEffect(() => {
     if (!selected) {
@@ -817,12 +823,13 @@ function ConversationsPage() {
       setExporting(false);
     }
   };
+  const visitorLabel = selected ? visitorDemographicLabel(selected.visitor_gender, selected.visitor_age_decade) : '';
   const lastAssistant = [...messages].reverse().find((message) => message.role === 'assistant');
   return <div className="split-page logs-page"><main className="split-main"><PageHeader title="会話ログ" description="記録された質問と回答、参照資料、ポリシー判定を確認します。" action={<button className="secondary-button" onClick={() => void download()} disabled={exporting}><Archive />{exporting ? '出力中…' : 'CSV出力'}</button>} />
     {error ? <p className="knowledge-notice" role="alert">{error}</p> : null}
     <div className="table-tools"><label className="search-field"><Search /><input placeholder="会話内容で検索" value={search} onChange={(event) => setSearch(event.target.value)} /></label><button className="square-button" type="button" aria-label="会話ログを再読み込み" onClick={() => void loadRows(deferredSearch)} disabled={loading}><RefreshCw className={loading ? 'spin' : ''} /></button></div>
     <div className="conversation-list" aria-busy={loading}><div className="conversation-head"><span>日時</span><span>最新の質問</span><span>ページ</span><span>回答状況</span></div>{rows.map((row) => <button key={row.id} className={selected?.id === row.id ? 'selected' : ''} onClick={() => setSelected(row)}><time>{formatDate(row.updated_at)}</time><span><strong>{row.latest_message || '（質問なし）'}</strong><small>{row.message_count}メッセージ</small></span><code>{row.source_page || '/'}</code><span>{row.has_refusal ? <span className="status warning">案内対象外</span> : <span className="status success">回答</span>}</span></button>)}{!loading && rows.length === 0 ? <div className="knowledge-empty"><MessageSquareText /><p>条件に一致する会話はありません。</p></div> : null}</div>
-  </main><aside className={`detail-drawer conversation-detail ${selected ? 'open' : ''}`}><div className="drawer-heading"><div><h2>会話の詳細</h2><p>{selected?.id}</p></div><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>{selected ? <><div className="conversation-meta"><span><History />{formatDate(selected.updated_at)}</span><span><Link2 />{selected.source_page}</span></div><div className="transcript">{messages.map((message) => <div key={message.id} className={message.role === 'user' ? 'transcript-user' : 'transcript-bot'}>{message.content_redacted}{message.role === 'assistant' && message.policy_action === 'allow' ? <small>出典は保存済みのナレッジ資料を参照</small> : null}</div>)}</div><div className="policy-result"><ShieldCheck /><div><strong>ポリシー判定</strong><p>{lastAssistant?.policy_action || '確認中'} {lastAssistant?.policy_action === 'allow' ? '— 根拠資料あり' : '— 回答を拒否または担当者へ案内'}</p></div></div></> : <div className="empty-detail"><MessageSquareText /><p>会話を選択してください。</p></div>}</aside></div>;
+  </main><aside className={`detail-drawer conversation-detail ${selected ? 'open' : ''}`}><div className="drawer-heading"><div><h2>会話の詳細</h2><p>{selected?.id}</p></div><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>{selected ? <><div className="conversation-meta"><span><History />{formatDate(selected.updated_at)}</span><span><Link2 />{selected.source_page}</span>{visitorLabel ? <span><UsersRound />{visitorLabel}</span> : null}</div><div className="transcript">{messages.map((message) => <div key={message.id} className={message.role === 'user' ? 'transcript-user' : 'transcript-bot'}>{message.content_redacted}{message.role === 'assistant' && message.policy_action === 'allow' ? <small>出典は保存済みのナレッジ資料を参照</small> : null}</div>)}</div><div className="policy-result"><ShieldCheck /><div><strong>ポリシー判定</strong><p>{lastAssistant?.policy_action || '確認中'} {lastAssistant?.policy_action === 'allow' ? '— 根拠資料あり' : '— 回答を拒否または担当者へ案内'}</p></div></div></> : <div className="empty-detail"><MessageSquareText /><p>会話を選択してください。</p></div>}</aside></div>;
 }
 
 function inquiryValue(value: unknown) {
@@ -951,6 +958,7 @@ export function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [session, setSession] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [focusConversationId, setFocusConversationId] = useState<string | undefined>();
   useEffect(() => { void api.authSession().then((value) => setSession(value.authenticated ? value.user?.loginId || null : null)).catch(() => setSession(null)).finally(() => setCheckingSession(false)); }, []);
   useEffect(() => {
     const expireSession = () => setSession(null);
@@ -958,12 +966,18 @@ export function App() {
     return () => window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, expireSession);
   }, []);
   const logout = async () => { try { await api.logout(); } finally { setSession(null); } };
-  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'conversations' ? ConversationsPage : page === 'inquiries' ? InquiriesPage : null;
+  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'inquiries' ? InquiriesPage : null;
   if (checkingSession) return <main className="auth-page"><p>ログイン状態を確認しています…</p></main>;
   if (!session) return <AuthScreen onAuthenticated={setSession} />;
   return <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
     <header className="topbar"><button className="menu-button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? 'メニューを開く' : 'メニューを折りたたむ'} aria-expanded={!collapsed}><Menu /></button><div className="brand"><span className="brand-mark" aria-hidden="true"><span className="brand-cat" style={orinyanSpriteStyle} /></span><strong>オリにゃん管理</strong></div><div className="topbar-right"><span className="environment"><Activity />本番</span><span className="account-email">{session}</span><button className="secondary-button logout-button" onClick={() => void logout()}>ログアウト</button></div></header>
     <Sidebar page={page} onPage={setPage} collapsed={collapsed} onToggle={() => setCollapsed((value) => !value)} />
-    <section className="content">{page === 'overview' ? <OverviewPage onOpenConversations={() => setPage('conversations')} /> : ActivePage ? <ActivePage /> : null}</section>
+    <section className="content">{
+      page === 'overview'
+        ? <OverviewPage onOpenConversations={(conversationId) => { setFocusConversationId(conversationId); setPage('conversations'); }} />
+        : page === 'conversations'
+          ? <ConversationsPage initialConversationId={focusConversationId} />
+          : ActivePage ? <ActivePage /> : null
+    }</section>
   </div>;
 }

@@ -199,6 +199,9 @@ function unsupportedConditionFromMessage(content: string) {
 
 function isRentalCriterionReply(content: string, lastAssistant: string) {
   const normalized = content.normalize('NFKC');
+  if (WARD_PROMPT.test(lastAssistant)) {
+    return Boolean(wardFromMessage(normalized) || UNKNOWN_LOCATION.test(normalized.trim()));
+  }
   const answeredAreaPrompt = AREA_PROMPT.test(lastAssistant);
   const answeredBudgetPrompt = BUDGET_PROMPT.test(lastAssistant);
   return Boolean(
@@ -218,6 +221,7 @@ function isRentalCriterionReply(content: string, lastAssistant: string) {
 function isRentalFlowPrompt(content: string) {
   return PROPERTY_TYPE_QUESTION.test(content)
     || AREA_PROMPT.test(content)
+    || WARD_PROMPT.test(content)
     || BUDGET_PROMPT.test(content)
     || PREFERENCE_PROMPT.test(content)
     || COMPACT_LAYOUT_CONFIRMATION.test(content);
@@ -333,11 +337,6 @@ export function evaluateRentalConsultation(
   const propertySearchMessages = messagesSinceLatestPropertySearch(history, currentMessage);
 
   if (hasPendingPropertyType(propertySearchMessages, lastAssistant)) {
-    if (!isRentalCriterionReply(currentMessage, lastAssistant)
-      && !RENTAL_INTENT.test(currentMessage)
-      && !SALE_INTENT.test(currentMessage)) {
-      return { active: false };
-    }
     return {
       active: false,
       response: 'まず、購入・注文住宅・賃貸のどれを考えているか選んでにゃん。',
@@ -379,7 +378,7 @@ export function evaluateRentalConsultation(
   if (!startsRentalSearch
     && isRentalFlowPrompt(lastAssistant)
     && !isRentalCriterionReply(currentMessage, lastAssistant)) {
-    return { active: false };
+    return { active: true, response: lastAssistant };
   }
   if (!shouldContinueCompletedPropertySearch(currentSearchMessages, currentMessage)) {
     return { active: false };
