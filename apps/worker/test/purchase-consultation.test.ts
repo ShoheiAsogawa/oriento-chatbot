@@ -44,7 +44,7 @@ describe('purchase consultation', () => {
   it('continues from a no-preference property-type choice to the purchase budget', () => {
     const history = [
       { role: 'user' as const, content: '物件を探す' },
-      { role: 'assistant' as const, content: '住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。' },
+      { role: 'assistant' as const, content: '住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。' },
       { role: 'user' as const, content: '購入' },
       { role: 'assistant' as const, content: '購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。' },
       { role: 'user' as const, content: '大阪府' },
@@ -105,7 +105,7 @@ describe('purchase consultation', () => {
       { role: 'user' as const, content: '土地を持っていない' },
       { role: 'assistant' as const, content: '建てたいエリアを教えてにゃん。' },
       { role: 'user' as const, content: '物件を探す' },
-      { role: 'assistant' as const, content: '住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。' },
+      { role: 'assistant' as const, content: '住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。' },
       { role: 'user' as const, content: '購入' },
       { role: 'assistant' as const, content: '購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。' },
     ];

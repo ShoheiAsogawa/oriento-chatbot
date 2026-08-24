@@ -27,7 +27,7 @@ const RENTAL_INTENT = /(?:一人暮らし|ひとり暮らし|単身|二人暮ら
 const SALE_INTENT = /(?:購入|買いたい|^(?:新築|中古)(?:戸建て?|マンション)$|(?:新築|中古)(?:戸建|マンション)?.*(?:買|購入)|戸建てを買|土地を買)/u;
 const FRESH_RENTAL_RESTART = /^(?:(?:もう一度|改めて|新しく)\s*)?賃貸(?:物件)?(?:を探(?:す|したい))?[。！!？?]?$/u;
 const PROPERTY_SEARCH_STARTER = /^(?:物件を探す|物件を探したい|物件探し(?:をしたい|したい)?)(?:[。！!？?])?$/u;
-const PROPERTY_TYPE_QUESTION = /賃貸(?:と|か)購入.*(?:教えて|選んで)/u;
+const PROPERTY_TYPE_QUESTION = /(?:購入・注文住宅・賃貸|賃貸・購入・注文住宅|賃貸(?:と|か)購入).*(?:教えて|選んで)/u;
 const AREA_PROMPT = /(?:住みたい地域|希望(?:の)?エリア|地域や最寄り駅|最寄り駅|都道府県|市区町村)/u;
 const WARD_PROMPT = /(?:次に|希望の?)区を選んで/u;
 const BUDGET_PROMPT = /(?:家賃|予算).*(?:上限|教えて)/u;
@@ -316,7 +316,7 @@ export function evaluateRentalConsultation(
   if (PROPERTY_SEARCH_STARTER.test(currentMessage.trim())) {
     return {
       active: false,
-      response: '住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
+      response: '住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。',
     };
   }
 
@@ -340,7 +340,7 @@ export function evaluateRentalConsultation(
     }
     return {
       active: false,
-      response: 'まず、賃貸・購入・注文住宅のどれを考えているか選んでにゃん。',
+      response: 'まず、購入・注文住宅・賃貸のどれを考えているか選んでにゃん。',
     };
   }
 

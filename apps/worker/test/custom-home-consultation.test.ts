@@ -580,7 +580,7 @@ describe('custom home consultation', () => {
   it('does not mistake a purchase type prompt containing こだわり for a custom-home intake', () => {
     const purchaseHistory = [
       user('物件を探す'),
-      assistant('住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。'),
+      assistant('住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。'),
       user('購入'),
       assistant('購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。'),
       user('大阪府'),
@@ -601,7 +601,7 @@ describe('custom home consultation', () => {
       user('土地を持っていない'),
       assistant('建てたいエリアを教えてにゃん。'),
       user('物件を探す'),
-      assistant('住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。'),
+      assistant('住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。'),
       user('購入'),
       assistant('購入物件を一緒に探すにゃん。まず、希望の都道府県を選んでにゃん。'),
     ];

@@ -3,11 +3,17 @@ import { choicesForChatAnswer } from '../src/chat-choices';
 
 describe('chat choices', () => {
   it('offers rental, purchase, and custom-home paths after starting a home search', () => {
-    expect(choicesForChatAnswer('住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。'))
+    expect(choicesForChatAnswer('住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。'))
       .toMatchObject([
-        { label: '賃貸', value: '賃貸' },
         { label: '購入', value: '購入' },
         { label: '注文住宅', value: '注文住宅' },
+        { label: '賃貸', value: '賃貸' },
+      ]);
+    expect(choicesForChatAnswer('住まい探しだね。賃貸・購入・注文住宅のどれを考えているか選んでにゃん。'))
+      .toMatchObject([
+        { label: '購入', value: '購入' },
+        { label: '注文住宅', value: '注文住宅' },
+        { label: '賃貸', value: '賃貸' },
       ]);
   });
 
