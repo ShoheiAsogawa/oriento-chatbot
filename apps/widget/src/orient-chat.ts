@@ -342,6 +342,27 @@ const styles = `
   .more-results-button:active { transform: translateY(0); }
   .more-results-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
+  .thinking-chars { display: inline-flex; }
+  .thinking-char {
+    display: inline-block;
+    animation: thinking-wave 1.4s ease-in-out infinite;
+  }
+  .thinking-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 5px;
+    height: 10px;
+  }
+  .thinking-dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--orient-primary);
+    animation: thinking-dot 1.05s ease-in-out infinite;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: .14s; }
+  .thinking-dots span:nth-child(3) { animation-delay: .28s; }
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
   .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
@@ -457,7 +478,7 @@ const styles = `
   .oc-cal-submit:disabled { opacity: .45; cursor: not-allowed; }
   .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
   .composer.locked { opacity: .55; }
-  .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+  .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease; }
   .suggestions button span { display: block; color: var(--orient-primary); font-size: 17px; line-height: 1; }
   .suggestions button:hover, .suggestions button:focus-visible { background: #fff5ef; outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
   .suggestions button:disabled {
@@ -473,6 +494,13 @@ const styles = `
     background: #f3f3f5;
     outline: none;
     transform: none;
+  }
+  .suggestions button.ready-pop {
+    z-index: 1;
+    animation: suggestion-ready 1.15s cubic-bezier(.22,.8,.28,1) 2 both;
+  }
+  .suggestions button.ready-pop span {
+    animation: suggestion-ready-icon .7s ease-in-out 2 both;
   }
   .composer { display: grid; grid-template-columns: 1fr 44px; gap: 8px; margin: 0 14px; padding: 5px 5px 5px 13px; border: 2px solid var(--orient-primary); border-radius: 12px; background: #fff; }
   .composer:focus-within { box-shadow: 0 0 0 3px rgba(255,104,11,.15); }
@@ -525,6 +553,25 @@ const styles = `
   @keyframes listen { 0%,100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
+  @keyframes thinking-wave {
+    0%, 68%, 100% { transform: translateY(0); color: var(--orient-muted); }
+    34% { transform: translateY(-3px); color: var(--orient-ink); }
+  }
+  @keyframes thinking-dot {
+    0%, 75%, 100% { transform: translateY(0); opacity: .35; }
+    40% { transform: translateY(-4px); opacity: 1; }
+  }
+  @keyframes suggestion-ready {
+    0% { transform: scale(1); background: #fff; box-shadow: 0 0 0 0 rgba(255,104,11,0); }
+    32% { transform: scale(1.08); background: #fff5ef; box-shadow: 0 8px 18px rgba(255,104,11,.22), 0 0 0 6px rgba(255,104,11,.2); }
+    58% { transform: scale(0.97); }
+    100% { transform: scale(1); background: #fff; box-shadow: 0 0 0 0 rgba(255,104,11,0); }
+  }
+  @keyframes suggestion-ready-icon {
+    0%, 100% { transform: scale(1) rotate(0); }
+    40% { transform: scale(1.28) rotate(-10deg); }
+    70% { transform: scale(1.08) rotate(8deg); }
+  }
   @media (max-width: 520px) {
     :host { inset: auto 10px 10px 10px; }
     .root { width: 100%; }
@@ -735,6 +782,7 @@ class OrientChat extends HTMLElement {
     const input = this.root.querySelector<HTMLTextAreaElement>('textarea');
     const send = this.root.querySelector<HTMLButtonElement>('.send');
     if (suggestions) {
+      const wasLocked = suggestions.classList.contains('locked');
       suggestions.hidden = false;
       suggestions.classList.toggle('locked', !ready);
       suggestions.querySelectorAll<HTMLButtonElement>('button').forEach((button) => {
@@ -742,6 +790,7 @@ class OrientChat extends HTMLElement {
         if (ready) button.removeAttribute('title');
         else button.title = 'はじめに性別と年代を選んでにゃん';
       });
+      if (ready && wasLocked && !this.sending) this.playSearchReadyAnimation(suggestions);
     }
     composer?.classList.toggle('locked', !ready);
     if (input) {
@@ -749,6 +798,20 @@ class OrientChat extends HTMLElement {
       input.placeholder = ready ? 'メッセージを入力' : 'はじめに性別と年代を選んでにゃん';
     }
     if (send && !this.sending) send.disabled = !ready;
+  }
+
+  private playSearchReadyAnimation(suggestions: HTMLElement) {
+    const search = suggestions.querySelector<HTMLButtonElement>('button[data-question="物件を探す"]');
+    if (!search) return;
+    search.classList.remove('ready-pop');
+    void search.offsetWidth;
+    search.classList.add('ready-pop');
+    const finish = (event: AnimationEvent) => {
+      if (event.target !== search || event.animationName !== 'suggestion-ready') return;
+      search.classList.remove('ready-pop');
+      search.removeEventListener('animationend', finish);
+    };
+    search.addEventListener('animationend', finish);
   }
 
   private selectVisitorProfile(value: string) {
@@ -1681,7 +1744,21 @@ class OrientChat extends HTMLElement {
       thinkingLabel.setAttribute('role', 'status');
       thinkingLabel.setAttribute('aria-live', 'polite');
       thinkingLabel.setAttribute('aria-atomic', 'true');
-      thinkingLabel.textContent = 'おりにゃんが考えています';
+      thinkingLabel.setAttribute('aria-label', 'おりにゃんが考えています');
+      const chars = document.createElement('span');
+      chars.className = 'thinking-chars';
+      Array.from('おりにゃんが考えています').forEach((character, index) => {
+        const letter = document.createElement('span');
+        letter.className = 'thinking-char';
+        letter.textContent = character;
+        letter.style.animationDelay = `${index * 70}ms`;
+        chars.append(letter);
+      });
+      const dots = document.createElement('span');
+      dots.className = 'thinking-dots';
+      dots.setAttribute('aria-hidden', 'true');
+      for (let index = 0; index < 3; index += 1) dots.append(document.createElement('span'));
+      thinkingLabel.append(chars, dots);
       bubble.append(thinkingLabel);
     } else if (message.role === 'assistant' && message.rawContent) {
       this.renderAnswerWithSources(bubble, message.rawContent, message.sources || []);
