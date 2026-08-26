@@ -96,7 +96,16 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
     return [choice('この条件を外して検索', `${condition}を条件から外す`, 'primary')];
   }
   if (/条件に合う.*(?:物件|賃貸).*(?:見つかった|見つからなかった)/su.test(answer)) {
-    return [choice('条件を変えて探す', '物件を探す')];
+    return propertyCandidateChoices(false);
   }
   return [];
+}
+
+export function propertyCandidateChoices(hasMoreResults: boolean): ChatChoice[] {
+  return hasMoreResults
+    ? [
+      choice('もっと見る', 'もっと見たい', 'primary'),
+      choice('別条件で探す', '物件を探す'),
+    ]
+    : [choice('別条件で探す', '物件を探す')];
 }

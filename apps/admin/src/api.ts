@@ -178,13 +178,19 @@ export interface CustomHomeInquiryIntake {
   priorities?: string;
 }
 
+export type InquiryKind = 'custom_home' | 'document_request' | 'phone' | 'viewing';
+
 export interface CustomHomeInquiry {
   id: string;
   conversationId: string;
   createdAt: string;
   updatedAt: string;
+  kind?: InquiryKind;
   name: string | null;
   phone: string | null;
+  address?: string | null;
+  preferredDatetime?: string | null;
+  properties?: Array<{ title: string; url: string }>;
   intake: CustomHomeInquiryIntake;
   notificationStatus: 'collecting' | 'pending' | 'processing' | 'sent' | 'failed' | string;
 }

@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { ConversationContextMessage } from '../src/conversation-context';
 import { evaluateCustomHomeConsultation } from '../src/custom-home-consultation';
 import { directConversationAnswer, evaluatePolicy, isPropertyKnowledgeQuestion } from '../src/policy';
+import { evaluatePropertyInquiry } from '../src/property-inquiry';
 import { evaluatePurchaseConsultation } from '../src/purchase-consultation';
 import { evaluateRentalConsultation } from '../src/rental-consultation';
 
-type Route = 'policy' | 'direct' | 'custom_home' | 'property_knowledge' | 'rental' | 'purchase' | 'ai';
+type Route = 'policy' | 'direct' | 'custom_home' | 'property_inquiry' | 'property_knowledge' | 'rental' | 'purchase' | 'ai';
 
 const user = (content: string): ConversationContextMessage => ({ role: 'user', content });
 const assistant = (content: string): ConversationContextMessage => ({ role: 'assistant', content });
@@ -15,6 +16,7 @@ function route(history: ConversationContextMessage[], currentMessage: string): R
   if (!evaluatePolicy(currentMessage).allowed) return 'policy';
   if (directConversationAnswer(currentMessage)) return 'direct';
   if (evaluateCustomHomeConsultation(history, currentMessage).active) return 'custom_home';
+  if (evaluatePropertyInquiry(history, currentMessage).active) return 'property_inquiry';
 
   const propertyKnowledge = isPropertyKnowledgeQuestion(
     currentMessage,
@@ -72,6 +74,8 @@ describe('whole-chat routing chaos audit', () => {
     ['ほかの物件も見たい', 'purchase'],
     ['もっと安い物件', 'purchase'],
     ['この物件はペット可？', 'property_knowledge'],
+    ['資料請求したい', 'property_inquiry'],
+    ['見学したい', 'property_inquiry'],
     ['あなたは誰？', 'direct'],
     ['おなかすいた', 'policy'],
     ['おすすめの病院を教えて', 'policy'],
@@ -84,6 +88,8 @@ describe('whole-chat routing chaos audit', () => {
   it.each([
     ['ほかの物件', 'rental'],
     ['この物件の家賃はいくら？', 'property_knowledge'],
+    ['資料請求したい', 'property_inquiry'],
+    ['電話で相談したい', 'property_inquiry'],
     ['購入に切り替え', 'purchase'],
     ['注文住宅', 'custom_home'],
     ['こんばんは', 'direct'],
@@ -173,5 +179,17 @@ describe('whole-chat routing chaos audit', () => {
       user('物件を探す'),
       assistant('住まい探しだね。購入・注文住宅・賃貸のどれを考えているか選んでにゃん。'),
     ], 'あああ')).toBe('rental');
+  });
+
+  it('lets a visitor leave a property inquiry and start another search', () => {
+    const history = [
+      ...completedRental,
+      user('資料請求したい'),
+      assistant('資料をお届けするにゃん。お名前を教えてにゃん。'),
+    ];
+    expect(route(history, '山田 太郎')).toBe('property_inquiry');
+    expect(route(history, '賃貸に切り替え')).toBe('rental');
+    expect(route(history, '物件を探す')).toBe('rental');
+    expect(route(history, '注文住宅')).toBe('custom_home');
   });
 });

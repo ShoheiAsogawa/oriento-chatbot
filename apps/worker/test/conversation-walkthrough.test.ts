@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { ChatChoice } from '../src/chat-choices';
-import { choicesForChatAnswer } from '../src/chat-choices';
+import { choicesForChatAnswer, propertyCandidateChoices } from '../src/chat-choices';
 import type { ConversationContextMessage } from '../src/conversation-context';
 import { customHomeChoicesForResponse, evaluateCustomHomeConsultation } from '../src/custom-home-consultation';
 import { redactCustomHomeContactTurn } from '../src/custom-home-chat';
@@ -14,6 +14,12 @@ import {
   rentalChoicesForAvailability,
 } from '../src/guided-search-options';
 import { directConversationAnswer, evaluatePolicy, isPropertyKnowledgeQuestion } from '../src/policy';
+import {
+  evaluatePropertyInquiry,
+  propertyInquiryChoicesForResponse,
+  propertyInquiryFollowUp,
+} from '../src/property-inquiry';
+import { redactPropertyInquiryTurn } from '../src/property-inquiry-chat';
 import { wantsOtherPropertyCandidates } from '../src/property-search-continuation';
 import { evaluatePurchaseConsultation } from '../src/purchase-consultation';
 import {
@@ -34,6 +40,7 @@ type Route =
   | 'policy'
   | 'direct'
   | 'custom_home'
+  | 'property_inquiry'
   | 'property_knowledge'
   | 'rental'
   | 'purchase'
@@ -45,6 +52,7 @@ type Turn = {
   choices: Array<{ label: string; value: string; tone?: string }>;
   sources: string[];
   hasMoreResults?: boolean;
+  followUp?: { answer: string; choices: Array<{ label: string; value: string; tone?: string }> };
   policy?: string;
 };
 
@@ -88,7 +96,10 @@ function playTurn(
   citedUrls: string[] = [],
 ): Turn {
   const customHomeContactTurn = redactCustomHomeContactTurn(history, message);
-  const redacted = customHomeContactTurn.redacted;
+  const propertyInquiryTurn = redactPropertyInquiryTurn(history, message);
+  const redacted = propertyInquiryTurn.contact.name || propertyInquiryTurn.contact.phone || propertyInquiryTurn.contact.address
+    ? propertyInquiryTurn.redacted
+    : customHomeContactTurn.redacted;
   const policy = evaluatePolicy(redacted);
   if (!policy.allowed) {
     return {
@@ -123,6 +134,19 @@ function playTurn(
     };
   }
 
+  const propertyInquiry = evaluatePropertyInquiry(history, redacted);
+  if (propertyInquiry.active) {
+    const answer = propertyInquiry.leadReady
+      ? 'お問い合わせを受け付けたにゃん。担当者からご連絡するので、少し待っていてにゃん。'
+      : propertyInquiry.response || '';
+    return {
+      route: 'property_inquiry',
+      answer,
+      choices: propertyInquiry.leadReady ? [] : propertyInquiryChoicesForResponse(propertyInquiry),
+      sources: [],
+    };
+  }
+
   const propertyKnowledge = isPropertyKnowledgeQuestion(redacted, history.map((item) => item.content));
   if (propertyKnowledge) {
     return { route: 'property_knowledge', answer: '', choices: [], sources: [] };
@@ -151,9 +175,12 @@ function playTurn(
     return {
       route: 'rental',
       answer,
-      choices: choicesForChatAnswer(answer),
+      choices: propertyCandidateChoices(page.length > 3 && recommendations.length > 0),
       sources: recommendations.map((property) => property.url),
       hasMoreResults: page.length > 3,
+      followUp: recommendations.length > 0 || wantsOtherPropertyCandidates(redacted)
+        ? propertyInquiryFollowUp()
+        : undefined,
     };
   }
 
@@ -178,9 +205,12 @@ function playTurn(
     return {
       route: 'purchase',
       answer,
-      choices: choicesForChatAnswer(answer),
+      choices: propertyCandidateChoices(page.length > 3 && recommendations.length > 0),
       sources: recommendations.map((property) => property.url),
       hasMoreResults: page.length > 3,
+      followUp: recommendations.length > 0 || wantsOtherPropertyCandidates(redacted)
+        ? propertyInquiryFollowUp()
+        : undefined,
     };
   }
 
@@ -189,10 +219,15 @@ function playTurn(
 
 function applyTurn(history: ConversationContextMessage[], message: string, citedUrls: string[] = []) {
   const turn = playTurn(history, message, citedUrls);
+  const inquiryTurn = redactPropertyInquiryTurn(history, message);
+  const redacted = inquiryTurn.contact.name || inquiryTurn.contact.phone || inquiryTurn.contact.address
+    ? inquiryTurn.redacted
+    : redactCustomHomeContactTurn(history, message).redacted;
   const nextHistory = [
     ...history,
-    user(redactCustomHomeContactTurn(history, message).redacted),
+    user(redacted),
     ...(turn.answer ? [assistant(turn.answer)] : []),
+    ...(turn.followUp?.answer ? [assistant(turn.followUp.answer)] : []),
   ];
   return { turn, history: nextHistory, citedUrls: [...citedUrls, ...turn.sources] };
 }
@@ -415,5 +450,53 @@ describe('live catalog conversation walkthroughs', () => {
     const gibberish = playTurn(rental.history, 'あああ');
     expect(gibberish.route).toBe('rental');
     expect(gibberish.answer).toMatch(/区を選んで/u);
+  });
+
+  it('places more-results and inquiry follow-up after rental candidates', () => {
+    const rental = autoComplete(['賃貸', '大阪府'], inventoryChoice);
+    const last = rental.turns.at(-1);
+    expect(last?.route).toBe('rental');
+    expect(last?.answer).toMatch(/見つかった/u);
+    expect(last?.followUp?.answer).toMatch(/気に入った物件/u);
+    expect(last?.followUp?.choices.map((choice) => choice.value)).toEqual([
+      '資料請求したい',
+      '電話で相談したい',
+      '見学したい',
+    ]);
+    if (last?.hasMoreResults) {
+      expect(last.choices.map((choice) => choice.value)).toEqual(['もっと見たい', '物件を探す']);
+    } else {
+      expect(last?.choices.map((choice) => choice.value)).toEqual(['物件を探す']);
+    }
+  });
+
+  it('collects a document request without leaving contact details in history', () => {
+    const rental = autoComplete(['賃貸', '大阪府'], inventoryChoice);
+    const started = applyTurn(rental.history, '資料請求したい');
+    expect(started.turn.route).toBe('property_inquiry');
+    expect(started.turn.answer).toMatch(/お名前/u);
+    const named = applyTurn(started.history, '山田 太郎');
+    expect(named.turn.answer).toMatch(/住所/u);
+    const addressed = applyTurn(named.history, '大阪府大阪市北区梅田1-1-1');
+    expect(addressed.turn.answer).toMatch(/電話番号/u);
+    const phoned = applyTurn(addressed.history, '090-1234-5678');
+    expect(phoned.turn.answer).toContain('お問い合わせを受け付けた');
+    expect(JSON.stringify(phoned.history)).not.toContain('山田');
+    expect(JSON.stringify(phoned.history)).not.toContain('梅田');
+    expect(JSON.stringify(phoned.history)).not.toContain('090-1234-5678');
+  });
+
+  it('lets a visitor pick viewing day and time from buttons', () => {
+    const purchase = autoComplete(['購入', '大阪府'], inventoryChoice);
+    const started = applyTurn(purchase.history, '見学したい');
+    expect(started.turn.route).toBe('property_inquiry');
+    expect(started.turn.choices.some((choice) => choice.value.startsWith('見学希望日:'))).toBe(true);
+    const day = started.turn.choices.find((choice) => choice.value.startsWith('見学希望日:'))?.value;
+    expect(day).toBeTruthy();
+    const pickedDay = applyTurn(started.history, day!);
+    expect(pickedDay.turn.choices.some((choice) => choice.value.startsWith('見学希望時間:'))).toBe(true);
+    const time = pickedDay.turn.choices.find((choice) => choice.value.startsWith('見学希望時間:'))?.value;
+    const pickedTime = applyTurn(pickedDay.history, time!);
+    expect(pickedTime.turn.answer).toMatch(/お名前/u);
   });
 });

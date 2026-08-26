@@ -15,6 +15,11 @@ interface ChatChoice {
   tone?: 'primary' | 'default';
 }
 
+interface ChatFollowUp {
+  answer: string;
+  choices?: ChatChoice[];
+}
+
 type VisitorGender = 'male' | 'female' | 'other';
 type VisitorAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
 
@@ -127,6 +132,7 @@ interface ChatMessage {
   lineLink?: boolean;
   pending?: boolean;
   moreResults?: boolean;
+  followUp?: boolean;
 }
 
 interface TurnstileApi {
@@ -759,9 +765,12 @@ class OrientChat extends HTMLElement {
       }
       const message = this.messages.find((item) => item.id === pendingId);
       const incomingChoices = result.choices;
-      const incomingMoreResults = typeof result.hasMoreResults === 'boolean'
-        ? result.hasMoreResults
-        : this.shouldShowMoreResults(result.answer);
+      const incomingMoreResults = this.shouldAttachMoreResults(
+        typeof result.hasMoreResults === 'boolean'
+          ? result.hasMoreResults
+          : this.shouldShowMoreResults(result.answer),
+        incomingChoices,
+      );
       if (message) {
         message.pending = false;
         message.content = this.displayAnswer(result.answer).slice(0, 1);
@@ -770,7 +779,9 @@ class OrientChat extends HTMLElement {
         // tapped while this.sending is still true.
         message.choices = [];
         message.moreResults = false;
-        message.lineLink = this.shouldShowLineLink(content, result.answer, result.choices, result.policy);
+        message.lineLink = result.followUp
+          ? false
+          : this.shouldShowLineLink(content, result.answer, result.choices, result.policy);
       }
       this.renderMessages();
       this.setDisabled(true);
@@ -780,11 +791,36 @@ class OrientChat extends HTMLElement {
         message.choices = incomingChoices;
         message.moreResults = incomingMoreResults;
       }
-      const typedItem = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
-        .find((candidate) => candidate.dataset.messageId === pendingId);
-      if (typedItem) {
-        this.renderChoices(typedItem, incomingChoices);
-        this.renderMoreResults(typedItem, incomingMoreResults);
+      if (result.followUp?.answer) {
+        const followUpId = crypto.randomUUID();
+        this.messages.push({
+          id: followUpId,
+          role: 'assistant',
+          content: '',
+          pending: true,
+          choices: [],
+          moreResults: false,
+          followUp: true,
+        });
+        this.renderMessages();
+        this.setDisabled(true);
+        const followUpMessage = this.messages.find((item) => item.id === followUpId);
+        if (followUpMessage) {
+          followUpMessage.pending = false;
+          followUpMessage.content = this.displayAnswer(result.followUp.answer).slice(0, 1);
+        }
+        await this.typeAnswer(followUpId, result.followUp.answer);
+        if (followUpMessage) followUpMessage.choices = result.followUp.choices || [];
+        const followUpItem = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
+          .find((candidate) => candidate.dataset.messageId === followUpId);
+        if (followUpItem) this.renderChoices(followUpItem, result.followUp.choices || []);
+      } else {
+        const typedItem = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
+          .find((candidate) => candidate.dataset.messageId === pendingId);
+        if (typedItem) {
+          this.renderChoices(typedItem, incomingChoices);
+          this.renderMoreResults(typedItem, incomingMoreResults);
+        }
       }
     } catch (error) {
       const expired = error instanceof Error && error.message.includes('有効期限');
@@ -824,6 +860,7 @@ class OrientChat extends HTMLElement {
       error?: string;
       redactUserMessage?: boolean;
       hasMoreResults?: boolean;
+      followUp?: ChatFollowUp;
     }>(response);
     if (response.status === 401) {
       this.clearStoredSession();
@@ -841,6 +878,12 @@ class OrientChat extends HTMLElement {
       policy: typeof data.policy === 'string' ? data.policy : 'allow',
       redactUserMessage: data.redactUserMessage === true,
       hasMoreResults: typeof data.hasMoreResults === 'boolean' ? data.hasMoreResults : undefined,
+      followUp: data.followUp && typeof data.followUp.answer === 'string' && data.followUp.answer.trim()
+        ? {
+          answer: data.followUp.answer,
+          choices: Array.isArray(data.followUp.choices) ? data.followUp.choices : [],
+        }
+        : undefined,
     };
   }
 
@@ -880,6 +923,7 @@ class OrientChat extends HTMLElement {
         policy: 'out_of_scope',
         redactUserMessage: false,
         hasMoreResults: false,
+        followUp: undefined,
       };
     }
     return {
@@ -889,7 +933,12 @@ class OrientChat extends HTMLElement {
       policy: 'allow',
       redactUserMessage: false,
       hasMoreResults: false,
+      followUp: undefined,
     };
+  }
+
+  private shouldAttachMoreResults(hasMoreResults: boolean, choices: ChatChoice[]) {
+    return hasMoreResults && !choices.some((choice) => choice.value === 'もっと見たい');
   }
 
   private shouldShowLineLink(input: string, answer: string, choices: ChatChoice[], policy: string) {
@@ -949,7 +998,7 @@ class OrientChat extends HTMLElement {
       if (item) {
         this.renderLineLink(item, Boolean(message.lineLink));
         this.renderChoices(item, message.choices || []);
-        this.renderMoreResults(item, Boolean(message.moreResults));
+        this.renderMoreResults(item, this.shouldAttachMoreResults(Boolean(message.moreResults), message.choices || []));
       }
       return;
     }
@@ -978,7 +1027,7 @@ class OrientChat extends HTMLElement {
     if (item) {
       this.renderLineLink(item, Boolean(message.lineLink));
       this.renderChoices(item, message.choices || []);
-      this.renderMoreResults(item, Boolean(message.moreResults));
+      this.renderMoreResults(item, this.shouldAttachMoreResults(Boolean(message.moreResults), message.choices || []));
     }
   }
 
@@ -1246,7 +1295,9 @@ class OrientChat extends HTMLElement {
     if (message.role === 'assistant' && !message.pending) {
       if (message.rawContent) this.renderLineLink(item, Boolean(message.lineLink));
       if (message.choices?.length) this.renderChoices(item, message.choices);
-      if (message.moreResults) this.renderMoreResults(item, true);
+      if (this.shouldAttachMoreResults(Boolean(message.moreResults), message.choices || [])) {
+        this.renderMoreResults(item, true);
+      }
     }
     return item;
   }

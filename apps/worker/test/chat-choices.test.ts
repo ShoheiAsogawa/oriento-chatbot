@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { choicesForChatAnswer } from '../src/chat-choices';
+import { choicesForChatAnswer, propertyCandidateChoices } from '../src/chat-choices';
 
 describe('chat choices', () => {
   it('offers rental, purchase, and custom-home paths after starting a home search', () => {
@@ -55,6 +55,15 @@ describe('chat choices', () => {
       label: 'この条件を外して検索',
       value: 'ペットを条件から外す',
       tone: 'primary',
+    }]);
+  });
+
+  it('offers more-results and a new-search path after catalog candidates', () => {
+    expect(propertyCandidateChoices(true).map((item) => item.value)).toEqual(['もっと見たい', '物件を探す']);
+    expect(propertyCandidateChoices(false)).toEqual([{
+      label: '別条件で探す',
+      value: '物件を探す',
+      tone: 'default',
     }]);
   });
 });

@@ -19,7 +19,7 @@ import {
   type ChatTurnClaim,
 } from './chat-http';
 import { appendRateLimitAudit } from './rate-limit-audit';
-import { choicesForChatAnswer } from './chat-choices';
+import { choicesForChatAnswer, propertyCandidateChoices } from './chat-choices';
 import { VISITOR_AGE_DECADES, VISITOR_GENDERS } from './visitor-profile';
 import {
   customHomeChoicesForResponse,
@@ -33,6 +33,24 @@ import {
 } from './custom-home-leads';
 import { customHomeIntakeFromState, redactCustomHomeContactTurn } from './custom-home-chat';
 import { processCustomHomeNotification, type CustomHomeNotificationPayload } from './custom-home-notifications';
+import {
+  evaluatePropertyInquiry,
+  extractPropertyInquiryContact,
+  extractPropertyInquiryState,
+  propertyInquiryChoicesForResponse,
+  propertyInquiryFollowUp,
+} from './property-inquiry';
+import { redactPropertyInquiryTurn } from './property-inquiry-chat';
+import {
+  loadRecentCitedProperties,
+  persistPropertyInquiryDraft,
+  persistPropertyInquiryLead,
+  type PropertyInquiryQueuePayload,
+} from './property-inquiry-leads';
+import {
+  isPropertyInquiryQueuePayload,
+  processPropertyInquiryNotification,
+} from './property-inquiry-notifications';
 import {
   guidedAnswerForAvailability,
   loadGuidedSearchOptions,
@@ -1076,6 +1094,7 @@ async function recordTurn(
   model: string | null,
   latencyMs: number,
   chunks: SearchChunk[] = [],
+  followUpAnswer?: string,
 ) {
   const userMessageId = crypto.randomUUID();
   const assistantMessageId = crypto.randomUUID();
@@ -1093,6 +1112,12 @@ async function recordTurn(
         .bind(crypto.randomUUID(), assistantMessageId, source.key, source.title, source.url || null, source.score),
     );
   });
+  if (followUpAnswer) {
+    statements.push(
+      env.DB.prepare(`INSERT INTO messages (id, conversation_id, role, content_redacted, model, latency_ms, policy_action) VALUES (?, ?, 'assistant', ?, ?, ?, ?)`)
+        .bind(crypto.randomUUID(), conversationId, followUpAnswer, model, latencyMs, policyAction),
+    );
+  }
   await env.DB.batch(statements);
   return assistantMessageId;
 }
@@ -1143,7 +1168,10 @@ app.post('/api/chat/message', async (context) => {
     INTAKE_HISTORY_MESSAGE_LIMIT,
   );
   const customHomeContactTurn = redactCustomHomeContactTurn(conversationHistory, input.message);
-  const redacted = customHomeContactTurn.redacted;
+  const propertyInquiryTurn = redactPropertyInquiryTurn(conversationHistory, input.message);
+  const redacted = propertyInquiryTurn.contact.name || propertyInquiryTurn.contact.phone || propertyInquiryTurn.contact.address
+    ? propertyInquiryTurn.redacted
+    : customHomeContactTurn.redacted;
   const policy = evaluatePolicy(redacted);
   if (!policy.allowed) {
     const messageId = await recordTurn(
@@ -1305,6 +1333,148 @@ app.post('/api/chat/message', async (context) => {
     }
   }
 
+  const propertyInquiry = evaluatePropertyInquiry(conversationHistory, redacted);
+  if (propertyInquiry.active) {
+    const inquiryContact = {
+      ...extractPropertyInquiryContact(conversationHistory, input.message),
+      ...propertyInquiryTurn.contact,
+    };
+    const inquiryState = extractPropertyInquiryState(conversationHistory, redacted);
+    const citedProperties = await loadRecentCitedProperties(context.env.DB, input.conversationId);
+
+    if (propertyInquiry.leadReady) {
+      const contactPhone = inquiryContact.phone;
+      if (!contactPhone) {
+        const answer = 'お電話番号を確認できなかったにゃん。数字を続けてもう一度入力してにゃん。';
+        const messageId = await recordTurn(
+          context.env,
+          input.conversationId,
+          redacted,
+          answer,
+          'allow',
+          null,
+          Date.now() - startedAt,
+        );
+        await appendAudit(context.env, {
+          eventType: 'chat.clarification_requested',
+          actorType: 'visitor',
+          subjectType: 'message',
+          subjectId: messageId,
+          metadata: { flow: 'property_inquiry', reason: 'phone_not_extractable' },
+        });
+        return context.json({
+          answer,
+          sources: [],
+          choices: [],
+          action: 'none',
+          policy: 'allow',
+          messageId,
+          redactUserMessage: true,
+        });
+      }
+
+      const lead = await persistPropertyInquiryLead(context.env.DB, context.env, {
+        conversationId: input.conversationId,
+        kind: propertyInquiry.kind || 'document_request',
+        contact: { ...inquiryContact, phone: contactPhone },
+        preferredDatetime: inquiryState.preferredDatetime,
+        properties: citedProperties,
+      });
+      let notificationQueued = false;
+      if (lead.queueRequired) {
+        try {
+          await context.env.CUSTOM_HOME_LEAD_QUEUE.send(lead.queue);
+          notificationQueued = true;
+        } catch {
+          await appendAudit(context.env, {
+            eventType: 'property_inquiry.notification_enqueue_failed',
+            actorType: 'system',
+            subjectType: 'property_inquiry',
+            subjectId: lead.inquiryId,
+          });
+        }
+      }
+      const answer = notificationQueued || !lead.queueRequired
+        ? 'お問い合わせを受け付けたにゃん。担当者からご連絡するので、少し待っていてにゃん。'
+        : 'お問い合わせは受け付けたにゃん。確認のため、公式LINEからも内容を送ってにゃん。';
+      const messageId = await recordTurn(
+        context.env,
+        input.conversationId,
+        redacted,
+        answer,
+        'allow',
+        'property-inquiry-v1',
+        Date.now() - startedAt,
+      );
+      await appendAudit(context.env, {
+        eventType: 'property_inquiry.accepted',
+        actorType: 'visitor',
+        subjectType: 'property_inquiry',
+        subjectId: lead.inquiryId,
+        metadata: {
+          created: lead.created,
+          notificationQueued,
+          kind: propertyInquiry.kind,
+          flow: 'property_inquiry',
+        },
+      });
+      return context.json({
+        answer,
+        sources: [],
+        choices: [],
+        action: 'none',
+        policy: 'allow',
+        messageId,
+        redactUserMessage: true,
+      });
+    }
+
+    if (propertyInquiry.kind && (inquiryContact.name || inquiryContact.address || inquiryState.preferredDatetime)) {
+      await persistPropertyInquiryDraft(context.env.DB, context.env, {
+        conversationId: input.conversationId,
+        kind: propertyInquiry.kind,
+        name: inquiryContact.name,
+        address: inquiryContact.address,
+        preferredDatetime: inquiryState.preferredDatetime,
+        properties: citedProperties,
+      });
+    }
+
+    if (propertyInquiry.response) {
+      const answer = propertyInquiry.response;
+      const messageId = await recordTurn(
+        context.env,
+        input.conversationId,
+        redacted,
+        answer,
+        'allow',
+        'property-inquiry-v1',
+        Date.now() - startedAt,
+      );
+      await appendAudit(context.env, {
+        eventType: 'chat.clarification_requested',
+        actorType: 'visitor',
+        subjectType: 'message',
+        subjectId: messageId,
+        metadata: {
+          flow: 'property_inquiry',
+          step: propertyInquiry.step,
+          kind: propertyInquiry.kind,
+          contactDraftSaved: Boolean(inquiryContact.name || inquiryContact.address),
+        },
+      });
+      return context.json({
+        answer,
+        sources: [],
+        choices: propertyInquiryChoicesForResponse(propertyInquiry),
+        action: 'none',
+        policy: 'allow',
+        messageId,
+        redactUserMessage: Boolean(inquiryContact.name || inquiryContact.phone || inquiryContact.address),
+      });
+    }
+  }
+
   const propertyKnowledgeQuestion = isPropertyKnowledgeQuestion(
     redacted,
     conversationHistory.map((message) => message.content),
@@ -1369,6 +1539,9 @@ app.post('/api/chat/message', async (context) => {
       : formatRentalAnswer(recommendations, criteria);
     const chunks = recommendations.map(rentalPropertyChunk);
     const sources = chunks.map(sourceFromChunk);
+    const followUp = recommendations.length > 0 || wantsOtherCandidates
+      ? propertyInquiryFollowUp()
+      : undefined;
     const messageId = await recordTurn(
       context.env,
       input.conversationId,
@@ -1378,6 +1551,7 @@ app.post('/api/chat/message', async (context) => {
       'rental-catalog-v1',
       Date.now() - startedAt,
       chunks,
+      followUp?.answer,
     );
     await appendAudit(context.env, {
       eventType: 'chat.answered',
@@ -1389,7 +1563,8 @@ app.post('/api/chat/message', async (context) => {
     return context.json({
       answer,
       sources,
-      choices: choicesForChatAnswer(answer),
+      choices: propertyCandidateChoices(hasMoreResults && recommendations.length > 0),
+      followUp,
       action: 'none',
       policy: 'allow',
       messageId,
@@ -1458,6 +1633,9 @@ app.post('/api/chat/message', async (context) => {
       : formatSaleAnswer(recommendations, criteria);
     const chunks = recommendations.map(salePropertyChunk);
     const sources = chunks.map(sourceFromChunk);
+    const followUp = recommendations.length > 0 || wantsOtherCandidates
+      ? propertyInquiryFollowUp()
+      : undefined;
     const messageId = await recordTurn(
       context.env,
       input.conversationId,
@@ -1467,6 +1645,7 @@ app.post('/api/chat/message', async (context) => {
       'sale-catalog-v1',
       Date.now() - startedAt,
       chunks,
+      followUp?.answer,
     );
     await appendAudit(context.env, {
       eventType: 'chat.answered',
@@ -1478,7 +1657,8 @@ app.post('/api/chat/message', async (context) => {
     return context.json({
       answer,
       sources,
-      choices: choicesForChatAnswer(answer),
+      choices: propertyCandidateChoices(hasMoreResults && recommendations.length > 0),
+      followUp,
       action: 'none',
       policy: 'allow',
       messageId,
@@ -2482,13 +2662,11 @@ async function safeAdminPIIDecrypt(value: string | null, env: Env) {
 }
 
 /**
- * Returns the custom-home inquiries for the admin inbox.
+ * Returns custom-home and property inquiries for the admin inbox.
  *
- * The database stores contact details and intake JSON encrypted.  Keep the
- * ciphertext out of this response and decrypt only after the admin middleware
- * above has authenticated the request.  Notification error details are also
- * intentionally omitted: the inbox needs the delivery status, not an
- * implementation detail that could contain provider data.
+ * The database stores contact details encrypted. Keep the ciphertext out of
+ * this response and decrypt only after the admin middleware above has
+ * authenticated the request. Notification error details are also omitted.
  */
 app.get('/api/admin/inquiries', async (context) => {
   const page = boundedPositiveInteger(context.req.query('page'), 1, 10_000);
@@ -2496,22 +2674,42 @@ app.get('/api/admin/inquiries', async (context) => {
   const offset = (page - 1) * perPage;
   const [count, listed] = await Promise.all([
     context.env.DB.prepare(
-      `SELECT COUNT(*) AS total FROM custom_home_leads
-       WHERE customer_id IS NOT NULL AND notification_status != 'collecting'`,
+      `SELECT COUNT(*) AS total FROM (
+         SELECT id FROM custom_home_leads
+         WHERE customer_id IS NOT NULL AND notification_status != 'collecting'
+         UNION ALL
+         SELECT id FROM property_inquiries
+         WHERE customer_id IS NOT NULL AND notification_status != 'collecting'
+       )`,
     ).first<{ total: number }>(),
     context.env.DB.prepare(
-      `SELECT l.id, l.conversation_id, l.contact_name_enc, l.intake_enc,
-        l.notification_status, l.notification_attempts, l.created_at, l.updated_at,
-        c.name_enc AS customer_name_enc, c.phone_enc
-       FROM custom_home_leads l
-       LEFT JOIN customers c ON c.id = l.customer_id
-       WHERE l.customer_id IS NOT NULL AND l.notification_status != 'collecting'
-       ORDER BY l.created_at DESC, l.id DESC LIMIT ? OFFSET ?`,
+      `SELECT * FROM (
+         SELECT l.id, l.conversation_id, 'custom_home' AS kind, l.contact_name_enc, l.intake_enc,
+           NULL AS address_enc, NULL AS preferred_datetime, NULL AS property_summary,
+           l.notification_status, l.notification_attempts, l.created_at, l.updated_at,
+           c.name_enc AS customer_name_enc, c.phone_enc
+         FROM custom_home_leads l
+         LEFT JOIN customers c ON c.id = l.customer_id
+         WHERE l.customer_id IS NOT NULL AND l.notification_status != 'collecting'
+         UNION ALL
+         SELECT i.id, i.conversation_id, i.kind, i.contact_name_enc, NULL AS intake_enc,
+           i.address_enc, i.preferred_datetime, i.property_summary,
+           i.notification_status, i.notification_attempts, i.created_at, i.updated_at,
+           c.name_enc AS customer_name_enc, c.phone_enc
+         FROM property_inquiries i
+         LEFT JOIN customers c ON c.id = i.customer_id
+         WHERE i.customer_id IS NOT NULL AND i.notification_status != 'collecting'
+       )
+       ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
     ).bind(perPage, offset).all<{
       id: string;
       conversation_id: string;
+      kind: string;
       contact_name_enc: string | null;
       intake_enc: string | null;
+      address_enc: string | null;
+      preferred_datetime: string | null;
+      property_summary: string | null;
       notification_status: string;
       notification_attempts: number;
       created_at: string;
@@ -2522,11 +2720,12 @@ app.get('/api/admin/inquiries', async (context) => {
   ]);
 
   const result = await Promise.all(listed.results.map(async (row) => {
-    const [leadName, customerName, phone, intakeText] = await Promise.all([
+    const [leadName, customerName, phone, intakeText, address] = await Promise.all([
       safeAdminPIIDecrypt(row.contact_name_enc, context.env),
       safeAdminPIIDecrypt(row.customer_name_enc, context.env),
       safeAdminPIIDecrypt(row.phone_enc, context.env),
       safeAdminPIIDecrypt(row.intake_enc, context.env),
+      safeAdminPIIDecrypt(row.address_enc, context.env),
     ]);
     let intake: Record<string, string | number> = {};
     if (intakeText) {
@@ -2546,11 +2745,35 @@ app.get('/api/admin/inquiries', async (context) => {
         // Keep a malformed/legacy record visible without returning its raw payload.
       }
     }
+    let properties: Array<{ title: string; url: string }> = [];
+    if (row.property_summary) {
+      try {
+        const parsed = JSON.parse(row.property_summary) as unknown;
+        if (Array.isArray(parsed)) {
+          properties = parsed.flatMap((item) => {
+            if (!item || typeof item !== 'object') return [];
+            const title = typeof (item as { title?: unknown }).title === 'string'
+              ? (item as { title: string }).title.trim().slice(0, 120)
+              : '';
+            const url = typeof (item as { url?: unknown }).url === 'string'
+              ? (item as { url: string }).url.trim().slice(0, 500)
+              : '';
+            return title && url.startsWith('https://') ? [{ title, url }] : [];
+          }).slice(0, 8);
+        }
+      } catch {
+        properties = [];
+      }
+    }
     return {
       id: row.id,
       conversationId: row.conversation_id,
+      kind: row.kind,
       name: leadName || customerName || null,
       phone,
+      address,
+      preferredDatetime: row.preferred_datetime,
+      properties,
       intake,
       notificationStatus: row.notification_status,
       notificationAttempts: row.notification_attempts,
@@ -2776,13 +2999,38 @@ app.get('/api/admin/maintenance/status', async (context) => {
   return context.json(result);
 });
 
-type WorkerQueuePayload = AuditArchiveEvent | CustomHomeLeadQueuePayload | CustomHomeNotificationPayload;
+type WorkerQueuePayload = AuditArchiveEvent | CustomHomeLeadQueuePayload | CustomHomeNotificationPayload | PropertyInquiryQueuePayload;
 
 async function consumeCustomHomeLeadBatch(
-  batch: MessageBatch<CustomHomeLeadQueuePayload>,
+  batch: MessageBatch<CustomHomeLeadQueuePayload | PropertyInquiryQueuePayload>,
   env: Env,
 ) {
   for (const message of batch.messages) {
+    if (isPropertyInquiryQueuePayload(message.body)) {
+      const result = await processPropertyInquiryNotification(env.DB, env, message.body, {
+        sender: 'no-reply@orijyu.com',
+        recipient: 'uken.shohei@gmail.com',
+        send: (email) => env.CUSTOM_HOME_LEAD_EMAIL.send(email),
+      });
+      if (result.disposition === 'retry') {
+        message.retry({ delaySeconds: Math.min(60, Math.max(10, result.attempt * 10)) });
+        continue;
+      }
+      message.ack();
+      if (result.status === 'sent' || result.status === 'failed') {
+        await appendAudit(env, {
+          eventType: result.status === 'sent'
+            ? 'property_inquiry.notification_sent'
+            : 'property_inquiry.notification_failed',
+          actorType: 'system',
+          subjectType: 'property_inquiry',
+          subjectId: message.body.propertyInquiryId,
+          metadata: { attempt: result.attempt },
+        });
+      }
+      continue;
+    }
+
     const result = await processCustomHomeNotification(env.DB, env, message.body, {
       sender: 'no-reply@orijyu.com',
       recipient: 'uken.shohei@gmail.com',
@@ -2813,7 +3061,7 @@ async function consumeWorkerQueue(batch: MessageBatch<WorkerQueuePayload>, env: 
     return;
   }
   if (batch.queue === 'orient-chat-custom-home-leads') {
-    await consumeCustomHomeLeadBatch(batch as MessageBatch<CustomHomeLeadQueuePayload>, env);
+    await consumeCustomHomeLeadBatch(batch as MessageBatch<CustomHomeLeadQueuePayload | PropertyInquiryQueuePayload>, env);
     return;
   }
   batch.ackAll();
