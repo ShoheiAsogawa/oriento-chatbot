@@ -113,21 +113,32 @@ async function upsertCustomerByPhone(
   return resolvedCustomer.id;
 }
 
+type StoredInquiry = {
+  id: string;
+  kind: PropertyInquiryKind;
+  contact_name_enc: string | null;
+  address_enc: string | null;
+  preferred_datetime: string | null;
+  property_summary: string | null;
+  notification_status: string;
+};
+
 async function loadCollectingInquiry(db: D1Database, conversationId: string) {
   return db.prepare(
     `SELECT id, kind, contact_name_enc, address_enc, preferred_datetime, property_summary, notification_status
      FROM property_inquiries
      WHERE conversation_id = ? AND notification_status = 'collecting'
      ORDER BY created_at DESC, id DESC LIMIT 1`,
-  ).bind(conversationId).first<{
-    id: string;
-    kind: PropertyInquiryKind;
-    contact_name_enc: string | null;
-    address_enc: string | null;
-    preferred_datetime: string | null;
-    property_summary: string | null;
-    notification_status: string;
-  }>();
+  ).bind(conversationId).first<StoredInquiry>();
+}
+
+async function loadReusableInquiry(db: D1Database, conversationId: string, kind: PropertyInquiryKind) {
+  return db.prepare(
+    `SELECT id, kind, contact_name_enc, address_enc, preferred_datetime, property_summary, notification_status
+     FROM property_inquiries
+     WHERE conversation_id = ? AND kind = ? AND notification_status != 'collecting'
+     ORDER BY created_at DESC, id DESC LIMIT 1`,
+  ).bind(conversationId, kind).first<StoredInquiry>();
 }
 
 export async function loadRecentCitedProperties(db: D1Database, conversationId: string): Promise<CitedProperty[]> {
@@ -236,6 +247,23 @@ export async function persistPropertyInquiryLead(
       queue: { propertyInquiryId: existing.id },
       created: false,
       queueRequired: true,
+    };
+  }
+
+  const reusable = await loadReusableInquiry(db, conversationId, input.kind);
+  if (reusable) {
+    await db.prepare(
+      `UPDATE property_inquiries SET customer_id = ?, kind = ?, contact_name_enc = ?, address_enc = ?,
+        preferred_datetime = ?, property_summary = ?,
+        notification_status = CASE WHEN notification_status = 'sent' THEN notification_status ELSE 'pending' END,
+        updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    ).bind(customerId, input.kind, nameEnc, addressEnc, datetime, propertySummary, reusable.id).run();
+    return {
+      inquiryId: reusable.id,
+      customerId,
+      queue: { propertyInquiryId: reusable.id },
+      created: false,
+      queueRequired: reusable.notification_status !== 'sent',
     };
   }
 

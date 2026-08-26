@@ -133,7 +133,12 @@ function jstIsoDay(offsetDays = 0, now = new Date()) {
 function parseIsoDay(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
   if (!match) return undefined;
-  return { y: Number(match[1]), m: Number(match[2]), d: Number(match[3]) };
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) return undefined;
+  return { y, m, d };
 }
 
 function isoFromParts(year: number, month: number, day: number) {
@@ -342,7 +347,7 @@ const styles = `
   .more-results-button:active { transform: translateY(0); }
   .more-results-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
-  .thinking-chars { display: inline-flex; }
+  .thinking-chars { display: inline-flex; flex-wrap: nowrap; }
   .thinking-char {
     display: inline-block;
   }
@@ -1527,7 +1532,13 @@ class OrientChat extends HTMLElement {
     submit.addEventListener('click', () => {
       const time = /^\d{1,2}:\d{2}$/u.test(timeInput.value) ? timeInput.value : '15:00';
       const [hour, minute] = time.split(':');
-      const padded = `${String(Number(hour)).padStart(2, '0')}:${minute}`;
+      const hourNum = Number(hour);
+      const minuteNum = Number(minute);
+      if (!Number.isInteger(hourNum) || !Number.isInteger(minuteNum) || hourNum < 0 || hourNum > 23 || minuteNum < 0 || minuteNum > 59) {
+        return;
+      }
+      if (!parseIsoDay(selected) || selected < picker.min || selected > picker.max) return;
+      const padded = `${String(hourNum).padStart(2, '0')}:${String(minuteNum).padStart(2, '0')}`;
       void this.sendMessage(`${picker.prefix}${selected} ${padded}`);
     });
 

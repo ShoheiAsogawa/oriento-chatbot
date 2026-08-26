@@ -11,6 +11,13 @@ type Route = 'policy' | 'direct' | 'custom_home' | 'property_inquiry' | 'propert
 const user = (content: string): ConversationContextMessage => ({ role: 'user', content });
 const assistant = (content: string): ConversationContextMessage => ({ role: 'assistant', content });
 
+function viewingDatetimePayload(now = new Date()) {
+  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const day = new Date(Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate() + 2));
+  const ymd = `${day.getUTCFullYear()}-${String(day.getUTCMonth() + 1).padStart(2, '0')}-${String(day.getUTCDate()).padStart(2, '0')}`;
+  return `見学希望日時:${ymd} 15:00`;
+}
+
 /** Mirrors the precedence in POST /api/chat/message without external bindings. */
 function route(history: ConversationContextMessage[], currentMessage: string): Route {
   if (!evaluatePolicy(currentMessage).allowed) return 'policy';
@@ -190,6 +197,34 @@ describe('whole-chat routing chaos audit', () => {
     expect(route(history, '山田 太郎')).toBe('property_inquiry');
     expect(route(history, '賃貸に切り替え')).toBe('rental');
     expect(route(history, '物件を探す')).toBe('rental');
+    expect(route(history, 'もっと見たい')).toBe('rental');
     expect(route(history, '注文住宅')).toBe('custom_home');
+  });
+
+  it('lets a visitor leave a viewing calendar without treating もっと見たい as a date', () => {
+    const history = [
+      ...completedPurchase,
+      user('見学したい'),
+      assistant('見学の希望日時を、カレンダーから選んでにゃん。'),
+    ];
+    expect(route(history, 'もっと見たい')).toBe('purchase');
+    expect(route(history, viewingDatetimePayload())).toBe('property_inquiry');
+  });
+
+  it('does not keep a completed inquiry in front of later questions', () => {
+    const history = [
+      ...completedRental,
+      user('資料請求したい'),
+      assistant('資料をお届けするにゃん。お名前を教えてにゃん。'),
+      user('[お名前]'),
+      assistant('資料を届ける住所を教えてにゃん。番地まで書けるとにゃん。'),
+      user('[住所]'),
+      assistant('連絡用の電話番号を教えてにゃん。'),
+      user('[電話番号]'),
+      assistant('お問い合わせを受け付けたにゃん。担当者からご連絡するので、少し待っていてにゃん。'),
+    ];
+    expect(route(history, 'あああ')).not.toBe('property_inquiry');
+    expect(route(history, 'この物件の家賃はいくら？')).toBe('property_knowledge');
+    expect(route(history, '見学したい')).toBe('property_inquiry');
   });
 });

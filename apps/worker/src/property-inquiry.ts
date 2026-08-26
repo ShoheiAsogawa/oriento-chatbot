@@ -4,7 +4,7 @@ import {
   extractCustomHomeContact,
   normalizeCustomHomePhone,
 } from './custom-home-consultation';
-import { isObviousConversationDetour } from './property-search-continuation';
+import { isObviousConversationDetour, wantsOtherPropertyCandidates } from './property-search-continuation';
 
 export type PropertyInquiryKind = 'document_request' | 'phone' | 'viewing';
 
@@ -80,7 +80,7 @@ const VIEWING_INTENT = /(?:(?:見学|内見|内覧)(?:を)?(?:したい|予約)|
 const NAME_PROMPT = /(?:お名前|氏名|名前).*(?:教えて|聞かせ|入力)/u;
 const ADDRESS_PROMPT = /(?:住所|ご住所|届ける住所|現在の(?:ご)?住所).*(?:教えて|聞かせ|入力|書ける)/u;
 const PHONE_PROMPT = /(?:電話番号|連絡用の電話).*(?:教えて|入力|聞かせ)/u;
-const DATETIME_TEXT_PROMPT = /(?:希望日時を(?:自由に|そのまま)|日時を(?:教えて|書いて)|希望日時を、?カレンダー|カレンダーから選んで)/u;
+const DATETIME_TEXT_PROMPT = /(?:希望日時を(?:自由に|そのまま)|日時を(?:教えて|書いて))/u;
 const NAME_REDACTED = /\[お名前\]/u;
 const PHONE_REDACTED = /\[電話番号\]/u;
 const ADDRESS_REDACTED = /\[住所\]/u;
@@ -177,14 +177,38 @@ export function kindFromInquiryMessage(content: string): PropertyInquiryKind | u
 
 function isModeSwitch(content: string) {
   const normalized = normalize(content);
-  return MODE_SWITCH.test(normalized) || RESET_INTENT.test(normalized);
+  return MODE_SWITCH.test(normalized)
+    || RESET_INTENT.test(normalized)
+    || wantsOtherPropertyCandidates(normalized);
+}
+
+function isRealIsoDay(iso: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(iso);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
+function isRealClockTime(hour: string, minute: string) {
+  const hours = Number(hour);
+  const minutes = Number(minute);
+  return Number.isInteger(hours) && Number.isInteger(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+}
+
+function isViewingDayInWindow(iso: string, now = new Date()) {
+  const min = isoDay(jstCalendarDate(now, 1));
+  const max = isoDay(jstCalendarDate(now, 60));
+  return iso >= min && iso <= max;
 }
 
 export function viewingDayFromMessage(content: string): string | undefined {
   const normalized = normalize(content);
   if (normalized.startsWith(VIEWING_DAY_PREFIX)) {
     const iso = normalized.slice(VIEWING_DAY_PREFIX.length);
-    return /^\d{4}-\d{2}-\d{2}$/u.test(iso) ? iso : undefined;
+    return isRealIsoDay(iso) ? iso : undefined;
   }
   return undefined;
 }
@@ -207,17 +231,17 @@ export function viewingDatetimePicker(now = new Date()): ChatDatetimePicker {
   };
 }
 
-export function viewingDatetimeFromMessage(content: string): string | undefined {
+export function viewingDatetimeFromMessage(content: string, now = new Date()): string | undefined {
   const normalized = normalize(content);
   if (!normalized.startsWith(VIEWING_DATETIME_PREFIX)) return undefined;
   const value = normalized.slice(VIEWING_DATETIME_PREFIX.length).trim();
   if (!value || value.length > 80) return undefined;
   const iso = value.match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{1,2}):(\d{2}))?$/u);
-  if (!iso) return value;
-  const time = iso[2] === undefined || iso[3] === undefined
-    ? undefined
-    : `${pad2(Number(iso[2]))}:${iso[3]}`;
-  return time ? `${iso[1]} ${time}` : iso[1];
+  if (!iso) return undefined;
+  if (!isRealIsoDay(iso[1]) || !isViewingDayInWindow(iso[1], now)) return undefined;
+  if (iso[2] === undefined || iso[3] === undefined) return iso[1];
+  if (!isRealClockTime(iso[2], iso[3])) return undefined;
+  return `${iso[1]} ${pad2(Number(iso[2]))}:${iso[3]}`;
 }
 
 function formatPreferredDatetime(date?: string, time?: string, fallback?: string) {
@@ -231,9 +255,9 @@ function freeDatetimeFromMessage(content: string, expecting: boolean) {
   const normalized = normalize(content);
   if (normalized === PROPERTY_INQUIRY_VALUES.viewingFreeText) return undefined;
   if (
-    viewingDatetimeFromMessage(normalized)
-    || viewingDayFromMessage(normalized)
-    || viewingTimeFromMessage(normalized)
+    normalized.startsWith(VIEWING_DATETIME_PREFIX)
+    || normalized.startsWith(VIEWING_DAY_PREFIX)
+    || normalized.startsWith(VIEWING_TIME_PREFIX)
   ) {
     return undefined;
   }
@@ -282,6 +306,7 @@ function flowMessages(history: ConversationContextMessage[], currentMessage: str
 export function extractPropertyInquiryState(
   history: ConversationContextMessage[],
   currentMessage: string,
+  now = new Date(),
 ): PropertyInquiryState {
   const messages = flowMessages(history, currentMessage);
   const state: PropertyInquiryState = {
@@ -306,14 +331,20 @@ export function extractPropertyInquiryState(
       continue;
     }
 
-    const datetime = viewingDatetimeFromMessage(content);
+    const datetime = viewingDatetimeFromMessage(content, now);
     if (datetime) {
       if (state.kind === 'viewing') {
-        state.preferredDatetime = datetime;
         state.wantsFreeDatetime = false;
-        const parts = datetime.match(/^(\d{4}-\d{2}-\d{2})(?:\s+(\S+))?$/u);
-        if (parts?.[1]) state.preferredDate = parts[1];
-        if (parts?.[2]) state.preferredTime = parts[2];
+        const timed = datetime.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/u);
+        if (timed) {
+          state.preferredDate = timed[1];
+          state.preferredTime = timed[2];
+          state.preferredDatetime = datetime;
+        } else if (isRealIsoDay(datetime)) {
+          state.preferredDate = datetime;
+        } else {
+          state.preferredDatetime = datetime;
+        }
       }
       continue;
     }
@@ -415,11 +446,17 @@ function promptForStep(kind: PropertyInquiryKind, step: PropertyInquiryStep) {
 export function evaluatePropertyInquiry(
   history: ConversationContextMessage[],
   currentMessage: string,
+  now = new Date(),
 ): PropertyInquiryDecision {
   const normalized = normalize(currentMessage);
   if (isModeSwitch(normalized)) return { active: false };
+  // Once a lead has been accepted, later chat must not re-enter this flow.
+  // Otherwise follow-up questions create a second lead and hide property answers.
+  if (!kindFromInquiryMessage(normalized) && extractPropertyInquiryState(history, '', now).leadReady) {
+    return { active: false };
+  }
 
-  const state = extractPropertyInquiryState(history, currentMessage);
+  const state = extractPropertyInquiryState(history, currentMessage, now);
   if (!state.kind) return { active: false };
 
   if (state.leadReady) {
@@ -440,11 +477,25 @@ export function evaluatePropertyInquiry(
     };
   }
 
+  if (
+    step === 'viewing_datetime'
+    && normalized.startsWith(VIEWING_DATETIME_PREFIX)
+    && !state.preferredDatetime
+    && !state.preferredDate
+  ) {
+    return {
+      active: true,
+      kind: state.kind,
+      step,
+      response: 'その日時は見学の予約では選べないにゃん。カレンダーから選んでにゃん。',
+    };
+  }
+
   return {
     active: true,
     kind: state.kind,
     step,
-    response: promptForStep(state.kind, step),
+    response: promptForStep(state.kind, step) || '見学の希望日時を、カレンダーから選んでにゃん。',
   };
 }
 

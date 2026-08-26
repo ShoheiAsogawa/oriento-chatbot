@@ -468,8 +468,10 @@ describe('live catalog conversation walkthroughs', () => {
     ]);
     if (last?.hasMoreResults) {
       expect(last.choices.map((choice) => choice.value)).toEqual(['もっと見たい', '物件を探す']);
+      expect(last.choices.find((choice) => choice.value === '物件を探す')?.size).toBe('compact');
     } else {
       expect(last?.choices.map((choice) => choice.value)).toEqual(['物件を探す']);
+      expect(last?.choices[0]?.size).toBe('compact');
     }
   });
 
@@ -500,5 +502,43 @@ describe('live catalog conversation walkthroughs', () => {
     expect(started.turn.picker?.min).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
     const picked = applyTurn(started.history, `見学希望日時:${started.turn.picker!.min} 15:00`);
     expect(picked.turn.answer).toMatch(/お名前/u);
+    const named = applyTurn(picked.history, '山田 太郎');
+    expect(named.turn.answer).toMatch(/住所/u);
+    const addressed = applyTurn(named.history, '大阪府大阪市北区梅田1-1-1');
+    expect(addressed.turn.answer).toMatch(/電話番号/u);
+    const phoned = applyTurn(addressed.history, '090-1234-5678');
+    expect(phoned.turn.answer).toContain('お問い合わせを受け付けた');
+    expect(JSON.stringify(phoned.history)).not.toContain('山田');
+    expect(JSON.stringify(phoned.history)).not.toContain('090-1234-5678');
+  });
+
+  it('lets a visitor leave a viewing calendar to see more listings', () => {
+    const rental = autoComplete(['賃貸', '大阪府'], inventoryChoice);
+    const started = applyTurn(rental.history, '見学したい');
+    expect(started.turn.picker?.type).toBe('datetime');
+    const more = applyTurn(started.history, 'もっと見たい');
+    expect(more.turn.route).toBe('rental');
+    expect(more.turn.answer).not.toMatch(/カレンダー|お名前/u);
+  });
+
+  it('does not accept a past calendar datetime as a viewing slot', () => {
+    const purchase = autoComplete(['購入', '大阪府'], inventoryChoice);
+    const started = applyTurn(purchase.history, '見学したい');
+    const past = applyTurn(started.history, '見学希望日時:2020-01-01 15:00');
+    expect(past.turn.route).toBe('property_inquiry');
+    expect(past.turn.answer).toMatch(/カレンダー|選べない/u);
+    expect(past.turn.picker?.type).toBe('datetime');
+  });
+
+  it('does not reopen a completed inquiry when the visitor asks about a listing', () => {
+    const rental = autoComplete(['賃貸', '大阪府'], inventoryChoice);
+    const started = applyTurn(rental.history, '資料請求したい');
+    const named = applyTurn(started.history, '山田 太郎');
+    const addressed = applyTurn(named.history, '大阪府大阪市北区梅田1-1-1');
+    const phoned = applyTurn(addressed.history, '090-1234-5678');
+    expect(phoned.turn.answer).toContain('お問い合わせを受け付けた');
+    const followUp = applyTurn(phoned.history, 'この物件の家賃はいくら？');
+    expect(followUp.turn.route).not.toBe('property_inquiry');
+    expect(followUp.turn.answer).not.toContain('お問い合わせを受け付けた');
   });
 });

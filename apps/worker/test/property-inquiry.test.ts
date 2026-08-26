@@ -34,8 +34,13 @@ describe('property inquiry flow', () => {
     expect(choices[0]?.value).toMatch(/^見学希望日:\d{4}-\d{2}-\d{2}$/u);
     expect(viewingDayFromMessage('見学希望日:2026-08-27')).toBe('2026-08-27');
     expect(viewingTimeFromMessage('見学希望時間:13:00〜15:00')).toBe('13:00〜15:00');
-    expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28 15:00')).toBe('2026-08-28 15:00');
-    expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28T9:05')).toBe('2026-08-28 09:05');
+    expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28 15:00', frozenNow)).toBe('2026-08-28 15:00');
+    expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28T9:05', frozenNow)).toBe('2026-08-28 09:05');
+    expect(viewingDatetimeFromMessage('見学希望日時:2026-08-20 15:00', frozenNow)).toBeUndefined();
+    expect(viewingDatetimeFromMessage('見学希望日時:2026-02-31 15:00', frozenNow)).toBeUndefined();
+    expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28 24:00', frozenNow)).toBeUndefined();
+    expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28 99:99', frozenNow)).toBeUndefined();
+    expect(viewingDatetimeFromMessage('見学希望日時:garbage', frozenNow)).toBeUndefined();
   });
 
   it('walks document request fields in order and redacts them', () => {
@@ -85,9 +90,9 @@ describe('property inquiry flow', () => {
       prefix: '見学希望日時:',
     });
     const asking = [user('見学したい'), assistant(started.response || '')];
-    const picked = evaluatePropertyInquiry(asking, '見学希望日時:2026-08-28 15:00');
+    const picked = evaluatePropertyInquiry(asking, '見学希望日時:2026-08-28 15:00', frozenNow);
     expect(picked.step).toBe('contact_name');
-    expect(extractPropertyInquiryState(asking, '見学希望日時:2026-08-28 15:00').preferredDatetime).toBe('2026-08-28 15:00');
+    expect(extractPropertyInquiryState(asking, '見学希望日時:2026-08-28 15:00', frozenNow).preferredDatetime).toBe('2026-08-28 15:00');
   });
 
   it('still accepts a day-then-time flow already in progress', () => {
@@ -111,6 +116,38 @@ describe('property inquiry flow', () => {
     expect(extractPropertyInquiryState(asking, '来週の土曜の午後').preferredDatetime).toBe('来週の土曜の午後');
   });
 
+  it('does not treat filler replies or more-results as a viewing datetime', () => {
+    const started = evaluatePropertyInquiry([], '見学したい');
+    const asking = [user('見学したい'), assistant(started.response || '')];
+    expect(evaluatePropertyInquiry(asking, 'もっと見たい').active).toBe(false);
+    expect(evaluatePropertyInquiry(asking, 'はい').step).toBe('viewing_datetime');
+    expect(evaluatePropertyInquiry(asking, 'うん').step).toBe('viewing_datetime');
+    expect(extractPropertyInquiryState(asking, 'はい').preferredDatetime).toBeUndefined();
+  });
+
+  it('rejects calendar dates that are in the past or not a real clock time', () => {
+    const started = evaluatePropertyInquiry([], '見学したい', frozenNow);
+    const asking = [user('見学したい'), assistant(started.response || '')];
+    const past = evaluatePropertyInquiry(asking, '見学希望日時:2026-08-20 15:00', frozenNow);
+    expect(past.step).toBe('viewing_datetime');
+    expect(past.response).toMatch(/選べない/u);
+    expect(evaluatePropertyInquiry(asking, '見学希望日時:2026-08-28 24:00', frozenNow).step).toBe('viewing_datetime');
+  });
+
+  it('completes a viewing inquiry after calendar, name, address, and phone', () => {
+    const started = evaluatePropertyInquiry([], '見学したい', frozenNow);
+    const asking = [user('見学したい'), assistant(started.response || '')];
+    const picked = evaluatePropertyInquiry(asking, '見学希望日時:2026-08-28 15:00', frozenNow);
+    const namedHistory = [...asking, user('見学希望日時:2026-08-28 15:00'), assistant(picked.response || '')];
+    const named = evaluatePropertyInquiry(namedHistory, '山田 太郎', frozenNow);
+    expect(named.step).toBe('contact_address');
+    const addressedHistory = [...namedHistory, user('[お名前]'), assistant(named.response || '')];
+    const addressed = evaluatePropertyInquiry(addressedHistory, '大阪府大阪市北区梅田1-1-1', frozenNow);
+    expect(addressed.step).toBe('contact_phone');
+    const phonedHistory = [...addressedHistory, user('[住所]'), assistant(addressed.response || '')];
+    expect(evaluatePropertyInquiry(phonedHistory, '090-1234-5678', frozenNow).leadReady).toBe(true);
+  });
+
   it('leaves the inquiry when the visitor starts a new search', () => {
     const history = [
       user('資料請求したい'),
@@ -118,6 +155,37 @@ describe('property inquiry flow', () => {
     ];
     expect(evaluatePropertyInquiry(history, '物件を探す').active).toBe(false);
     expect(evaluatePropertyInquiry(history, '賃貸に切り替え').active).toBe(false);
+  });
+
+  it('does not resume a completed inquiry for later chat', () => {
+    const history = [
+      user('資料請求したい'),
+      assistant('資料をお届けするにゃん。お名前を教えてにゃん。'),
+      user('[お名前]'),
+      assistant('資料を届ける住所を教えてにゃん。番地まで書けるとにゃん。'),
+      user('[住所]'),
+      assistant('連絡用の電話番号を教えてにゃん。'),
+      user('[電話番号]'),
+      assistant('お問い合わせを受け付けたにゃん。担当者からご連絡するので、少し待っていてにゃん。'),
+    ];
+    expect(extractPropertyInquiryState(history, '').leadReady).toBe(true);
+    expect(evaluatePropertyInquiry(history, 'あああ').active).toBe(false);
+    expect(evaluatePropertyInquiry(history, 'この物件の家賃はいくら？').active).toBe(false);
+    expect(evaluatePropertyInquiry(history, '見学したい', frozenNow)).toMatchObject({
+      active: true,
+      kind: 'viewing',
+      step: 'viewing_datetime',
+    });
+    expect(evaluatePropertyInquiry(history, '見学したい', frozenNow).leadReady).toBeFalsy();
+  });
+
+  it('rejects a calendar payload that is not a real datetime', () => {
+    const started = evaluatePropertyInquiry([], '見学したい', frozenNow);
+    const asking = [user('見学したい'), assistant(started.response || '')];
+    const garbage = evaluatePropertyInquiry(asking, '見学希望日時:てきとう', frozenNow);
+    expect(garbage.step).toBe('viewing_datetime');
+    expect(garbage.response).toMatch(/選べない/u);
+    expect(extractPropertyInquiryState(asking, '見学希望日時:てきとう', frozenNow).preferredDatetime).toBeUndefined();
   });
 
   it('keeps follow-up copy and three side-by-side actions', () => {

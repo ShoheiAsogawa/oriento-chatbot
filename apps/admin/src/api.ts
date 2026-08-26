@@ -193,6 +193,7 @@ export interface CustomHomeInquiry {
   properties?: Array<{ title: string; url: string }>;
   intake: CustomHomeInquiryIntake;
   notificationStatus: 'collecting' | 'pending' | 'processing' | 'sent' | 'failed' | string;
+  notificationAttempts?: number;
 }
 
 export interface OverviewPrefectureCount {

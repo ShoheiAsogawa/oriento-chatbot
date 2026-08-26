@@ -862,6 +862,14 @@ function inquiryKindLabel(kind: InquiryKind | string | undefined) {
   return '注文住宅';
 }
 
+function inquiryNotificationLabel(status: string | undefined) {
+  if (status === 'sent') return 'メール送信済み';
+  if (status === 'failed') return 'メール送信失敗';
+  if (status === 'processing') return 'メール送信中';
+  if (status === 'pending') return 'メール未送信';
+  return '';
+}
+
 function InquirySummary({ inquiry }: { inquiry: CustomHomeInquiry }) {
   const kind = inquiry.kind || 'custom_home';
   if (kind === 'document_request') {
@@ -905,12 +913,14 @@ function InquiryDetails({ inquiry, onClose }: { inquiry: CustomHomeInquiry; onCl
     ['予算', intake.budgetYen ? inquiryBudget(intake.budgetYen) : intake.budgetNote ? inquiryUndecidedNote(intake.budgetNote) : '未回答'],
     ['入居時期', inquiryValue(intake.timing)],
     ['こだわり・優先事項', inquiryValue(intake.priorities)],
+    ['メール通知', inquiryNotificationLabel(inquiry.notificationStatus) || inquiry.notificationStatus || '未確認'],
   ];
   const propertyFields: Array<[string, string]> = [
     ['お問い合わせ種別', inquiryKindLabel(kind)],
     ...(kind === 'viewing' ? [['希望日時', inquiryValue(inquiry.preferredDatetime)] as [string, string]] : []),
     ...(kind !== 'phone' ? [['住所', inquiryValue(inquiry.address)] as [string, string]] : []),
     ['対象物件', propertyLines],
+    ['メール通知', inquiryNotificationLabel(inquiry.notificationStatus) || inquiry.notificationStatus || '未確認'],
   ];
   const fields = kind === 'custom_home' ? customHomeFields : propertyFields;
   return <div className="inquiry-modal-backdrop" role="presentation">
@@ -956,7 +966,14 @@ function InquiriesPage() {
     <section className="surface inquiry-list" aria-busy={loading} aria-label="お問い合わせ一覧">
       <div className="inquiry-list-head"><span>受付日時</span><span>種別</span><span>お客様</span><span>相談内容</span><span>操作</span></div>
       {rows.map((row) => <button className="inquiry-row" type="button" key={row.id} onClick={() => setSelected(row)}>
-        <time>{formatDate(row.createdAt)}</time><span className="inquiry-kind">{inquiryKindLabel(row.kind)}</span><span className="inquiry-person"><strong>{row.name || '氏名未入力'}</strong><small>{row.phone || '電話番号未入力'}</small></span><InquirySummary inquiry={row} /><span className="row-action">詳細を見る <ChevronRight /></span>
+        <time>{formatDate(row.createdAt)}</time>
+        <span className="inquiry-kind-cell">
+          <span className="inquiry-kind">{inquiryKindLabel(row.kind)}</span>
+          {inquiryNotificationLabel(row.notificationStatus) ? <small className={`inquiry-mail inquiry-mail-${row.notificationStatus}`}>{inquiryNotificationLabel(row.notificationStatus)}</small> : null}
+        </span>
+        <span className="inquiry-person"><strong>{row.name || '氏名未入力'}</strong><small>{row.phone || '電話番号未入力'}</small></span>
+        <InquirySummary inquiry={row} />
+        <span className="row-action">詳細を見る <ChevronRight /></span>
       </button>)}
       {loading && rows.length === 0 ? <div className="knowledge-empty"><RefreshCw className="spin" /><p>お問い合わせを読み込んでいます…</p></div> : null}
       {!loading && rows.length === 0 ? <div className="knowledge-empty"><ClipboardList /><p>お問い合わせはまだありません。</p></div> : null}
