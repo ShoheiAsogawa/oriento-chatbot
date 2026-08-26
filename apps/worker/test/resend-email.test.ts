@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { sendEmailWithResend } from '../src/resend-email';
 
 const email = {
-  from: 'オリにゃん <no-reply@notify.orijyu.com>',
+  from: 'オリにゃん <no-reply@orijyu.com>',
   to: 'staff@example.com',
   subject: 'ご相談が届きました',
   text: '本文',
