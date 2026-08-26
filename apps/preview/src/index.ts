@@ -54,7 +54,6 @@ const html = `<!doctype html>
   <footer>Orient Chat production-connected preview — conversations are audited.</footer>
 
   <orient-chat
-    open
     api-url="${productionAssetOrigin}"
     primary-color="#ff680b"
     ink-color="#29293a"
@@ -64,7 +63,7 @@ const html = `<!doctype html>
     contact-url="https://orijyu.com/reception.html"
   ></orient-chat>
   <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260826-7"></script>
+  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260826-8"></script>
 </body>
 </html>`;
 

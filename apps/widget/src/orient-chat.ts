@@ -263,15 +263,20 @@ template.innerHTML = `
         <a class="privacy-link" target="_blank" rel="noopener">プライバシーポリシー・免責事項</a>
       </p>
       <div class="escalation">
-        <a class="line-link" target="_blank" rel="noopener">公式LINE</a>
-        <span class="escalation-sep" aria-hidden="true">·</span>
-        <a class="contact-link" target="_blank" rel="noopener noreferrer">問い合わせフォーム</a>
+        <a class="line-link" target="_blank" rel="noopener">
+          <svg class="escalation-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.4C6.7 3.4 2.4 7 2.4 11.4c0 3.94 3.4 7.26 8.08 7.9.32.06.74.22.84.5.08.24.05.62 0 .88l-.12.82c-.04.24-.18.96.86.52 1.04-.44 5.56-3.3 7.6-5.66 1.4-1.56 2.04-3.14 2.04-4.96C21.7 7 17.4 3.4 12 3.4Z"/></svg>
+          公式LINE
+        </a>
+        <a class="contact-link" target="_blank" rel="noopener noreferrer">
+          <svg class="escalation-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.6" y="6" width="16.8" height="12.2" rx="2.2"/><path d="m5.2 8.2 6.8 5 6.8-5"/></svg>
+          問い合わせフォーム
+        </a>
       </div>
       <div class="turnstile-slot" aria-hidden="true"></div>
     </section>
     <button class="launcher" type="button" aria-label="オリにゃんに相談にゃ！" aria-expanded="false">
       <span class="launcher-scene" aria-hidden="true">
-        <span class="launcher-ring"></span>
+        <span class="launcher-ring-clip"><span class="launcher-ring"></span></span>
         <span class="launcher-character"><span class="cat cat-launcher" data-cat-state="idle"></span></span>
       </span>
       <span class="launcher-label">オリにゃんに相談にゃ！</span>
@@ -293,7 +298,7 @@ const styles = `
     position: fixed;
     inset: auto 20px 18px auto;
     z-index: 2147483000;
-    overflow: hidden;
+    overflow: visible;
     color: var(--orient-ink);
     font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
     font-size: 15px;
@@ -527,34 +532,67 @@ const styles = `
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 6px 8px;
-    padding: 4px 14px 8px;
-    color: var(--orient-muted);
-    font-size: 10px;
+    gap: 8px;
+    padding: 2px 16px 12px;
   }
-  .escalation-sep { color: #c5c6cc; }
   .line-link, .escalation .contact-link {
-    color: var(--orient-muted);
-    font-size: 10px;
-    font-weight: 600;
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 4px 11px 4px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    line-height: 1;
+    text-decoration: none;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
   }
-  .line-link:hover, .line-link:focus-visible { color: #237a46; outline: none; }
-  .escalation .contact-link:hover, .escalation .contact-link:focus-visible { color: var(--orient-ink); outline: none; }
+  .escalation-icon { width: 13px; height: 13px; flex: 0 0 13px; display: block; }
+  .line-link {
+    color: #2d7a4a;
+    background: #f4faf6;
+    border: 1px solid #d5eadc;
+  }
+  .line-link .escalation-icon { fill: #06c755; }
+  .line-link:hover, .line-link:focus-visible {
+    color: #1f6a3e;
+    background: #eaf6ee;
+    border-color: #b7dcc4;
+    outline: none;
+  }
+  .escalation .contact-link {
+    color: #6a5d52;
+    background: #faf8f6;
+    border: 1px solid #ece6df;
+  }
+  .escalation .contact-link .escalation-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .escalation .contact-link:hover, .escalation .contact-link:focus-visible {
+    color: var(--orient-ink);
+    background: #fff6ef;
+    border-color: #f0d4c0;
+    outline: none;
+  }
   .turnstile-slot { position: absolute; left: 12px; bottom: 12px; z-index: 8; }
   .cat { background-image: var(--orient-asset); background-repeat: no-repeat; background-size: 200% 200%; background-position: 0 0; }
   .cat[data-cat-state="listening"] { background-position: 100% 0; }
   .cat[data-cat-state="speaking"] { background-position: 0 100%; }
   .cat[data-cat-state="thinking"] { background-position: 100% 100%; }
   .cat-avatar { width: 52px; height: 52px; border: 3px solid rgba(255,255,255,.88); border-radius: 50%; background-color: #fff; }
-  .launcher { width: 208px; height: 98px; position: relative; overflow: hidden; border: 0; background: transparent; cursor: pointer; }
-  .launcher-scene { position: absolute; inset: 0; }
-  .launcher-ring { width: 180px; height: 180px; position: absolute; right: -98px; bottom: -108px; z-index: 1; display: block; border: 4px solid #fff; border-radius: 50%; background: var(--orient-primary); box-shadow: 0 0 0 1px rgba(255,104,11,.08), 0 10px 24px rgba(41,41,58,.18); }
-  .launcher-character { width: 88px; height: 88px; position: absolute; right: -20px; bottom: -28px; z-index: 2; filter: drop-shadow(0 5px 5px rgba(41,41,58,.2)); transform-origin: 52% 92%; animation: launcher-peek 3.6s cubic-bezier(.45,0,.25,1) infinite; will-change: transform; }
+  .launcher { width: 236px; height: 108px; position: relative; overflow: visible; border: 0; background: transparent; cursor: pointer; }
+  .launcher-scene { position: absolute; inset: 0; pointer-events: none; }
+  .launcher-ring-clip { position: absolute; inset: 0 -12px -6px 0; overflow: hidden; pointer-events: none; }
+  .launcher-ring { width: 180px; height: 180px; position: absolute; right: -86px; bottom: -102px; z-index: 1; display: block; border: 4px solid #fff; border-radius: 50%; background: var(--orient-primary); box-shadow: 0 0 0 1px rgba(255,104,11,.08), 0 10px 24px rgba(41,41,58,.18); }
+  .launcher-character { width: 88px; height: 88px; position: absolute; right: -12px; bottom: -20px; z-index: 2; filter: drop-shadow(0 5px 5px rgba(41,41,58,.2)); transform-origin: 52% 92%; animation: launcher-peek 3.6s cubic-bezier(.45,0,.25,1) infinite; will-change: transform; }
   .cat-launcher { width: 100%; height: 100%; display: block; }
-  .launcher-label { min-height: 32px; position: absolute; right: 56px; bottom: 2px; z-index: 3; display: inline-flex; align-items: center; padding: 7px 12px; color: #fff; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: var(--orient-ink); box-shadow: 0 7px 16px rgba(41,41,58,.22); font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .01em; white-space: nowrap; transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease; }
+  .launcher-label { min-height: 32px; position: absolute; right: 72px; bottom: 14px; z-index: 3; display: inline-flex; align-items: center; padding: 8px 13px; color: #fff; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: var(--orient-ink); box-shadow: 0 7px 16px rgba(41,41,58,.22); font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .01em; white-space: nowrap; transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease; }
   .launcher-label::after { content: ""; width: 0; height: 0; position: absolute; right: -8px; bottom: 8px; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 9px solid var(--orient-ink); transition: border-left-color 180ms ease; }
   .launcher:hover .launcher-character, .launcher:focus-visible .launcher-character { animation: launcher-greet .72s cubic-bezier(.2,.8,.2,1) both; }
   .launcher:hover .cat-launcher, .launcher:focus-visible .cat-launcher { background-position: 0 100%; }
@@ -575,13 +613,14 @@ const styles = `
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
   @media (max-width: 520px) {
-    :host { inset: auto 10px 10px 10px; overflow: hidden; }
+    :host { inset: auto 10px 10px 10px; overflow: visible; }
     .root { width: 100%; }
     .panel { width: 100%; height: min(690px, calc(100dvh - 24px)); min-height: 480px; border-radius: 16px; }
-    .launcher { width: 202px; height: 94px; }
-    .launcher-ring { width: 180px; height: 180px; right: -88px; bottom: -100px; }
-    .launcher-character { width: 84px; height: 84px; right: -10px; bottom: -20px; }
-    .launcher-label { right: 64px; bottom: 10px; }
+    .launcher { width: 228px; height: 104px; }
+    .launcher-ring-clip { inset: 0 -8px -4px 0; }
+    .launcher-ring { width: 180px; height: 180px; right: -78px; bottom: -96px; }
+    .launcher-character { width: 84px; height: 84px; right: -6px; bottom: -16px; }
+    .launcher-label { right: 70px; bottom: 16px; }
     .suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .suggestions button { font-size: 10px; }
     .choice-grid[data-count="3"] { gap: 5px; }
