@@ -41,6 +41,7 @@ describe('property inquiry flow', () => {
     expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28 24:00', frozenNow)).toBeUndefined();
     expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28 99:99', frozenNow)).toBeUndefined();
     expect(viewingDatetimeFromMessage('見学希望日時:garbage', frozenNow)).toBeUndefined();
+    expect(viewingDatetimeFromMessage('見学希望日時:2026-08-28', frozenNow)).toBeUndefined();
   });
 
   it('walks document request fields in order and redacts them', () => {
@@ -114,6 +115,32 @@ describe('property inquiry flow', () => {
     const typed = evaluatePropertyInquiry(asking, '来週の土曜の午後');
     expect(typed.step).toBe('contact_name');
     expect(extractPropertyInquiryState(asking, '来週の土曜の午後').preferredDatetime).toBe('来週の土曜の午後');
+  });
+
+  it('does not treat a date-only reply as a complete viewing slot', () => {
+    const started = evaluatePropertyInquiry([], '見学したい', frozenNow);
+    const asking = [user('見学したい'), assistant(started.response || '')];
+    const dateOnly = evaluatePropertyInquiry(asking, '8月28日', frozenNow);
+    expect(dateOnly.step).toBe('viewing_datetime');
+    expect(dateOnly.response).toMatch(/日付と時間/u);
+    expect(extractPropertyInquiryState(asking, '8月28日', frozenNow).preferredDatetime).toBeUndefined();
+    expect(evaluatePropertyInquiry(asking, '見学希望日時:2026-08-28', frozenNow).step).toBe('viewing_datetime');
+  });
+
+  it('does not capture an address while still asking for a name', () => {
+    const started = evaluatePropertyInquiry([], '資料請求したい');
+    const asking = [user('資料請求したい'), assistant(started.response || '')];
+    const addressed = evaluatePropertyInquiry(asking, '大阪府大阪市北区梅田1-1-1');
+    expect(addressed.step).toBe('contact_name');
+    expect(extractPropertyInquiryState(asking, '大阪府大阪市北区梅田1-1-1').addressSet).toBe(false);
+  });
+
+  it('points a visitor who refuses contact details to LINE', () => {
+    const started = evaluatePropertyInquiry([], '資料請求したい');
+    const asking = [user('資料請求したい'), assistant(started.response || '')];
+    const declined = evaluatePropertyInquiry(asking, '教えたくない');
+    expect(declined.step).toBe('contact_name');
+    expect(declined.response).toMatch(/公式LINE/u);
   });
 
   it('does not treat filler replies or more-results as a viewing datetime', () => {

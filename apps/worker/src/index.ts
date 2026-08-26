@@ -1139,14 +1139,14 @@ app.post('/api/chat/message', async (context) => {
   const startedAt = Date.now();
   const input = messageSchema.parse(await readChatJson(context.req.raw));
   if (!(await verifySessionToken(input.sessionToken, input.conversationId, context.env))) {
-    return context.json({ error: 'Session expired' }, 401);
+    return context.json({ error: 'チャットの有効期限が切れました。もう一度送信してにゃん。' }, 401);
   }
   const conversation = await context.env.DB.prepare(`SELECT id FROM conversations WHERE id = ?`).bind(input.conversationId).first();
-  if (!conversation) return context.json({ error: 'Conversation not found' }, 404);
+  if (!conversation) return context.json({ error: '会話を再開できませんでした。もう一度送ってにゃん。' }, 404);
 
   const turn = await claimChatTurn(context.env.DB, input.conversationId, input.clientTurnId);
   if (turn.kind === 'cached') {
-    if (!turn.response || typeof turn.response !== 'object') return context.json({ error: 'Stored response unavailable' }, 409);
+    if (!turn.response || typeof turn.response !== 'object') return context.json({ error: '回答を取り出せませんでした。もう一度送ってにゃん。' }, 409);
     return context.json(turn.response as Record<string, unknown>);
   }
   if (turn.kind === 'busy') {
@@ -1809,12 +1809,12 @@ app.post('/api/chat/lead', async (context) => {
   const appendAudit = appendChatAudit;
   const input = leadSchema.parse(await readChatJson(context.req.raw));
   if (!(await verifySessionToken(input.sessionToken, input.conversationId, context.env))) {
-    return context.json({ error: 'Session expired' }, 401);
+    return context.json({ error: 'チャットの有効期限が切れました。もう一度送信してにゃん。' }, 401);
   }
   const conversation = await context.env.DB.prepare(`SELECT id FROM conversations WHERE id = ?`)
     .bind(input.conversationId)
     .first<{ id: string }>();
-  if (!conversation) return context.json({ error: 'Conversation not found' }, 404);
+  if (!conversation) return context.json({ error: '会話を再開できませんでした。もう一度送ってにゃん。' }, 404);
   const rate = await context.env.RATE_LIMITER.limit({ key: `lead:${input.conversationId}` });
   if (!rate.success) {
     await appendRateLimitAudit(context.env, 'lead', input.conversationId);
@@ -2608,7 +2608,14 @@ app.get('/api/admin/conversations', async (context) => {
      ))
      GROUP BY c.id ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
   ).bind(search, search, perPage, (page - 1) * perPage).all();
-  return context.json({ result: result.results, page, perPage });
+  const count = await context.env.DB.prepare(
+    `SELECT COUNT(*) AS total FROM conversations c
+     WHERE (? = '' OR EXISTS (
+       SELECT 1 FROM messages ms
+       WHERE ms.conversation_id = c.id AND ms.content_redacted LIKE '%' || ? || '%'
+     ))`,
+  ).bind(search, search).first<{ total: number }>();
+  return context.json({ result: result.results, page, perPage, total: Number(count?.total || 0) });
 });
 
 app.get('/api/admin/conversations/export.csv', async (context) => {

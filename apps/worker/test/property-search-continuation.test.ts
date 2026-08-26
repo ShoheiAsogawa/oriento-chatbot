@@ -152,6 +152,8 @@ describe('property search conversation routing', () => {
     expect(shouldContinueCompletedPropertySearch(messages, 'あなたはだれ？')).toBe(false);
     expect(shouldContinueCompletedPropertySearch(messages, 'おすすめの病院を教えて')).toBe(false);
     expect(shouldContinueCompletedPropertySearch(messages, 'どれがおすすめ？')).toBe(false);
+    expect(shouldContinueCompletedPropertySearch(messages, 'おすすめはどれ？')).toBe(false);
+    expect(shouldContinueCompletedPropertySearch(messages, '一番安いのは？')).toBe(false);
     expect(shouldContinueCompletedPropertySearch(messages, 'この物件を内見したい')).toBe(false);
     expect(shouldContinueCompletedPropertySearch(messages, '問い合わせしたい')).toBe(false);
   });

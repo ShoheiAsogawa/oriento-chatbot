@@ -663,13 +663,16 @@ export const api = {
   ),
   deleteKnowledge: (id: string) => request(`/api/admin/knowledge/${id}`, { method: 'DELETE' }, { ok: true }),
   reindexKnowledge: (id: string) => request<KnowledgeItem>(`/api/admin/knowledge/${id}/reindex`, { method: 'POST' }),
-  conversations: (search = '') => {
-    const params = new URLSearchParams({ page: '1', perPage: '100' });
+  conversations: (search = '', page = 1, perPage = 50) => {
+    const params = new URLSearchParams({
+      page: String(Math.max(1, page)),
+      perPage: String(Math.min(100, Math.max(1, perPage))),
+    });
     if (search.trim()) params.set('search', search.trim());
-    return request<{ result: ConversationSummary[]; page: number; perPage: number }>(
+    return request<{ result: ConversationSummary[]; page: number; perPage: number; total: number }>(
       `/api/admin/conversations?${params.toString()}`,
       undefined,
-      { result: mockConversations.filter((row) => !search.trim() || row.latest_message.includes(search.trim())), page: 1, perPage: 100 },
+      { result: mockConversations.filter((row) => !search.trim() || row.latest_message.includes(search.trim())), page: 1, perPage, total: mockConversations.length },
     );
   },
   inquiries: (page = 1, perPage = 50) => {
@@ -710,6 +713,7 @@ export const api = {
     const response = await fetch('/api/admin/conversations/export.csv', { headers: adminHeaders(), credentials: 'same-origin' });
     if (response.status === 401) window.dispatchEvent(new Event(ADMIN_SESSION_EXPIRED_EVENT));
     if (!response.ok) throw new Error(`CSV export ${response.status}`);
+    const truncated = response.headers.get('X-Export-Truncated') === 'true';
     const url = URL.createObjectURL(await response.blob());
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -718,6 +722,7 @@ export const api = {
     anchor.click();
     anchor.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return { truncated };
   },
   settings: () => request('/api/admin/settings', undefined, {
     answer_policy: { domain: '不動産・住まい・物件・家づくり・店舗案内・問い合わせ方法', min_retrieval_score: 0.48, refuse_price_negotiation: true, refuse_legal_judgment: true, refuse_important_matters: true },

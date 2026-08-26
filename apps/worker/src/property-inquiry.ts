@@ -85,9 +85,11 @@ const NAME_REDACTED = /\[お名前\]/u;
 const PHONE_REDACTED = /\[電話番号\]/u;
 const ADDRESS_REDACTED = /\[住所\]/u;
 const CONTACT_LINK_OR_URL = /(?:https?:\/\/|www\.|line\.me|公式\s*LINE|LINEから|リンク|URL)/iu;
-const CONTACT_DECLINE = /(?:^(?:なし|ない|ありません|未定|後で|あとで|匿名(?:で|希望)?|名無し)[。！!？?]?$|(?:名前|氏名|電話番号|連絡先|住所|個人情報).*(?:教えたくない|言いたくない|入力したくない))/u;
+const CONTACT_DECLINE = /(?:^(?:なし|ない|ありません|未定|後で|あとで|匿名(?:で|希望)?|名無し|教えたくない|言いたくない|入力したくない)[。！!？?]?$|(?:名前|氏名|電話番号|連絡先|住所|個人情報).*(?:教えたくない|言いたくない|入力したくない))/u;
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/iu;
 const ADDRESS_HINT = /(?:都|道|府|県|市|区|町|村|丁目|番地|号|マンション|アパート|ビル|\d[-−ー]\d)/u;
+const VIEWING_DATE_HINT = /(?:\d{1,2}\s*[\/月]\s*\d{1,2}|\d{4}-\d{2}-\d{2}|明日|あさって|今週末|来週|平日|土日|[月火水木金土日]曜)/u;
+const VIEWING_TIME_HINT = /(?:\d{1,2}\s*時|\d{1,2}:\d{2}|午前|午後|夕方|朝|夜|昼過ぎ|時間は相談|相談して決める)/u;
 
 const KIND_BY_VALUE: Record<string, PropertyInquiryKind> = {
   [PROPERTY_INQUIRY_VALUES.document]: 'document_request',
@@ -239,7 +241,7 @@ export function viewingDatetimeFromMessage(content: string, now = new Date()): s
   const iso = value.match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{1,2}):(\d{2}))?$/u);
   if (!iso) return undefined;
   if (!isRealIsoDay(iso[1]) || !isViewingDayInWindow(iso[1], now)) return undefined;
-  if (iso[2] === undefined || iso[3] === undefined) return iso[1];
+  if (iso[2] === undefined || iso[3] === undefined) return undefined;
   if (!isRealClockTime(iso[2], iso[3])) return undefined;
   return `${iso[1]} ${pad2(Number(iso[2]))}:${iso[3]}`;
 }
@@ -261,10 +263,15 @@ function freeDatetimeFromMessage(content: string, expecting: boolean) {
   ) {
     return undefined;
   }
-  if (!expecting && !/(?:\d{1,2}\s*[\/月]\s*\d{1,2}|\d{1,2}\s*時|午前|午後|明日|あさって|今週末|来週|平日|土日)/u.test(normalized)) {
+  if (!expecting && !VIEWING_DATE_HINT.test(normalized) && !VIEWING_TIME_HINT.test(normalized)) {
     return undefined;
   }
+  if (!VIEWING_TIME_HINT.test(normalized)) return undefined;
+  if (!expecting && !VIEWING_DATE_HINT.test(normalized)) return undefined;
   if (!normalized || normalized.length > 80 || CONTACT_LINK_OR_URL.test(normalized) || !hasMeaningfulText(normalized)) {
+    return undefined;
+  }
+  if (EMAIL.test(normalized) || /(?:丁目|番地|号|\d[-−ー]\d[-−ー]\d)/u.test(normalized)) {
     return undefined;
   }
   if (isObviousConversationDetour(normalized) || isModeSwitch(normalized)) return undefined;
@@ -281,7 +288,7 @@ export function addressFromMessage(content: string, expecting: boolean): string 
   if (!normalized || normalized.length < 4 || normalized.length > 120) return undefined;
   if (EMAIL.test(normalized) || CONTACT_LINK_OR_URL.test(normalized) || isModeSwitch(normalized)) return undefined;
   if (normalizeCustomHomePhone(normalized)) return undefined;
-  if (!expecting && !ADDRESS_HINT.test(normalized)) return undefined;
+  if (!expecting) return undefined;
   if (expecting && !ADDRESS_HINT.test(normalized) && !/\d/u.test(normalized)) return undefined;
   if (!hasMeaningfulText(normalized)) return undefined;
   if (isObviousConversationDetour(normalized)) return undefined;
@@ -473,21 +480,26 @@ export function evaluatePropertyInquiry(
       active: true,
       kind: state.kind,
       step,
-      response: 'お名前と電話番号がないと、担当者からご連絡できないにゃん。入力できる範囲で教えてにゃん。',
+      response: 'お名前と電話番号がないと、担当者からご連絡できないにゃん。入力できる範囲で教えてにゃん。チャットで入力しない場合は、公式LINEから担当者へ相談してにゃん。',
     };
   }
 
   if (
     step === 'viewing_datetime'
-    && normalized.startsWith(VIEWING_DATETIME_PREFIX)
     && !state.preferredDatetime
     && !state.preferredDate
+    && (
+      normalized.startsWith(VIEWING_DATETIME_PREFIX)
+      || (VIEWING_DATE_HINT.test(normalized) && !VIEWING_TIME_HINT.test(normalized))
+    )
   ) {
     return {
       active: true,
       kind: state.kind,
       step,
-      response: 'その日時は見学の予約では選べないにゃん。カレンダーから選んでにゃん。',
+      response: normalized.startsWith(VIEWING_DATETIME_PREFIX)
+        ? 'その日時は見学の予約では選べないにゃん。カレンダーから選んでにゃん。'
+        : '見学の日付と時間の両方を、カレンダーから選んでにゃん。',
     };
   }
 

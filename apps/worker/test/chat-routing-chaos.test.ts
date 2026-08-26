@@ -227,4 +227,9 @@ describe('whole-chat routing chaos audit', () => {
     expect(route(history, 'この物件の家賃はいくら？')).toBe('property_knowledge');
     expect(route(history, '見学したい')).toBe('property_inquiry');
   });
+
+  it('hands a recommendation question off after completed listings', () => {
+    expect(route(completedRental, 'おすすめはどれ？')).not.toBe('rental');
+    expect(route(completedPurchase, '一番安いのは？')).not.toBe('purchase');
+  });
 });

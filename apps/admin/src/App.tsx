@@ -761,28 +761,55 @@ function KnowledgePage() {
 }
 
 function WidgetPreview() {
-  return <section className="widget-preview"><div className="preview-title"><h3>ウィジェットプレビュー</h3><Eye /></div><div className="mini-widget"><header><span className="mini-cat" style={orinyanSpriteStyle}></span><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div></header><div className="mini-message"><span className="mini-cat" style={orinyanSpriteStyle}></span><p>こんにちは！<br />何かお困りのことはありますか？</p></div><div className="mini-input">メッセージを入力… <span>➤</span></div></div></section>;
+  return <section className="widget-preview"><div className="preview-title"><h3>ウィジェットプレビュー</h3><Eye /></div><div className="mini-widget"><header><span className="mini-cat" style={orinyanSpriteStyle}></span><div><strong>オリにゃんに相談</strong><small>● オンライン</small></div></header><div className="mini-message"><span className="mini-cat" style={orinyanSpriteStyle}></span><p>こんにちは、オリにゃんだよ！<br />はじめに性別を選んでにゃん。</p></div><div className="mini-input">はじめに性別と年代を選んでにゃん</div></div></section>;
+}
+
+const CONVERSATIONS_PAGE_SIZE = 50;
+
+function policyActionLabel(action: string | undefined) {
+  if (action === 'allow') return '案内済み';
+  if (action === 'price_negotiation') return '価格交渉のため案内対象外';
+  if (action === 'important_matters') return '重要事項のため案内対象外';
+  if (action === 'legal_judgment') return '法的判断のため案内対象外';
+  if (action === 'prompt_injection') return '不正な入力';
+  if (action === 'no_grounding') return '根拠不足のため未回答';
+  if (action === 'out_of_scope') return '案内対象外';
+  return action || '確認中';
+}
+
+function parseMessageCitations(raw: string | undefined) {
+  try {
+    const parsed = JSON.parse(raw || '[]') as Array<{ title?: string | null; url?: string | null }>;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item) => item && (item.title || item.url));
+  } catch {
+    return [];
+  }
 }
 
 function ConversationsPage({ initialConversationId }: { initialConversationId?: string }) {
   const [rows, setRows] = useState<ConversationSummary[]>([]);
   const [selected, setSelected] = useState<ConversationSummary | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const rowsRequestSequence = useRef(0);
-  const loadRows = useCallback(async (query: string) => {
+  const loadRows = useCallback(async (query: string, nextPage: number) => {
     const sequence = rowsRequestSequence.current + 1;
     rowsRequestSequence.current = sequence;
     setLoading(true);
     setError(null);
     try {
-      const data = await api.conversations(query);
+      const data = await api.conversations(query, nextPage, CONVERSATIONS_PAGE_SIZE);
       if (rowsRequestSequence.current !== sequence) return;
       setRows(data.result);
+      setTotal(Number(data.total || data.result.length));
       setSelected((current) => (
         data.result.find((row) => row.id === initialConversationId)
         || data.result.find((row) => row.id === current?.id)
@@ -796,18 +823,25 @@ function ConversationsPage({ initialConversationId }: { initialConversationId?: 
       if (rowsRequestSequence.current === sequence) setLoading(false);
     }
   }, [initialConversationId]);
-  useEffect(() => { void loadRows(deferredSearch); }, [deferredSearch, loadRows]);
+  useEffect(() => { setPage(1); }, [deferredSearch]);
+  useEffect(() => { void loadRows(deferredSearch, page); }, [deferredSearch, page, loadRows]);
   useEffect(() => {
     if (!selected) {
       setMessages([]);
+      setMessagesLoading(false);
       return;
     }
     let active = true;
     setMessages([]);
+    setMessagesLoading(true);
     void api.conversation(selected.id).then((data) => {
-      if (active) setMessages(data.messages);
+      if (!active) return;
+      setMessages(data.messages);
+      setMessagesLoading(false);
     }).catch((reason) => {
-      if (active) setError(reason instanceof Error ? reason.message : '会話の詳細を読み込めませんでした。');
+      if (!active) return;
+      setMessagesLoading(false);
+      setError(reason instanceof Error ? reason.message : '会話の詳細を読み込めませんでした。');
     });
     return () => { active = false; };
   }, [selected]);
@@ -816,7 +850,8 @@ function ConversationsPage({ initialConversationId }: { initialConversationId?: 
     setExporting(true);
     setError(null);
     try {
-      await api.downloadConversations();
+      const exported = await api.downloadConversations();
+      if (exported.truncated) setError('CSVは最新1万件までです。それ以前の会話は含まれていません。');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'CSVを出力できませんでした。');
     } finally {
@@ -825,11 +860,16 @@ function ConversationsPage({ initialConversationId }: { initialConversationId?: 
   };
   const visitorLabel = selected ? visitorDemographicLabel(selected.visitor_gender, selected.visitor_age_decade) : '';
   const lastAssistant = [...messages].reverse().find((message) => message.role === 'assistant');
+  const totalPages = Math.max(1, Math.ceil(total / CONVERSATIONS_PAGE_SIZE));
   return <div className="split-page logs-page"><main className="split-main"><PageHeader title="会話ログ" description="記録された質問と回答、参照資料、ポリシー判定を確認します。" action={<button className="secondary-button" onClick={() => void download()} disabled={exporting}><Archive />{exporting ? '出力中…' : 'CSV出力'}</button>} />
     {error ? <p className="knowledge-notice" role="alert">{error}</p> : null}
-    <div className="table-tools"><label className="search-field"><Search /><input placeholder="会話内容で検索" value={search} onChange={(event) => setSearch(event.target.value)} /></label><button className="square-button" type="button" aria-label="会話ログを再読み込み" onClick={() => void loadRows(deferredSearch)} disabled={loading}><RefreshCw className={loading ? 'spin' : ''} /></button></div>
+    <div className="table-tools"><label className="search-field"><Search /><input placeholder="会話内容で検索" value={search} onChange={(event) => setSearch(event.target.value)} /></label><button className="square-button" type="button" aria-label="会話ログを再読み込み" onClick={() => void loadRows(deferredSearch, page)} disabled={loading}><RefreshCw className={loading ? 'spin' : ''} /></button></div>
     <div className="conversation-list" aria-busy={loading}><div className="conversation-head"><span>日時</span><span>最新の質問</span><span>ページ</span><span>回答状況</span></div>{rows.map((row) => <button key={row.id} className={selected?.id === row.id ? 'selected' : ''} onClick={() => setSelected(row)}><time>{formatDate(row.updated_at)}</time><span><strong>{row.latest_message || '（質問なし）'}</strong><small>{row.message_count}メッセージ</small></span><code>{row.source_page || '/'}</code><span>{row.has_refusal ? <span className="status warning">案内対象外</span> : <span className="status success">回答</span>}</span></button>)}{!loading && rows.length === 0 ? <div className="knowledge-empty"><MessageSquareText /><p>条件に一致する会話はありません。</p></div> : null}</div>
-  </main><aside className={`detail-drawer conversation-detail ${selected ? 'open' : ''}`}><div className="drawer-heading"><div><h2>会話の詳細</h2><p>{selected?.id}</p></div><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>{selected ? <><div className="conversation-meta"><span><History />{formatDate(selected.updated_at)}</span><span><Link2 />{selected.source_page}</span>{visitorLabel ? <span><UsersRound />{visitorLabel}</span> : null}</div><div className="transcript">{messages.map((message) => <div key={message.id} className={message.role === 'user' ? 'transcript-user' : 'transcript-bot'}>{message.content_redacted}{message.role === 'assistant' && message.policy_action === 'allow' ? <small>出典は保存済みのナレッジ資料を参照</small> : null}</div>)}</div><div className="policy-result"><ShieldCheck /><div><strong>ポリシー判定</strong><p>{lastAssistant?.policy_action || '確認中'} {lastAssistant?.policy_action === 'allow' ? '— 根拠資料あり' : '— 回答を拒否または担当者へ案内'}</p></div></div></> : <div className="empty-detail"><MessageSquareText /><p>会話を選択してください。</p></div>}</aside></div>;
+    {totalPages > 1 ? <nav className="inquiry-pagination" aria-label="会話ログのページ移動"><button className="secondary-button" type="button" disabled={loading || page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft />前へ</button><span>{page} / {totalPages} ページ</span><button className="secondary-button" type="button" disabled={loading || page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>次へ<ChevronRight /></button></nav> : null}
+  </main><aside className={`detail-drawer conversation-detail ${selected ? 'open' : ''}`}><div className="drawer-heading"><div><h2>会話の詳細</h2><p>{selected?.id}</p></div><button onClick={() => setSelected(null)} aria-label="閉じる"><X /></button></div>{selected ? <><div className="conversation-meta"><span><History />{formatDate(selected.updated_at)}</span><span><Link2 />{selected.source_page}</span>{visitorLabel ? <span><UsersRound />{visitorLabel}</span> : null}</div><div className="transcript">{messagesLoading ? <p className="knowledge-notice">会話を読み込んでいます…</p> : messages.map((message) => {
+    const citations = message.role === 'assistant' ? parseMessageCitations(message.citations) : [];
+    return <div key={message.id} className={message.role === 'user' ? 'transcript-user' : 'transcript-bot'}>{message.content_redacted}{citations.length > 0 ? <ul className="transcript-citations">{citations.map((citation, index) => <li key={`${citation.url || citation.title || index}`}>{citation.url ? <a href={citation.url} target="_blank" rel="noopener noreferrer">{citation.title || citation.url}</a> : citation.title}</li>)}</ul> : message.role === 'assistant' && message.policy_action === 'allow' ? <small>出典は保存済みのナレッジ資料を参照</small> : null}</div>;
+  })}</div><div className="policy-result"><ShieldCheck /><div><strong>ポリシー判定</strong><p>{policyActionLabel(lastAssistant?.policy_action)}{lastAssistant?.policy_action === 'allow' ? ' — 根拠資料あり' : lastAssistant?.policy_action ? ' — 回答を拒否または担当者へ案内' : ''}</p></div></div></> : <div className="empty-detail"><MessageSquareText /><p>会話を選択してください。</p></div>}</aside></div>;
 }
 
 function inquiryValue(value: unknown) {
@@ -893,7 +933,7 @@ function InquirySummary({ inquiry }: { inquiry: CustomHomeInquiry }) {
   return <p className="inquiry-summary">{summary.length ? summary.join(' ／ ') : '聞き取り内容あり'}</p>;
 }
 
-function InquiryDetails({ inquiry, onClose }: { inquiry: CustomHomeInquiry; onClose: () => void }) {
+function InquiryDetails({ inquiry, onClose, onOpenConversation }: { inquiry: CustomHomeInquiry; onClose: () => void; onOpenConversation?: (conversationId: string) => void }) {
   const kind = inquiry.kind || 'custom_home';
   const intake = inquiry.intake || {};
   const household = [
@@ -928,6 +968,7 @@ function InquiryDetails({ inquiry, onClose }: { inquiry: CustomHomeInquiry; onCl
       <div className="drawer-heading"><div><h2 id="inquiry-modal-title">お問い合わせ内容</h2><p>{formatDate(inquiry.createdAt)}</p></div><button type="button" onClick={onClose} aria-label="閉じる"><X /></button></div>
       <div className="inquiry-contact"><strong>{inquiry.name || '氏名未入力'}</strong>{inquiry.phone ? <a href={`tel:${inquiry.phone}`}>{inquiry.phone}</a> : <span>電話番号未入力</span>}</div>
       <dl className="inquiry-detail-list">{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      {inquiry.conversationId && onOpenConversation ? <button className="secondary-button full" type="button" onClick={() => { onOpenConversation(inquiry.conversationId); onClose(); }}>会話ログを開く</button> : null}
       <button className="secondary-button full" type="button" onClick={onClose}>一覧に戻る</button>
     </section>
   </div>;
@@ -935,7 +976,7 @@ function InquiryDetails({ inquiry, onClose }: { inquiry: CustomHomeInquiry; onCl
 
 const INQUIRIES_PAGE_SIZE = 50;
 
-function InquiriesPage() {
+function InquiriesPage({ onOpenConversation }: { onOpenConversation?: (conversationId: string) => void }) {
   const [rows, setRows] = useState<CustomHomeInquiry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -979,7 +1020,7 @@ function InquiriesPage() {
       {!loading && rows.length === 0 ? <div className="knowledge-empty"><ClipboardList /><p>お問い合わせはまだありません。</p></div> : null}
     </section>
     {totalPages > 1 ? <nav className="inquiry-pagination" aria-label="お問い合わせのページ移動"><button className="secondary-button" type="button" disabled={loading || page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft />前へ</button><span>{page} / {totalPages} ページ</span><button className="secondary-button" type="button" disabled={loading || page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>次へ<ChevronRight /></button></nav> : null}
-    {selected ? <InquiryDetails inquiry={selected} onClose={() => setSelected(null)} /> : null}
+    {selected ? <InquiryDetails inquiry={selected} onClose={() => setSelected(null)} onOpenConversation={onOpenConversation} /> : null}
   </main>;
 }
 
@@ -1014,7 +1055,7 @@ export function App() {
     return () => window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, expireSession);
   }, []);
   const logout = async () => { try { await api.logout(); } finally { setSession(null); } };
-  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : page === 'inquiries' ? InquiriesPage : null;
+  const ActivePage = page === 'reports' ? ReportsPage : page === 'knowledge' ? KnowledgePage : null;
   if (checkingSession) return <main className="auth-page"><p>ログイン状態を確認しています…</p></main>;
   if (!session) return <AuthScreen onAuthenticated={setSession} />;
   return <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
@@ -1025,7 +1066,9 @@ export function App() {
         ? <OverviewPage onOpenConversations={(conversationId) => { setFocusConversationId(conversationId); setPage('conversations'); }} />
         : page === 'conversations'
           ? <ConversationsPage initialConversationId={focusConversationId} />
-          : ActivePage ? <ActivePage /> : null
+          : page === 'inquiries'
+            ? <InquiriesPage onOpenConversation={(conversationId) => { setFocusConversationId(conversationId); setPage('conversations'); }} />
+            : ActivePage ? <ActivePage /> : null
     }</section>
   </div>;
 }

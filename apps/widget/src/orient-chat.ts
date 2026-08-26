@@ -59,7 +59,7 @@ function isVisitorAgeDecade(value: string): value is VisitorAgeDecade {
 
 const orinyanMonthlyGreetings = [
   [
-    'あけましておめでとう、オリにゃんだよ！\n今年もいいお部屋と、いい日なたに出会えますようにだにゃん。',
+    'あけましておめでとう、オリにゃんだよ！\n今年もいいお部屋と、いい日々に出会えますようにだにゃん。',
     'お正月、こたつから出られないオリにゃんだよ。\n「こたつ付き」の物件があったら、たぶん内見から帰らないにゃん。',
     '新しい年だにゃん！\n初夢に出てきた理想のお部屋、いっしょに正夢にしよっか。',
   ],
@@ -169,6 +169,17 @@ function parseDatetimePicker(value: unknown): ChatDatetimePicker | undefined {
   return { type: 'datetime', min: picker.min, max: picker.max, prefix: picker.prefix };
 }
 
+function visitorFacingError(message?: string) {
+  const value = (message || '').trim();
+  if (/session expired|unauthorized/i.test(value) || value.includes('有効期限')) {
+    return 'チャットの有効期限が切れました。もう一度送信してにゃん。';
+  }
+  if (/conversation not found/i.test(value)) return '会話を再開できませんでした。もう一度送ってにゃん。';
+  if (/stored response unavailable/i.test(value)) return '回答を取り出せませんでした。もう一度送ってにゃん。';
+  if (/[\u3040-\u30ff\u4e00-\u9fff]/u.test(value)) return value;
+  return '回答を取得できませんでした。もう一度お試しください。';
+}
+
 const calendarWeekdays = ['日', '月', '火', '水', '木', '金', '土'];
 
 function orinyanOpeningMessage(now = new Date()) {
@@ -187,8 +198,9 @@ interface ChatMessage {
   lineLink?: boolean;
   pending?: boolean;
   moreResults?: boolean;
-  followUp?: boolean;
+    followUp?: boolean;
   picker?: ChatDatetimePicker;
+  failed?: boolean;
 }
 
 interface TurnstileApi {
@@ -259,12 +271,12 @@ template.innerHTML = `
       </div>
       <div class="turnstile-slot" aria-hidden="true"></div>
     </section>
-    <button class="launcher" type="button" aria-label="おりにゃんに相談にゃ！" aria-expanded="false">
+    <button class="launcher" type="button" aria-label="オリにゃんに相談にゃ！" aria-expanded="false">
       <span class="launcher-scene" aria-hidden="true">
         <span class="launcher-ring"></span>
         <span class="launcher-character"><span class="cat cat-launcher" data-cat-state="idle"></span></span>
       </span>
-      <span class="launcher-label">おりにゃんに相談にゃ！</span>
+      <span class="launcher-label">オリにゃんに相談にゃ！</span>
     </button>
   </div>
 `;
@@ -283,6 +295,7 @@ const styles = `
     position: fixed;
     inset: auto 20px 18px auto;
     z-index: 2147483000;
+    overflow: hidden;
     color: var(--orient-ink);
     font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
     font-size: 15px;
@@ -296,7 +309,7 @@ const styles = `
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   .root { display: grid; justify-items: end; gap: 12px; }
   .panel {
-    width: min(420px, calc(100vw - 28px));
+    width: min(420px, calc(100dvw - 40px));
     height: min(720px, calc(100vh - 118px));
     min-height: 520px;
     display: grid;
@@ -526,7 +539,7 @@ const styles = `
   .cat[data-cat-state="speaking"] { background-position: 0 100%; }
   .cat[data-cat-state="thinking"] { background-position: 100% 100%; }
   .cat-avatar { width: 52px; height: 52px; border: 3px solid rgba(255,255,255,.88); border-radius: 50%; background-color: #fff; }
-  .launcher { width: 208px; height: 98px; position: relative; overflow: visible; border: 0; background: transparent; cursor: pointer; }
+  .launcher { width: 208px; height: 98px; position: relative; overflow: hidden; border: 0; background: transparent; cursor: pointer; }
   .launcher-scene { position: absolute; inset: 0; }
   .launcher-ring { width: 180px; height: 180px; position: absolute; right: -98px; bottom: -108px; z-index: 1; display: block; border: 4px solid #fff; border-radius: 50%; background: var(--orient-primary); box-shadow: 0 0 0 1px rgba(255,104,11,.08), 0 10px 24px rgba(41,41,58,.18); }
   .launcher-character { width: 88px; height: 88px; position: absolute; right: -20px; bottom: -28px; z-index: 2; filter: drop-shadow(0 5px 5px rgba(41,41,58,.2)); transform-origin: 52% 92%; animation: launcher-peek 3.6s cubic-bezier(.45,0,.25,1) infinite; will-change: transform; }
@@ -552,7 +565,7 @@ const styles = `
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
   @media (max-width: 520px) {
-    :host { inset: auto 10px 10px 10px; }
+    :host { inset: auto 10px 10px 10px; overflow: hidden; }
     .root { width: 100%; }
     .panel { width: 100%; height: min(690px, calc(100dvh - 24px)); min-height: 480px; border-radius: 16px; }
     .launcher { width: 202px; height: 94px; }
@@ -733,7 +746,13 @@ class OrientChat extends HTMLElement {
     if (panel) panel.hidden = false;
     launcher?.setAttribute('aria-expanded', 'true');
     if (!this.hasAttribute('open')) this.setAttribute('open', '');
-    window.setTimeout(() => this.root.querySelector<HTMLTextAreaElement>('textarea')?.focus(), 180);
+    window.setTimeout(() => {
+      if (this.profileReady) {
+        this.root.querySelector<HTMLTextAreaElement>('textarea')?.focus();
+        return;
+      }
+      this.root.querySelector<HTMLButtonElement>('.choice-button')?.focus();
+    }, 180);
   }
 
   private close() {
@@ -954,8 +973,16 @@ class OrientChat extends HTMLElement {
       message.picker = undefined;
     });
     this.root.querySelectorAll('.message-choices, .more-results, .message-picker').forEach((element) => element.remove());
-    const userMessageId = crypto.randomUUID();
-    this.messages.push({ id: userMessageId, role: 'user', content });
+    const lastAssistant = this.messages.at(-1);
+    const lastUser = this.messages.at(-2);
+    const retryingFailed = Boolean(
+      lastAssistant?.failed
+      && lastUser?.role === 'user'
+      && lastUser.content === content,
+    );
+    const userMessageId = retryingFailed && lastUser ? lastUser.id : crypto.randomUUID();
+    if (retryingFailed) this.messages.pop();
+    else this.messages.push({ id: userMessageId, role: 'user', content });
     const pendingId = crypto.randomUUID();
     this.messages.push({ id: pendingId, role: 'assistant', content: '', pending: true });
     const input = this.root.querySelector<HTMLTextAreaElement>('textarea');
@@ -974,12 +1001,9 @@ class OrientChat extends HTMLElement {
       const message = this.messages.find((item) => item.id === pendingId);
       const incomingChoices = result.choices;
       const incomingPicker = result.picker;
-      const incomingMoreResults = this.shouldAttachMoreResults(
-        typeof result.hasMoreResults === 'boolean'
-          ? result.hasMoreResults
-          : this.shouldShowMoreResults(result.answer),
-        incomingChoices,
-      );
+      const incomingMoreResults = typeof result.hasMoreResults === 'boolean'
+        ? this.shouldAttachMoreResults(result.hasMoreResults, incomingChoices)
+        : this.demoMode && this.shouldAttachMoreResults(this.shouldShowMoreResults(result.answer), incomingChoices);
       if (message) {
         message.pending = false;
         message.content = this.displayAnswer(result.answer).slice(0, 1);
@@ -1038,21 +1062,18 @@ class OrientChat extends HTMLElement {
         }
       }
     } catch (error) {
-      const expired = error instanceof Error && error.message.includes('有効期限');
-      if (expired) {
-        this.messages = this.messages.filter((item) => item.id === userMessageId || item.id === pendingId);
-      }
       const message = this.messages.find((item) => item.id === pendingId);
       if (message) {
         message.pending = false;
-        message.content = error instanceof Error ? error.message : '通信に失敗しました。しばらくしてからお試しください。';
+        message.failed = true;
+        message.content = error instanceof Error ? visitorFacingError(error.message) : '通信に失敗しました。しばらくしてからお試しください。';
       }
       this.renderMessages();
     } finally {
       this.sending = false;
       this.setDisabled(false);
       this.setCatState('idle');
-      input?.focus();
+      if (this.profileReady) input?.focus();
     }
   }
 
@@ -1083,7 +1104,7 @@ class OrientChat extends HTMLElement {
       this.disposeTurnstileWidget();
       throw new Error('チャットの有効期限が切れました。もう一度送信してにゃん。');
     }
-    if (!response.ok) throw new Error(data.error || '回答を取得できませんでした。もう一度お試しください。');
+    if (!response.ok) throw new Error(visitorFacingError(data.error));
     if (typeof data.answer !== 'string' || data.answer.trim().length === 0) {
       throw new Error('回答データを確認できませんでした。もう一度お試しください。');
     }
@@ -1743,11 +1764,11 @@ class OrientChat extends HTMLElement {
       thinkingLabel.setAttribute('role', 'status');
       thinkingLabel.setAttribute('aria-live', 'polite');
       thinkingLabel.setAttribute('aria-atomic', 'true');
-      thinkingLabel.setAttribute('aria-label', 'おりにゃんが考えています');
+      thinkingLabel.setAttribute('aria-label', 'オリにゃんが考えています');
       const copy = document.createElement('span');
       copy.className = 'thinking-copy';
       copy.setAttribute('aria-hidden', 'true');
-      copy.textContent = 'おりにゃんが考えています';
+      copy.textContent = 'オリにゃんが考えています';
       const dots = document.createElement('span');
       dots.className = 'thinking-dots';
       dots.setAttribute('aria-hidden', 'true');

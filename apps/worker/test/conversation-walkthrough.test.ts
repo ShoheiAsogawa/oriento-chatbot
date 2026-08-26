@@ -541,4 +541,11 @@ describe('live catalog conversation walkthroughs', () => {
     expect(followUp.turn.route).not.toBe('property_inquiry');
     expect(followUp.turn.answer).not.toContain('お問い合わせを受け付けた');
   });
+
+  it('does not replay listings when asked which candidate is recommended', () => {
+    const rental = autoComplete(['賃貸', '大阪府'], inventoryChoice);
+    const asked = applyTurn(rental.history, 'おすすめはどれ？');
+    expect(asked.turn.route).not.toBe('rental');
+    expect(asked.turn.answer).not.toMatch(/見つかった/u);
+  });
 });
