@@ -25,6 +25,11 @@ await cp(
   join(staticRoot, 'assets', 'orinyan-states.png'),
 );
 await cp(
+  // Official LINE brand icon from https://www.line.me/ja/logo (LINE_Brand_icon.zip), used as-is.
+  resolve(projectRoot, 'apps', 'widget', 'public', 'assets', 'LINE_Brand_icon.png'),
+  join(staticRoot, 'assets', 'LINE_Brand_icon.png'),
+);
+await cp(
   resolve(projectRoot, 'output', 'pdf', 'orient-ai-chat-privacy-policy.pdf'),
   join(staticRoot, 'documents', 'orient-ai-chat-privacy-policy.pdf'),
 );

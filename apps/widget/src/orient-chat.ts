@@ -264,8 +264,8 @@ template.innerHTML = `
       </p>
       <div class="escalation">
         <a class="line-link" target="_blank" rel="noopener">
-          <svg class="line-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.004 2C6.48 2 2 6.09 2 11.13c0 4.47 3.96 8.21 9.31 8.9.36.08.85.24.98.55.11.28.07.72.03 1.01l-.15.94c-.04.27-.2 1.07.94.58 1.14-.49 6.16-3.63 8.4-6.22C22.5 14.7 23.5 13 23.5 11.13 23.5 6.09 19.02 2 12.004 2Z"/></svg>
-          公式LINE
+          <img class="line-logo" alt="" width="40" height="40">
+          公式ラインはこちらにゃ！
         </a>
       </div>
       <div class="turnstile-slot" aria-hidden="true"></div>
@@ -534,21 +534,27 @@ const styles = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 12px;
     width: 100%;
-    min-height: 44px;
-    padding: 0 16px;
+    min-height: 60px;
+    padding: 10px 16px;
     border: 0;
     border-radius: 12px;
     color: #fff;
     background: #06c755;
     font-size: 14px;
     font-weight: 800;
-    letter-spacing: .04em;
-    line-height: 1;
+    letter-spacing: .02em;
+    line-height: 1.3;
     text-decoration: none;
   }
-  .line-logo { width: 22px; height: 22px; flex: 0 0 22px; display: block; fill: #fff; }
+  .line-logo {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: block;
+    object-fit: contain;
+  }
   .line-link:hover, .line-link:focus-visible {
     background: #05b34c;
     outline: 2px solid rgba(6, 199, 85, .28);
@@ -678,6 +684,10 @@ class OrientChat extends HTMLElement {
   private get apiUrl() { return (this.getAttribute('api-url') || '').replace(/\/$/, ''); }
   private get demoMode() { return this.getAttribute('demo-mode') === 'true' || !this.apiUrl; }
   private get lineUrl() { return this.getAttribute('line-url') || 'https://page.line.me/089wmudt'; }
+  private get lineBrandIconUrl() {
+    if (this.apiUrl) return `${this.apiUrl}/assets/LINE_Brand_icon.png`;
+    return '/assets/LINE_Brand_icon.png';
+  }
 
   private async recordPropertyPageView() {
     if (this.demoMode) return;
@@ -731,8 +741,13 @@ class OrientChat extends HTMLElement {
     };
     for (const [key, value] of Object.entries(appearance)) if (value) this.style.setProperty(key, value);
     const line = this.root.querySelector<HTMLAnchorElement>('.line-link');
+    const lineLogo = this.root.querySelector<HTMLImageElement>('.line-logo');
     const privacy = this.root.querySelector<HTMLAnchorElement>('.privacy-link');
-    if (line) line.href = this.lineUrl;
+    if (line) {
+      line.href = this.lineUrl;
+      line.setAttribute('aria-label', '公式ラインはこちらにゃ！');
+    }
+    if (lineLogo) lineLogo.src = this.lineBrandIconUrl;
     if (privacy) {
       privacy.href = this.getAttribute('privacy-policy-url')
         || `${this.apiUrl}/documents/orient-ai-chat-privacy-policy.pdf`;
