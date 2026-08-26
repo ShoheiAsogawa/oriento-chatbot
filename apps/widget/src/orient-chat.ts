@@ -264,12 +264,8 @@ template.innerHTML = `
       </p>
       <div class="escalation">
         <a class="line-link" target="_blank" rel="noopener">
-          <svg class="escalation-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.4C6.7 3.4 2.4 7 2.4 11.4c0 3.94 3.4 7.26 8.08 7.9.32.06.74.22.84.5.08.24.05.62 0 .88l-.12.82c-.04.24-.18.96.86.52 1.04-.44 5.56-3.3 7.6-5.66 1.4-1.56 2.04-3.14 2.04-4.96C21.7 7 17.4 3.4 12 3.4Z"/></svg>
+          <svg class="line-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.004 2C6.48 2 2 6.09 2 11.13c0 4.47 3.96 8.21 9.31 8.9.36.08.85.24.98.55.11.28.07.72.03 1.01l-.15.94c-.04.27-.2 1.07.94.58 1.14-.49 6.16-3.63 8.4-6.22C22.5 14.7 23.5 13 23.5 11.13 23.5 6.09 19.02 2 12.004 2Z"/></svg>
           公式LINE
-        </a>
-        <a class="contact-link" target="_blank" rel="noopener noreferrer">
-          <svg class="escalation-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.6" y="6" width="16.8" height="12.2" rx="2.2"/><path d="m5.2 8.2 6.8 5 6.8-5"/></svg>
-          問い合わせフォーム
         </a>
       </div>
       <div class="turnstile-slot" aria-hidden="true"></div>
@@ -531,56 +527,32 @@ const styles = `
   .privacy-link:hover, .privacy-link:focus-visible { color: var(--orient-primary-strong); outline: none; }
   .escalation {
     display: flex;
-    align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 2px 16px 12px;
+    padding: 0 16px 14px;
   }
-  .line-link, .escalation .contact-link {
+  .line-link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    min-height: 30px;
-    padding: 4px 11px 4px 9px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .01em;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    background: #06c755;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: .04em;
     line-height: 1;
     text-decoration: none;
-    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
   }
-  .escalation-icon { width: 13px; height: 13px; flex: 0 0 13px; display: block; }
-  .line-link {
-    color: #2d7a4a;
-    background: #f4faf6;
-    border: 1px solid #d5eadc;
-  }
-  .line-link .escalation-icon { fill: #06c755; }
+  .line-logo { width: 22px; height: 22px; flex: 0 0 22px; display: block; fill: #fff; }
   .line-link:hover, .line-link:focus-visible {
-    color: #1f6a3e;
-    background: #eaf6ee;
-    border-color: #b7dcc4;
-    outline: none;
-  }
-  .escalation .contact-link {
-    color: #6a5d52;
-    background: #faf8f6;
-    border: 1px solid #ece6df;
-  }
-  .escalation .contact-link .escalation-icon {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .escalation .contact-link:hover, .escalation .contact-link:focus-visible {
-    color: var(--orient-ink);
-    background: #fff6ef;
-    border-color: #f0d4c0;
-    outline: none;
+    background: #05b34c;
+    outline: 2px solid rgba(6, 199, 85, .28);
+    outline-offset: 2px;
   }
   .turnstile-slot { position: absolute; left: 12px; bottom: 12px; z-index: 8; }
   .cat { background-image: var(--orient-asset); background-repeat: no-repeat; background-size: 200% 200%; background-position: 0 0; }
@@ -759,10 +731,8 @@ class OrientChat extends HTMLElement {
     };
     for (const [key, value] of Object.entries(appearance)) if (value) this.style.setProperty(key, value);
     const line = this.root.querySelector<HTMLAnchorElement>('.line-link');
-    const contact = this.root.querySelector<HTMLAnchorElement>('.contact-link');
     const privacy = this.root.querySelector<HTMLAnchorElement>('.privacy-link');
     if (line) line.href = this.lineUrl;
-    if (contact) contact.href = this.getAttribute('contact-url') || 'https://orijyu.com/reception.html';
     if (privacy) {
       privacy.href = this.getAttribute('privacy-policy-url')
         || `${this.apiUrl}/documents/orient-ai-chat-privacy-policy.pdf`;
