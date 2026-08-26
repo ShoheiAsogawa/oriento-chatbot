@@ -347,10 +347,7 @@ const styles = `
   .more-results-button:active { transform: translateY(0); }
   .more-results-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
-  .thinking-chars { display: inline-flex; flex-wrap: nowrap; }
-  .thinking-char {
-    display: inline-block;
-  }
+  .thinking-copy { white-space: nowrap; }
   .thinking-dots {
     display: inline-flex;
     align-items: center;
@@ -359,10 +356,11 @@ const styles = `
     height: 12px;
   }
   .thinking-dots span {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: var(--orient-primary);
+    opacity: .45;
   }
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
@@ -791,28 +789,17 @@ class OrientChat extends HTMLElement {
       const motion = search.animate(
         reduced
           ? [
-            { backgroundColor: '#ffffff', boxShadow: '0 0 0 0 rgba(255,104,11,0)' },
-            { backgroundColor: '#fff3eb', boxShadow: '0 0 0 6px rgba(255,104,11,.32)' },
-            { backgroundColor: '#ffffff', boxShadow: '0 0 0 0 rgba(255,104,11,0)' },
+            { backgroundColor: '#ffffff' },
+            { backgroundColor: '#fff6f0' },
+            { backgroundColor: '#ffffff' },
           ]
           : [
             { transform: 'scale(1)', backgroundColor: '#ffffff', boxShadow: '0 0 0 0 rgba(255,104,11,0)' },
-            { transform: 'scale(1.12)', backgroundColor: '#fff3eb', boxShadow: '0 10px 22px rgba(255,104,11,.3), 0 0 0 8px rgba(255,104,11,.28)' },
+            { transform: 'scale(1.03)', backgroundColor: '#fff7f2', boxShadow: '0 0 0 3px rgba(255,104,11,.16)' },
             { transform: 'scale(1)', backgroundColor: '#ffffff', boxShadow: '0 0 0 0 rgba(255,104,11,0)' },
           ],
-        { duration: 900, iterations: 3, easing: 'cubic-bezier(.22, .8, .28, 1)' },
+        { duration: 720, iterations: 2, easing: 'ease-in-out' },
       );
-      const icon = search.querySelector('span');
-      if (icon && !reduced) {
-        icon.animate(
-          [
-            { transform: 'scale(1) rotate(0deg)' },
-            { transform: 'scale(1.32) rotate(-12deg)' },
-            { transform: 'scale(1) rotate(0deg)' },
-          ],
-          { duration: 650, iterations: 3, easing: 'ease-in-out' },
-        );
-      }
       motion.addEventListener('finish', () => search.classList.remove('ready-pop'));
     });
   }
@@ -1731,10 +1718,8 @@ class OrientChat extends HTMLElement {
     const container = this.root.querySelector<HTMLElement>('.messages');
     if (!container) return;
     container.replaceChildren(...this.messages.map((message) => this.renderMessage(message)));
-    this.root.querySelectorAll<HTMLElement>('.thinking-label').forEach((label) => {
-      const chars = label.querySelector<HTMLElement>('.thinking-chars');
-      const dots = label.querySelector<HTMLElement>('.thinking-dots');
-      if (chars && dots) this.playThinkingAnimation(chars, dots);
+    this.root.querySelectorAll<HTMLElement>('.thinking-dots').forEach((dots) => {
+      this.playThinkingAnimation(dots);
     });
     container.scrollTop = container.scrollHeight;
   }
@@ -1759,21 +1744,15 @@ class OrientChat extends HTMLElement {
       thinkingLabel.setAttribute('aria-live', 'polite');
       thinkingLabel.setAttribute('aria-atomic', 'true');
       thinkingLabel.setAttribute('aria-label', 'おりにゃんが考えています');
-      const chars = document.createElement('span');
-      chars.className = 'thinking-chars';
-      chars.setAttribute('aria-hidden', 'true');
-      Array.from('おりにゃんが考えています').forEach((character, index) => {
-        const letter = document.createElement('span');
-        letter.className = 'thinking-char';
-        letter.textContent = character;
-        letter.style.animationDelay = `${index * 70}ms`;
-        chars.append(letter);
-      });
+      const copy = document.createElement('span');
+      copy.className = 'thinking-copy';
+      copy.setAttribute('aria-hidden', 'true');
+      copy.textContent = 'おりにゃんが考えています';
       const dots = document.createElement('span');
       dots.className = 'thinking-dots';
       dots.setAttribute('aria-hidden', 'true');
       for (let index = 0; index < 3; index += 1) dots.append(document.createElement('span'));
-      thinkingLabel.append(chars, dots);
+      thinkingLabel.append(copy, dots);
       bubble.append(thinkingLabel);
     } else if (message.role === 'assistant' && message.rawContent) {
       this.renderAnswerWithSources(bubble, message.rawContent, message.sources || []);
@@ -1795,24 +1774,8 @@ class OrientChat extends HTMLElement {
     return item;
   }
 
-  private playThinkingAnimation(chars: HTMLElement, dots: HTMLElement) {
+  private playThinkingAnimation(dots: HTMLElement) {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    chars.querySelectorAll<HTMLElement>('.thinking-char').forEach((letter, index) => {
-      letter.animate(
-        reduced
-          ? [
-            { opacity: 0.55 },
-            { opacity: 1 },
-            { opacity: 0.55 },
-          ]
-          : [
-            { transform: 'translateY(0px)', color: '#74757f' },
-            { transform: 'translateY(-5px)', color: '#29293a' },
-            { transform: 'translateY(0px)', color: '#74757f' },
-          ],
-        { duration: 1100, delay: index * 70, iterations: Infinity, easing: 'ease-in-out' },
-      );
-    });
     dots.querySelectorAll<HTMLElement>('span').forEach((dot, index) => {
       dot.animate(
         reduced
@@ -1822,11 +1785,11 @@ class OrientChat extends HTMLElement {
             { opacity: 0.3 },
           ]
           : [
-            { transform: 'translateY(0px) scale(1)', opacity: 0.35 },
-            { transform: 'translateY(-6px) scale(1.15)', opacity: 1 },
-            { transform: 'translateY(0px) scale(1)', opacity: 0.35 },
+            { transform: 'translateY(0px)', opacity: 0.35 },
+            { transform: 'translateY(-2px)', opacity: 1 },
+            { transform: 'translateY(0px)', opacity: 0.35 },
           ],
-        { duration: 900, delay: index * 120, iterations: Infinity, easing: 'ease-in-out' },
+        { duration: 900, delay: index * 160, iterations: Infinity, easing: 'ease-in-out' },
       );
     });
   }
