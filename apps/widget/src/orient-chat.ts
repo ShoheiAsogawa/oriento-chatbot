@@ -834,14 +834,36 @@ class OrientChat extends HTMLElement {
     const search = suggestions.querySelector<HTMLButtonElement>('button[data-question="物件を探す"]');
     if (!search) return;
     search.classList.remove('ready-pop');
-    void search.offsetWidth;
-    search.classList.add('ready-pop');
-    const finish = (event: AnimationEvent) => {
-      if (event.target !== search || event.animationName !== 'suggestion-ready') return;
-      search.classList.remove('ready-pop');
-      search.removeEventListener('animationend', finish);
-    };
-    search.addEventListener('animationend', finish);
+    window.requestAnimationFrame(() => {
+      search.classList.add('ready-pop');
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const motion = search.animate(
+        reduced
+          ? [
+            { backgroundColor: '#ffffff', boxShadow: '0 0 0 0 rgba(255,104,11,0)' },
+            { backgroundColor: '#fff3eb', boxShadow: '0 0 0 6px rgba(255,104,11,.32)' },
+            { backgroundColor: '#ffffff', boxShadow: '0 0 0 0 rgba(255,104,11,0)' },
+          ]
+          : [
+            { transform: 'scale(1)', backgroundColor: '#ffffff', boxShadow: '0 0 0 0 rgba(255,104,11,0)' },
+            { transform: 'scale(1.12)', backgroundColor: '#fff3eb', boxShadow: '0 10px 22px rgba(255,104,11,.3), 0 0 0 8px rgba(255,104,11,.28)' },
+            { transform: 'scale(1)', backgroundColor: '#ffffff', boxShadow: '0 0 0 0 rgba(255,104,11,0)' },
+          ],
+        { duration: 900, iterations: 3, easing: 'cubic-bezier(.22, .8, .28, 1)' },
+      );
+      const icon = search.querySelector('span');
+      if (icon && !reduced) {
+        icon.animate(
+          [
+            { transform: 'scale(1) rotate(0deg)' },
+            { transform: 'scale(1.32) rotate(-12deg)' },
+            { transform: 'scale(1) rotate(0deg)' },
+          ],
+          { duration: 650, iterations: 3, easing: 'ease-in-out' },
+        );
+      }
+      motion.addEventListener('finish', () => search.classList.remove('ready-pop'));
+    });
   }
 
   private selectVisitorProfile(value: string) {
@@ -1789,6 +1811,7 @@ class OrientChat extends HTMLElement {
       dots.setAttribute('aria-hidden', 'true');
       for (let index = 0; index < 3; index += 1) dots.append(document.createElement('span'));
       thinkingLabel.append(chars, dots);
+      this.playThinkingAnimation(chars, dots);
       bubble.append(thinkingLabel);
     } else if (message.role === 'assistant' && message.rawContent) {
       this.renderAnswerWithSources(bubble, message.rawContent, message.sources || []);
@@ -1808,6 +1831,42 @@ class OrientChat extends HTMLElement {
       }
     }
     return item;
+  }
+
+  private playThinkingAnimation(chars: HTMLElement, dots: HTMLElement) {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    chars.querySelectorAll<HTMLElement>('.thinking-char').forEach((letter, index) => {
+      letter.animate(
+        reduced
+          ? [
+            { opacity: 0.55 },
+            { opacity: 1 },
+            { opacity: 0.55 },
+          ]
+          : [
+            { transform: 'translateY(0px)', color: '#74757f' },
+            { transform: 'translateY(-5px)', color: '#29293a' },
+            { transform: 'translateY(0px)', color: '#74757f' },
+          ],
+        { duration: 1100, delay: index * 70, iterations: Infinity, easing: 'ease-in-out' },
+      );
+    });
+    dots.querySelectorAll<HTMLElement>('span').forEach((dot, index) => {
+      dot.animate(
+        reduced
+          ? [
+            { opacity: 0.3 },
+            { opacity: 1 },
+            { opacity: 0.3 },
+          ]
+          : [
+            { transform: 'translateY(0px) scale(1)', opacity: 0.35 },
+            { transform: 'translateY(-6px) scale(1.15)', opacity: 1 },
+            { transform: 'translateY(0px) scale(1)', opacity: 0.35 },
+          ],
+        { duration: 900, delay: index * 120, iterations: Infinity, easing: 'ease-in-out' },
+      );
+    });
   }
 
 }
