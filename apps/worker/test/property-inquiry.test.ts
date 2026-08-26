@@ -245,6 +245,8 @@ describe('property inquiry flow', () => {
   });
 
   it('keeps follow-up copy and three side-by-side actions', () => {
-    expect(propertyInquiryFollowUp().choices.map((choice) => choice.label)).toEqual(['資料請求', '電話', '見学']);
+    const followUp = propertyInquiryFollowUp();
+    expect(followUp.choices.map((choice) => choice.label)).toEqual(['資料請求', '電話', '見学']);
+    expect(followUp.answer).toBe('気に入った物件はあったかにゃ？資料請求・電話・見学から選んでにゃん。');
   });
 });

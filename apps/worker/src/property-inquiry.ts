@@ -60,7 +60,7 @@ export const PROPERTY_INQUIRY_VALUES = {
 } as const;
 
 export const PROPERTY_INQUIRY_FOLLOW_UP_ANSWER =
-  '気に入った物件はあったかにゃ？資料請求・お電話・内見から選んでにゃん。';
+  '気に入った物件はあったかにゃ？資料請求・電話・見学から選んでにゃん。';
 
 export const PROPERTY_INQUIRY_FOLLOW_UP_CHOICES: ChatChoice[] = [
   { label: '資料請求', value: PROPERTY_INQUIRY_VALUES.document },

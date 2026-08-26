@@ -1252,7 +1252,7 @@ class OrientChat extends HTMLElement {
         redactUserMessage: false,
         hasMoreResults: false,
         followUp: {
-          answer: '気に入った物件はあったかにゃ？資料請求・お電話・内見から選んでにゃん。',
+          answer: '気に入った物件はあったかにゃ？資料請求・電話・見学から選んでにゃん。',
           choices: [
             { label: '資料請求', value: '資料請求したい' },
             { label: '電話', value: '電話で相談したい' },
