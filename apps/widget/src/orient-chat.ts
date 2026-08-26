@@ -263,11 +263,9 @@ template.innerHTML = `
         <a class="privacy-link" target="_blank" rel="noopener">プライバシーポリシー・免責事項</a>
       </p>
       <div class="escalation">
-        <p><strong>最新情報は公式LINEへ</strong><span>友だち追加して物件・住まい情報をチェック</span></p>
-        <div>
-          <a class="line-link" target="_blank" rel="noopener">公式LINEを開く ↗</a>
-          <a class="contact-link" target="_blank" rel="noopener noreferrer">問い合わせフォームはこちら</a>
-        </div>
+        <a class="line-link" target="_blank" rel="noopener">公式LINE</a>
+        <span class="escalation-sep" aria-hidden="true">·</span>
+        <a class="contact-link" target="_blank" rel="noopener noreferrer">問い合わせフォーム</a>
       </div>
       <div class="turnstile-slot" aria-hidden="true"></div>
     </section>
@@ -520,18 +518,30 @@ const styles = `
   .send { width: 42px; height: 42px; display: grid; place-items: center; align-self: end; border: 0; border-radius: 9px; color: #fff; background: var(--orient-primary); cursor: pointer; }
   .send:disabled { opacity: .45; cursor: not-allowed; }
   .send svg { width: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .privacy { margin: 7px 18px 10px; color: var(--orient-muted); font-size: 10px; }
+  .privacy { margin: 4px 18px 6px; color: var(--orient-muted); font-size: 10px; }
   .privacy::before { content: "▣"; margin-right: 5px; }
   .privacy-link { color: var(--orient-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--orient-primary); text-underline-offset: 2px; }
   .privacy-link:hover, .privacy-link:focus-visible { color: var(--orient-primary-strong); outline: none; }
-  .escalation { padding: 10px 14px 14px; border-top: 1px solid var(--orient-border); }
-  .escalation p { margin: 0 0 9px; text-align: center; color: var(--orient-muted); font-size: 10px; line-height: 1.45; }
-  .escalation p strong { display: block; margin-bottom: 2px; color: var(--orient-ink); font-size: 12px; }
-  .escalation p span { display: block; }
-  .escalation > div { display: grid; grid-template-columns: 1fr; gap: 8px; }
-  .line-link { min-height: 40px; display: grid; place-items: center; color: #fff; border: 1px solid var(--orient-line); border-radius: 9px; background: var(--orient-line); font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
-  .line-link:hover, .line-link:focus-visible { color: #fff; border-color: #05ae4a; background: #05ae4a; outline: 2px solid rgba(6,199,85,.2); outline-offset: 1px; }
-  .escalation .contact-link { justify-self: center; color: var(--orient-muted); font-size: 10px; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .escalation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    padding: 4px 14px 8px;
+    color: var(--orient-muted);
+    font-size: 10px;
+  }
+  .escalation-sep { color: #c5c6cc; }
+  .line-link, .escalation .contact-link {
+    color: var(--orient-muted);
+    font-size: 10px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  .line-link:hover, .line-link:focus-visible { color: #237a46; outline: none; }
   .escalation .contact-link:hover, .escalation .contact-link:focus-visible { color: var(--orient-ink); outline: none; }
   .turnstile-slot { position: absolute; left: 12px; bottom: 12px; z-index: 8; }
   .cat { background-image: var(--orient-asset); background-repeat: no-repeat; background-size: 200% 200%; background-position: 0 0; }
