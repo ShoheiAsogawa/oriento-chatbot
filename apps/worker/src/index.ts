@@ -66,6 +66,7 @@ import { evaluatePurchaseConsultation } from './purchase-consultation';
 import { extractRentalCriteria, formatRentalAnswer, loadRentalCatalog, recommendRentalProperties, rentalPropertyChunk } from './rental-catalog';
 import { evaluateRentalConsultation } from './rental-consultation';
 import { extractSaleCriteria, formatSaleAnswer, loadSaleCatalog, recommendSaleProperties, salePropertyChunk } from './sale-catalog';
+import { sendEmailWithResend } from './resend-email';
 import { attachMissingSourceMarkers, filterAnswerableChunks, propertyDetailSources, safeSourceUrl, selectAnswerSources, shouldShowPropertyDetailLinks, sourceFromChunk } from './sources';
 import {
   createSessionToken,
@@ -2784,9 +2785,12 @@ async function consumeCustomHomeLeadBatch(
 ) {
   for (const message of batch.messages) {
     const result = await processCustomHomeNotification(env.DB, env, message.body, {
-      sender: 'no-reply@orijyu.com',
-      recipient: 'uken.shohei@gmail.com',
-      send: (email) => env.CUSTOM_HOME_LEAD_EMAIL.send(email),
+      sender: env.CUSTOM_HOME_NOTIFICATION_SENDER,
+      recipient: env.CUSTOM_HOME_NOTIFICATION_RECIPIENT,
+      send: (email) => sendEmailWithResend(email, {
+        apiKey: env.RESEND_API_KEY,
+        idempotencyKey: `custom-home-lead/${message.body.leadId}`,
+      }),
     });
     if (result.disposition === 'retry') {
       message.retry({ delaySeconds: Math.min(60, Math.max(10, result.attempt * 10)) });

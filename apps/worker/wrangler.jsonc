@@ -26,6 +26,8 @@
     "GENERATION_MODEL": "gpt-5.4-nano",
     "DAILY_SESSION_LIMIT": "500",
     "DAILY_AI_REQUEST_LIMIT": "500",
+    "CUSTOM_HOME_NOTIFICATION_SENDER": "オリにゃん <no-reply@orijyu.com>",
+    "CUSTOM_HOME_NOTIFICATION_RECIPIENT": "uken.shohei@gmail.com",
     "DEV_ADMIN_BYPASS": "false"
   },
   "secrets": {
@@ -35,7 +37,8 @@
       "HASH_SALT",
       "PII_ENCRYPTION_KEY",
       "AI_GATEWAY_TOKEN",
-      "KNOWLEDGE_SYNC_SECRET"
+      "KNOWLEDGE_SYNC_SECRET",
+      "RESEND_API_KEY"
     ]
   },
   "d1_databases": [
@@ -62,16 +65,6 @@
       { "queue": "orient-chat-custom-home-leads", "max_batch_size": 5, "max_batch_timeout": 10, "max_retries": 5 }
     ]
   },
-  "send_email": [
-    {
-      "name": "CUSTOM_HOME_LEAD_EMAIL",
-      // Verified Cloudflare destination. Do not change to an unverified Orient
-      // mailbox or Email Sending will fail. Swap this only after Cloudflare
-      // Email Routing has confirmed the company inbox.
-      "destination_address": "uken.shohei@gmail.com",
-      "allowed_sender_addresses": ["no-reply@orijyu.com"]
-    }
-  ],
   "durable_objects": {
     "bindings": [
       { "name": "AUDIT_LEDGER", "class_name": "AuditLedger" },
