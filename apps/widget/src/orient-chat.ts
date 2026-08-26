@@ -264,7 +264,7 @@ template.innerHTML = `
       </p>
       <div class="escalation">
         <a class="line-link" target="_blank" rel="noopener">
-          <img class="line-logo" alt="" width="40" height="40">
+          <img class="line-logo" alt="" width="22" height="22">
           公式ラインはこちらにゃ！
         </a>
       </div>
@@ -528,30 +528,30 @@ const styles = `
   .escalation {
     display: flex;
     justify-content: center;
-    padding: 0 16px 14px;
+    padding: 0 16px 10px;
   }
   .line-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
-    min-height: 60px;
-    padding: 10px 16px;
+    min-height: 36px;
+    padding: 4px 12px;
     border: 0;
-    border-radius: 12px;
+    border-radius: 10px;
     color: #fff;
     background: #06c755;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
     letter-spacing: .02em;
-    line-height: 1.3;
+    line-height: 1.2;
     text-decoration: none;
   }
   .line-logo {
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
     display: block;
     object-fit: contain;
   }

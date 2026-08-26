@@ -62,7 +62,7 @@ const html = `<!doctype html>
     line-url="https://page.line.me/089wmudt"
   ></orient-chat>
   <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260826-11"></script>
+  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260826-12"></script>
 </body>
 </html>`;
 
