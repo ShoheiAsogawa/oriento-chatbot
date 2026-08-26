@@ -32,8 +32,8 @@ type VisitorGender = 'male' | 'female' | 'other';
 type VisitorAgeDecade = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s_plus';
 
 const visitorGenderChoices: ChatChoice[] = [
-  { label: '男性', value: 'male', tone: 'primary' },
-  { label: '女性', value: 'female', tone: 'primary' },
+  { label: '男性', value: 'male' },
+  { label: '女性', value: 'female' },
   { label: 'そのほか', value: 'other' },
 ];
 const visitorAgeChoices: ChatChoice[] = [
@@ -236,7 +236,7 @@ const template = document.createElement('template');
 template.innerHTML = `
   <style></style>
   <div class="root">
-    <section class="panel" role="dialog" aria-labelledby="orient-chat-title" aria-modal="false" hidden>
+    <section class="panel" role="dialog" aria-labelledby="orient-chat-title" aria-modal="false" tabindex="-1" hidden>
       <header class="panel-header">
         <div class="cat cat-avatar" data-cat-state="idle" aria-hidden="true"></div>
         <div class="header-copy">
@@ -326,6 +326,7 @@ const styles = `
     animation: panel-in 220ms cubic-bezier(.2,.8,.2,1) both;
     position: relative;
   }
+  .panel:focus, .panel:focus-visible { outline: none; }
   .panel[hidden] { display: none; }
   .panel-header {
     min-height: 84px;
@@ -359,7 +360,7 @@ const styles = `
   .message-line-link:hover, .message-line-link:focus-visible { color: #05ae4a; outline: 2px solid rgba(6,199,85,.16); outline-offset: 2px; }
   .more-results { margin-top: 9px; }
   .more-results-button { min-height: 36px; padding: 7px 14px; border: 1px solid #ffc49f; border-radius: 999px; color: var(--orient-primary-strong); background: #fffaf7; font-size: 12px; font-weight: 800; cursor: pointer; transition: transform 120ms ease, border-color 120ms ease, background 120ms ease; }
-  .more-results-button:hover, .more-results-button:focus-visible { transform: translateY(-1px); border-color: var(--orient-primary); background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
+  .more-results-button:focus-visible { transform: translateY(-1px); border-color: var(--orient-primary); background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
   .more-results-button:active { transform: translateY(0); }
   .more-results-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .thinking-label { display: inline-flex; align-items: center; min-height: 24px; color: var(--orient-muted); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
@@ -385,7 +386,8 @@ const styles = `
   .choice-grid[data-count="1"] { grid-template-columns: minmax(0, 1fr); }
   .choice-button { min-width: 0; min-height: 40px; padding: 8px 9px; border: 1px solid #ffc49f; border-radius: 10px; color: #5a3522; background: #fffaf7; font-size: 12px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; cursor: pointer; transition: transform 120ms ease, border-color 120ms ease, background 120ms ease; }
   .choice-button[data-tone="primary"] { border-color: var(--orient-primary); color: var(--orient-primary-strong); background: #fff3eb; }
-  .choice-button:hover, .choice-button:focus-visible { transform: translateY(-1px); border-color: var(--orient-primary); background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
+  .choice-button:focus-visible { transform: translateY(-1px); border-color: var(--orient-primary); background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
+  .choice-button:focus:not(:focus-visible) { outline: none; transform: none; }
   .choice-button:active { transform: translateY(0); }
   .choice-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .choice-button:last-child:nth-child(odd) { grid-column: 1 / -1; }
@@ -403,7 +405,7 @@ const styles = `
     font-size: 11px;
     font-weight: 700;
   }
-  .choice-button.compact:hover, .choice-button.compact:focus-visible {
+  .choice-button.compact:focus-visible {
     color: var(--orient-ink);
     border-color: #c9cad1;
     background: #f6f6f8;
@@ -434,7 +436,7 @@ const styles = `
     cursor: pointer;
     touch-action: manipulation;
   }
-  .oc-cal-nav button:hover, .oc-cal-nav button:focus-visible { background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
+  .oc-cal-nav button:focus-visible { background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
   .oc-cal-nav button:disabled { opacity: .35; cursor: default; }
   .oc-cal-title { text-align: center; font-size: 14px; font-weight: 800; }
   .oc-cal-weekdays, .oc-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
@@ -452,10 +454,10 @@ const styles = `
     cursor: pointer;
     touch-action: manipulation;
   }
-  .oc-cal-day:hover:not(:disabled), .oc-cal-day:focus-visible:not(:disabled) { background: #fff5ef; outline: 2px solid rgba(255,104,11,.18); outline-offset: 0; }
+  .oc-cal-day:focus-visible:not(:disabled) { background: #fff5ef; outline: 2px solid rgba(255,104,11,.18); outline-offset: 0; }
   .oc-cal-day:disabled { color: #d0d1d7; cursor: default; }
   .oc-cal-day[data-selected="true"] { color: #fff; background: var(--orient-primary); }
-  .oc-cal-day[data-selected="true"]:hover:not(:disabled), .oc-cal-day[data-selected="true"]:focus-visible:not(:disabled) { background: var(--orient-primary-strong); }
+  .oc-cal-day[data-selected="true"]:focus-visible:not(:disabled) { background: var(--orient-primary-strong); }
   .oc-cal-summary { margin: 8px 0 0; color: var(--orient-ink); font-size: 12px; font-weight: 800; text-align: center; }
   .oc-cal-time-row {
     display: grid;
@@ -489,13 +491,13 @@ const styles = `
     cursor: pointer;
     touch-action: manipulation;
   }
-  .oc-cal-submit:hover, .oc-cal-submit:focus-visible { background: var(--orient-primary-strong); outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
+  .oc-cal-submit:focus-visible { background: var(--orient-primary-strong); outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
   .oc-cal-submit:disabled { opacity: .45; cursor: not-allowed; }
   .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); overflow: visible; }
   .composer.locked { opacity: .55; }
   .suggestions button { position: relative; min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: background 180ms ease, box-shadow 180ms ease; }
   .suggestions button span { display: block; color: var(--orient-primary); font-size: 17px; line-height: 1; }
-  .suggestions button:hover, .suggestions button:focus-visible { background: #fff5ef; outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
+  .suggestions button:focus-visible { background: #fff5ef; outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
   .suggestions button:disabled {
     color: #8d8e96;
     border-color: #d8d9df;
@@ -612,6 +614,16 @@ const styles = `
   @keyframes listen { 0%,100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
+  @media (hover: hover) and (pointer: fine) {
+    .more-results-button:hover { transform: translateY(-1px); border-color: var(--orient-primary); background: #ffede2; }
+    .choice-button:hover { transform: translateY(-1px); border-color: var(--orient-primary); background: #ffede2; }
+    .choice-button.compact:hover { color: var(--orient-ink); border-color: #c9cad1; background: #f6f6f8; }
+    .oc-cal-nav button:hover { background: #ffede2; }
+    .oc-cal-day:hover:not(:disabled) { background: #fff5ef; }
+    .oc-cal-day[data-selected="true"]:hover:not(:disabled) { background: var(--orient-primary-strong); }
+    .oc-cal-submit:hover { background: var(--orient-primary-strong); }
+    .suggestions button:hover:not(:disabled) { background: #fff5ef; }
+  }
   @media (max-width: 520px) {
     :host { inset: auto 10px 10px 10px; overflow: visible; }
     .root { width: 100%; }
@@ -800,7 +812,7 @@ class OrientChat extends HTMLElement {
         this.root.querySelector<HTMLTextAreaElement>('textarea')?.focus();
         return;
       }
-      this.root.querySelector<HTMLButtonElement>('.choice-button')?.focus();
+      this.root.querySelector<HTMLElement>('.panel')?.focus({ preventScroll: true });
     }, 180);
   }
 
@@ -1257,7 +1269,7 @@ class OrientChat extends HTMLElement {
         followUp: {
           answer: '気に入った物件はあったかにゃ？資料請求・お電話・内見から選んでにゃん。',
           choices: [
-            { label: '資料請求', value: '資料請求したい', tone: 'primary' as const },
+            { label: '資料請求', value: '資料請求したい' },
             { label: '電話', value: '電話で相談したい' },
             { label: '見学', value: '見学したい' },
           ],
@@ -1459,7 +1471,7 @@ class OrientChat extends HTMLElement {
     const maxParts = parseIsoDay(picker.max) || parseIsoDay(jstIsoDay(60))!;
     let viewYear = minParts.y;
     let viewMonth = minParts.m;
-    let selected = picker.min;
+    let selected = '';
     const minMonth = `${minParts.y}-${String(minParts.m).padStart(2, '0')}`;
     const maxMonth = `${maxParts.y}-${String(maxParts.m).padStart(2, '0')}`;
 
@@ -1518,6 +1530,8 @@ class OrientChat extends HTMLElement {
     const formatSelected = () => {
       const parts = parseIsoDay(selected);
       const time = timeInput.value || '15:00';
+      submit.disabled = !parts;
+      submit.dataset.selectable = parts ? 'true' : 'false';
       if (!parts) {
         summary.textContent = '日付を選んでにゃん';
         return;

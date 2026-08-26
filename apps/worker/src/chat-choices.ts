@@ -37,9 +37,9 @@ const PREFECTURE_CHOICES = [
 export function choicesForChatAnswer(answer: string): ChatChoice[] {
   if (/(?:購入・注文住宅・賃貸|賃貸(?:・|と|か)購入(?:・|と|か)?(?:注文住宅)?|賃貸.*購入.*注文住宅|注文住宅.*賃貸.*購入|購入.*注文住宅.*賃貸).*(?:教えて|選んで)/u.test(answer)) {
     return [
-      choice('購入', '購入', 'primary'),
-      choice('注文住宅', '注文住宅', 'primary'),
-      choice('賃貸', '賃貸', 'primary'),
+      choice('購入', '購入'),
+      choice('注文住宅', '注文住宅'),
+      choice('賃貸', '賃貸'),
     ];
   }
   if (/(?:住みたい|希望の)(?:都道府県|地域)|都道府県を選んで/u.test(answer)) {
@@ -49,14 +49,14 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
     return [
       choice('5万円まで', '家賃5万円まで'),
       choice('7万円まで', '家賃7万円まで'),
-      choice('10万円まで', '家賃10万円まで', 'primary'),
+      choice('10万円まで', '家賃10万円まで'),
       choice('15万円まで', '家賃15万円まで'),
     ];
   }
   if (/購入予算の上限/u.test(answer)) {
     return [
       choice('2,000万円まで', '購入予算2000万円まで'),
-      choice('3,000万円まで', '購入予算3000万円まで', 'primary'),
+      choice('3,000万円まで', '購入予算3000万円まで'),
       choice('4,000万円まで', '購入予算4000万円まで'),
       choice('5,000万円まで', '購入予算5000万円まで'),
       choice('6,000万円まで', '購入予算6000万円まで'),
@@ -75,7 +75,7 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
   if (/購入物件の希望間取り/u.test(answer)) {
     return [
       choice('2LDK'),
-      choice('3LDK', '3LDK', 'primary'),
+      choice('3LDK', '3LDK'),
       choice('4LDK'),
       choice('5LDK'),
       choice('こだわりなし', '間取りはこだわりなし'),
@@ -86,7 +86,7 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
       choice('ワンルーム'),
       choice('1K'),
       choice('1LDK'),
-      choice('2LDK', '2LDK', 'primary'),
+      choice('2LDK'),
       choice('3LDK'),
       choice('こだわりなし', 'こだわりなし'),
     ];
@@ -94,7 +94,7 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
   if (/かなり手狭/u.test(answer)) {
     const compactLayout = answer.match(/(?:ワンルーム|1R|1K)/u)?.[0] || 'ワンルーム';
     return [
-      choice('2LDK以上で探す', '2LDK以上', 'primary'),
+      choice('2LDK以上で探す', '2LDK以上'),
       choice('そのまま探す', `${compactLayout}のまま`),
     ];
   }

@@ -63,7 +63,7 @@ export const PROPERTY_INQUIRY_FOLLOW_UP_ANSWER =
   '気に入った物件はあったかにゃ？資料請求・お電話・内見から選んでにゃん。';
 
 export const PROPERTY_INQUIRY_FOLLOW_UP_CHOICES: ChatChoice[] = [
-  { label: '資料請求', value: PROPERTY_INQUIRY_VALUES.document, tone: 'primary' },
+  { label: '資料請求', value: PROPERTY_INQUIRY_VALUES.document },
   { label: '電話', value: PROPERTY_INQUIRY_VALUES.phone },
   { label: '見学', value: PROPERTY_INQUIRY_VALUES.viewing },
 ];
@@ -144,17 +144,16 @@ export function viewingDayChoices(now = new Date()): ChatChoice[] {
     return true;
   });
   return [
-    ...unique.slice(0, 5).map((item, index) => ({
+    ...unique.slice(0, 5).map((item) => ({
       label: `${item.hint} ${formatDayLabel(item.date)}`,
       value: `${VIEWING_DAY_PREFIX}${isoDay(item.date)}`,
-      tone: index === 0 ? 'primary' as const : 'default' as const,
     })),
     { label: '希望日を自分で書く', value: PROPERTY_INQUIRY_VALUES.viewingFreeText },
   ];
 }
 
 export const VIEWING_TIME_CHOICES: ChatChoice[] = [
-  { label: '10〜12時', value: `${VIEWING_TIME_PREFIX}10:00〜12:00`, tone: 'primary' },
+  { label: '10〜12時', value: `${VIEWING_TIME_PREFIX}10:00〜12:00` },
   { label: '13〜15時', value: `${VIEWING_TIME_PREFIX}13:00〜15:00` },
   { label: '15〜17時', value: `${VIEWING_TIME_PREFIX}15:00〜17:00` },
   { label: '17〜19時', value: `${VIEWING_TIME_PREFIX}17:00〜19:00` },
