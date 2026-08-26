@@ -39,6 +39,7 @@ import {
   extractPropertyInquiryState,
   propertyInquiryChoicesForResponse,
   propertyInquiryFollowUp,
+  propertyInquiryPickerForResponse,
 } from './property-inquiry';
 import { redactPropertyInquiryTurn } from './property-inquiry-chat';
 import {
@@ -1467,6 +1468,7 @@ app.post('/api/chat/message', async (context) => {
         answer,
         sources: [],
         choices: propertyInquiryChoicesForResponse(propertyInquiry),
+        picker: propertyInquiryPickerForResponse(propertyInquiry),
         action: 'none',
         policy: 'allow',
         messageId,

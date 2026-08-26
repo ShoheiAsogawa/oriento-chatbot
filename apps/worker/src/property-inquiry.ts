@@ -9,6 +9,7 @@ import { isObviousConversationDetour } from './property-search-continuation';
 export type PropertyInquiryKind = 'document_request' | 'phone' | 'viewing';
 
 export type PropertyInquiryStep =
+  | 'viewing_datetime'
   | 'viewing_day'
   | 'viewing_time'
   | 'viewing_datetime_text'
@@ -17,12 +18,20 @@ export type PropertyInquiryStep =
   | 'contact_phone'
   | 'complete';
 
+export type ChatDatetimePicker = {
+  type: 'datetime';
+  min: string;
+  max: string;
+  prefix: string;
+};
+
 export type PropertyInquiryDecision = {
   active: boolean;
   response?: string;
   step?: PropertyInquiryStep;
   leadReady?: boolean;
   kind?: PropertyInquiryKind;
+  picker?: ChatDatetimePicker;
 };
 
 export type PropertyInquiryContact = {
@@ -61,6 +70,7 @@ export const PROPERTY_INQUIRY_FOLLOW_UP_CHOICES: ChatChoice[] = [
 
 const VIEWING_DAY_PREFIX = '見学希望日:';
 const VIEWING_TIME_PREFIX = '見学希望時間:';
+const VIEWING_DATETIME_PREFIX = '見学希望日時:';
 const WEEKDAYS = '日月火水木金土';
 const MODE_SWITCH = /^(?:(?:賃貸|購入)(?:物件)?(?:を?(?:探す|探したい)|に変更|で探したい|がいい|を希望|にしたい|したい|に切り替え|へ切り替え|へ変更)?|(?:注文住宅|注文建築|自由設計)(?:(?:から|じゃなくて?|ではなく|をやめて?)\s*(?:賃貸|購入)|.*(?:賃貸|購入).*(?:切り替え|変更|探したい|にする))|物件を?(?:探す|探したい)|物件探し(?:をしたい|したい)?)(?:[。！!？?])?$/u;
 const RESET_INTENT = /^(?:やり直し|リセット|最初から|キャンセル|やめる)[。！!？?]*$/u;
@@ -70,7 +80,7 @@ const VIEWING_INTENT = /(?:(?:見学|内見|内覧)(?:を)?(?:したい|予約)|
 const NAME_PROMPT = /(?:お名前|氏名|名前).*(?:教えて|聞かせ|入力)/u;
 const ADDRESS_PROMPT = /(?:住所|ご住所|届ける住所|現在の(?:ご)?住所).*(?:教えて|聞かせ|入力|書ける)/u;
 const PHONE_PROMPT = /(?:電話番号|連絡用の電話).*(?:教えて|入力|聞かせ)/u;
-const DATETIME_TEXT_PROMPT = /(?:希望日時を(?:自由に|そのまま)|日時を(?:教えて|書いて))/u;
+const DATETIME_TEXT_PROMPT = /(?:希望日時を(?:自由に|そのまま)|日時を(?:教えて|書いて)|希望日時を、?カレンダー|カレンダーから選んで)/u;
 const NAME_REDACTED = /\[お名前\]/u;
 const PHONE_REDACTED = /\[電話番号\]/u;
 const ADDRESS_REDACTED = /\[住所\]/u;
@@ -188,6 +198,28 @@ export function viewingTimeFromMessage(content: string): string | undefined {
   return undefined;
 }
 
+export function viewingDatetimePicker(now = new Date()): ChatDatetimePicker {
+  return {
+    type: 'datetime',
+    min: isoDay(jstCalendarDate(now, 1)),
+    max: isoDay(jstCalendarDate(now, 60)),
+    prefix: VIEWING_DATETIME_PREFIX,
+  };
+}
+
+export function viewingDatetimeFromMessage(content: string): string | undefined {
+  const normalized = normalize(content);
+  if (!normalized.startsWith(VIEWING_DATETIME_PREFIX)) return undefined;
+  const value = normalized.slice(VIEWING_DATETIME_PREFIX.length).trim();
+  if (!value || value.length > 80) return undefined;
+  const iso = value.match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{1,2}):(\d{2}))?$/u);
+  if (!iso) return value;
+  const time = iso[2] === undefined || iso[3] === undefined
+    ? undefined
+    : `${pad2(Number(iso[2]))}:${iso[3]}`;
+  return time ? `${iso[1]} ${time}` : iso[1];
+}
+
 function formatPreferredDatetime(date?: string, time?: string, fallback?: string) {
   if (date && time) return `${date} ${time}`;
   if (date) return date;
@@ -198,7 +230,13 @@ function formatPreferredDatetime(date?: string, time?: string, fallback?: string
 function freeDatetimeFromMessage(content: string, expecting: boolean) {
   const normalized = normalize(content);
   if (normalized === PROPERTY_INQUIRY_VALUES.viewingFreeText) return undefined;
-  if (viewingDayFromMessage(normalized) || viewingTimeFromMessage(normalized)) return undefined;
+  if (
+    viewingDatetimeFromMessage(normalized)
+    || viewingDayFromMessage(normalized)
+    || viewingTimeFromMessage(normalized)
+  ) {
+    return undefined;
+  }
   if (!expecting && !/(?:\d{1,2}\s*[\/月]\s*\d{1,2}|\d{1,2}\s*時|午前|午後|明日|あさって|今週末|来週|平日|土日)/u.test(normalized)) {
     return undefined;
   }
@@ -268,6 +306,17 @@ export function extractPropertyInquiryState(
       continue;
     }
 
+    const datetime = viewingDatetimeFromMessage(content);
+    if (datetime) {
+      if (state.kind === 'viewing') {
+        state.preferredDatetime = datetime;
+        state.wantsFreeDatetime = false;
+        const parts = datetime.match(/^(\d{4}-\d{2}-\d{2})(?:\s+(\S+))?$/u);
+        if (parts?.[1]) state.preferredDate = parts[1];
+        if (parts?.[2]) state.preferredTime = parts[2];
+      }
+      continue;
+    }
     const day = viewingDayFromMessage(content);
     if (day) {
       if (state.kind === 'viewing') {
@@ -335,8 +384,8 @@ function nextStep(state: PropertyInquiryState): PropertyInquiryStep | undefined 
   if (!state.kind) return undefined;
   if (state.kind === 'viewing' && !state.preferredDatetime) {
     if (state.wantsFreeDatetime) return 'viewing_datetime_text';
-    if (!state.preferredDate) return 'viewing_day';
-    if (!state.preferredTime) return 'viewing_time';
+    if (state.preferredDate && !state.preferredTime) return 'viewing_time';
+    if (!state.preferredDate) return 'viewing_datetime';
     return 'viewing_datetime_text';
   }
   if (!state.nameSet) return 'contact_name';
@@ -346,6 +395,7 @@ function nextStep(state: PropertyInquiryState): PropertyInquiryStep | undefined 
 }
 
 function promptForStep(kind: PropertyInquiryKind, step: PropertyInquiryStep) {
+  if (step === 'viewing_datetime') return '見学の希望日時を、カレンダーから選んでにゃん。';
   if (step === 'viewing_day') return '見学の希望日を選んでにゃん。ボタンから選ぶとかんたんにゃん。';
   if (step === 'viewing_time') return 'その日の希望時間はどれかにゃん。';
   if (step === 'viewing_datetime_text') return '見学の希望日時を、日付と時間のつきで教えてにゃん。';
@@ -405,6 +455,14 @@ export function propertyInquiryChoicesForResponse(
   if (decision.step === 'viewing_day') return viewingDayChoices(now);
   if (decision.step === 'viewing_time') return VIEWING_TIME_CHOICES;
   return [];
+}
+
+export function propertyInquiryPickerForResponse(
+  decision: PropertyInquiryDecision,
+  now = new Date(),
+): ChatDatetimePicker | undefined {
+  if (decision.step !== 'viewing_datetime') return undefined;
+  return viewingDatetimePicker(now);
 }
 
 export function extractPropertyInquiryContact(

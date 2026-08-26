@@ -59,11 +59,15 @@ describe('chat choices', () => {
   });
 
   it('offers more-results and a new-search path after catalog candidates', () => {
-    expect(propertyCandidateChoices(true).map((item) => item.value)).toEqual(['もっと見たい', '物件を探す']);
+    expect(propertyCandidateChoices(true)).toEqual([
+      { label: 'もっと見る', value: 'もっと見たい', tone: 'primary' },
+      { label: '別条件で探す', value: '物件を探す', tone: 'default', size: 'compact' },
+    ]);
     expect(propertyCandidateChoices(false)).toEqual([{
       label: '別条件で探す',
       value: '物件を探す',
       tone: 'default',
+      size: 'compact',
     }]);
   });
 });

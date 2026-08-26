@@ -18,6 +18,7 @@ import {
   evaluatePropertyInquiry,
   propertyInquiryChoicesForResponse,
   propertyInquiryFollowUp,
+  propertyInquiryPickerForResponse,
 } from '../src/property-inquiry';
 import { redactPropertyInquiryTurn } from '../src/property-inquiry-chat';
 import { wantsOtherPropertyCandidates } from '../src/property-search-continuation';
@@ -49,10 +50,11 @@ type Route =
 type Turn = {
   route: Route;
   answer: string;
-  choices: Array<{ label: string; value: string; tone?: string }>;
+  choices: Array<{ label: string; value: string; tone?: string; size?: string }>;
   sources: string[];
   hasMoreResults?: boolean;
-  followUp?: { answer: string; choices: Array<{ label: string; value: string; tone?: string }> };
+  followUp?: { answer: string; choices: Array<{ label: string; value: string; tone?: string; size?: string }> };
+  picker?: { type: 'datetime'; min: string; max: string; prefix: string };
   policy?: string;
 };
 
@@ -143,6 +145,7 @@ function playTurn(
       route: 'property_inquiry',
       answer,
       choices: propertyInquiry.leadReady ? [] : propertyInquiryChoicesForResponse(propertyInquiry),
+      picker: propertyInquiry.leadReady ? undefined : propertyInquiryPickerForResponse(propertyInquiry),
       sources: [],
     };
   }
@@ -486,17 +489,16 @@ describe('live catalog conversation walkthroughs', () => {
     expect(JSON.stringify(phoned.history)).not.toContain('090-1234-5678');
   });
 
-  it('lets a visitor pick viewing day and time from buttons', () => {
+  it('lets a visitor pick a viewing datetime from the calendar', () => {
     const purchase = autoComplete(['購入', '大阪府'], inventoryChoice);
     const started = applyTurn(purchase.history, '見学したい');
     expect(started.turn.route).toBe('property_inquiry');
-    expect(started.turn.choices.some((choice) => choice.value.startsWith('見学希望日:'))).toBe(true);
-    const day = started.turn.choices.find((choice) => choice.value.startsWith('見学希望日:'))?.value;
-    expect(day).toBeTruthy();
-    const pickedDay = applyTurn(started.history, day!);
-    expect(pickedDay.turn.choices.some((choice) => choice.value.startsWith('見学希望時間:'))).toBe(true);
-    const time = pickedDay.turn.choices.find((choice) => choice.value.startsWith('見学希望時間:'))?.value;
-    const pickedTime = applyTurn(pickedDay.history, time!);
-    expect(pickedTime.turn.answer).toMatch(/お名前/u);
+    expect(started.turn.answer).toMatch(/カレンダー/u);
+    expect(started.turn.choices).toEqual([]);
+    expect(started.turn.picker?.type).toBe('datetime');
+    expect(started.turn.picker?.prefix).toBe('見学希望日時:');
+    expect(started.turn.picker?.min).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
+    const picked = applyTurn(started.history, `見学希望日時:${started.turn.picker!.min} 15:00`);
+    expect(picked.turn.answer).toMatch(/お名前/u);
   });
 });

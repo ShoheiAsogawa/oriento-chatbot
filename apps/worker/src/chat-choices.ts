@@ -2,12 +2,19 @@ export type ChatChoice = {
   label: string;
   value: string;
   tone?: 'primary' | 'default';
+  size?: 'compact';
 };
 
-const choice = (label: string, value = label, tone: ChatChoice['tone'] = 'default'): ChatChoice => ({
+const choice = (
+  label: string,
+  value = label,
+  tone: ChatChoice['tone'] = 'default',
+  size?: ChatChoice['size'],
+): ChatChoice => ({
   label,
   value,
   tone,
+  ...(size ? { size } : {}),
 });
 
 const PREFECTURE_CHOICES = [
@@ -102,10 +109,8 @@ export function choicesForChatAnswer(answer: string): ChatChoice[] {
 }
 
 export function propertyCandidateChoices(hasMoreResults: boolean): ChatChoice[] {
+  const otherConditions = choice('別条件で探す', '物件を探す', 'default', 'compact');
   return hasMoreResults
-    ? [
-      choice('もっと見る', 'もっと見たい', 'primary'),
-      choice('別条件で探す', '物件を探す'),
-    ]
-    : [choice('別条件で探す', '物件を探す')];
+    ? [choice('もっと見る', 'もっと見たい', 'primary'), otherConditions]
+    : [otherConditions];
 }

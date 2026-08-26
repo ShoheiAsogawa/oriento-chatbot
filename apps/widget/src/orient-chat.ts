@@ -13,6 +13,14 @@ interface ChatChoice {
   label: string;
   value: string;
   tone?: 'primary' | 'default';
+  size?: 'compact';
+}
+
+interface ChatDatetimePicker {
+  type: 'datetime';
+  min: string;
+  max: string;
+  prefix: string;
 }
 
 interface ChatFollowUp {
@@ -116,6 +124,48 @@ function japanCalendarMonth(now = new Date()) {
   return new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCMonth();
 }
 
+function jstIsoDay(offsetDays = 0, now = new Date()) {
+  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const date = new Date(Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate() + offsetDays));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+}
+
+function parseIsoDay(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
+  if (!match) return undefined;
+  return { y: Number(match[1]), m: Number(match[2]), d: Number(match[3]) };
+}
+
+function isoFromParts(year: number, month: number, day: number) {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function weekdaySunday0(year: number, month: number, day: number) {
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
+function daysInMonth(year: number, month: number) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function shiftMonth(year: number, month: number, delta: number) {
+  const date = new Date(Date.UTC(year, month - 1 + delta, 1));
+  return { y: date.getUTCFullYear(), m: date.getUTCMonth() + 1 };
+}
+
+function parseDatetimePicker(value: unknown): ChatDatetimePicker | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const picker = value as Record<string, unknown>;
+  if (picker.type !== 'datetime') return undefined;
+  if (typeof picker.min !== 'string' || typeof picker.max !== 'string' || typeof picker.prefix !== 'string') {
+    return undefined;
+  }
+  if (!parseIsoDay(picker.min) || !parseIsoDay(picker.max) || !picker.prefix.trim()) return undefined;
+  return { type: 'datetime', min: picker.min, max: picker.max, prefix: picker.prefix };
+}
+
+const calendarWeekdays = ['日', '月', '火', '水', '木', '金', '土'];
+
 function orinyanOpeningMessage(now = new Date()) {
   const monthlyGreetings = orinyanMonthlyGreetings[japanCalendarMonth(now)] || orinyanMonthlyGreetings[0];
   const greeting = monthlyGreetings[Math.floor(Math.random() * monthlyGreetings.length)];
@@ -133,6 +183,7 @@ interface ChatMessage {
   pending?: boolean;
   moreResults?: boolean;
   followUp?: boolean;
+  picker?: ChatDatetimePicker;
 }
 
 interface TurnstileApi {
@@ -304,6 +355,106 @@ const styles = `
   .choice-button:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .choice-grid[data-count="3"] .choice-button:last-child:nth-child(odd),
   .choice-grid[data-count="6"] .choice-button:last-child:nth-child(odd) { grid-column: auto; }
+  .choice-compact { display: flex; justify-content: center; margin-top: 8px; }
+  .choice-grid + .choice-compact { margin-top: 8px; }
+  .choice-button.compact {
+    min-height: 28px;
+    padding: 4px 12px;
+    border-color: #e0e1e6;
+    border-radius: 999px;
+    color: var(--orient-muted);
+    background: #fff;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .choice-button.compact:hover, .choice-button.compact:focus-visible {
+    color: var(--orient-ink);
+    border-color: #c9cad1;
+    background: #f6f6f8;
+  }
+  .message-picker { margin-top: 8px; animation: choices-in 180ms ease-out both; }
+  .oc-picker-datetime {
+    padding: 10px;
+    border: 1px solid var(--orient-border);
+    border-radius: 12px;
+    background: #fff;
+  }
+  .oc-cal-nav {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .oc-cal-nav button {
+    min-width: 44px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--orient-primary-strong);
+    background: #fff5ef;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .oc-cal-nav button:hover, .oc-cal-nav button:focus-visible { background: #ffede2; outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
+  .oc-cal-nav button:disabled { opacity: .35; cursor: default; }
+  .oc-cal-title { text-align: center; font-size: 14px; font-weight: 800; }
+  .oc-cal-weekdays, .oc-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+  .oc-cal-weekdays span { padding: 4px 0; color: var(--orient-muted); font-size: 10px; font-weight: 700; text-align: center; }
+  .oc-cal-weekdays span:first-child { color: #c45b5b; }
+  .oc-cal-weekdays span:last-child { color: #4a6fa5; }
+  .oc-cal-day {
+    min-height: 40px;
+    border: 0;
+    border-radius: 8px;
+    color: var(--orient-ink);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .oc-cal-day:hover:not(:disabled), .oc-cal-day:focus-visible:not(:disabled) { background: #fff5ef; outline: 2px solid rgba(255,104,11,.18); outline-offset: 0; }
+  .oc-cal-day:disabled { color: #d0d1d7; cursor: default; }
+  .oc-cal-day[data-selected="true"] { color: #fff; background: var(--orient-primary); }
+  .oc-cal-day[data-selected="true"]:hover:not(:disabled), .oc-cal-day[data-selected="true"]:focus-visible:not(:disabled) { background: var(--orient-primary-strong); }
+  .oc-cal-summary { margin: 8px 0 0; color: var(--orient-ink); font-size: 12px; font-weight: 800; text-align: center; }
+  .oc-cal-time-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .oc-cal-time-row span { font-size: 12px; font-weight: 800; }
+  .oc-cal-time {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid var(--orient-border);
+    border-radius: 10px;
+    color: var(--orient-ink);
+    background: #fff;
+    font-size: 16px;
+  }
+  .oc-cal-time:focus { border-color: var(--orient-primary); outline: 2px solid rgba(255,104,11,.18); }
+  .oc-cal-submit {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 10px;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--orient-primary);
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .oc-cal-submit:hover, .oc-cal-submit:focus-visible { background: var(--orient-primary-strong); outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
+  .oc-cal-submit:disabled { opacity: .45; cursor: not-allowed; }
   .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
   .composer.locked { opacity: .55; }
   .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
@@ -387,6 +538,9 @@ const styles = `
     .choice-grid[data-count="3"] { gap: 5px; }
     .choice-grid[data-count="6"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .choice-button { min-height: 42px; padding-inline: 6px; font-size: 12px; }
+    .choice-button.compact { min-height: 28px; padding: 4px 12px; font-size: 11px; }
+    .oc-cal-day { min-height: 42px; }
+    .oc-picker-datetime { padding: 8px; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
@@ -744,8 +898,9 @@ class OrientChat extends HTMLElement {
     this.messages.forEach((message) => {
       message.choices = [];
       message.moreResults = false;
+      message.picker = undefined;
     });
-    this.root.querySelectorAll('.message-choices, .more-results').forEach((element) => element.remove());
+    this.root.querySelectorAll('.message-choices, .more-results, .message-picker').forEach((element) => element.remove());
     const userMessageId = crypto.randomUUID();
     this.messages.push({ id: userMessageId, role: 'user', content });
     const pendingId = crypto.randomUUID();
@@ -765,6 +920,7 @@ class OrientChat extends HTMLElement {
       }
       const message = this.messages.find((item) => item.id === pendingId);
       const incomingChoices = result.choices;
+      const incomingPicker = result.picker;
       const incomingMoreResults = this.shouldAttachMoreResults(
         typeof result.hasMoreResults === 'boolean'
           ? result.hasMoreResults
@@ -779,6 +935,7 @@ class OrientChat extends HTMLElement {
         // tapped while this.sending is still true.
         message.choices = [];
         message.moreResults = false;
+        message.picker = undefined;
         message.lineLink = result.followUp
           ? false
           : this.shouldShowLineLink(content, result.answer, result.choices, result.policy);
@@ -790,6 +947,15 @@ class OrientChat extends HTMLElement {
       if (message) {
         message.choices = incomingChoices;
         message.moreResults = incomingMoreResults;
+        message.picker = incomingPicker;
+      }
+      const typedItem = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
+        .find((candidate) => candidate.dataset.messageId === pendingId);
+      if (typedItem) {
+        this.renderChoices(typedItem, incomingChoices);
+        this.renderPicker(typedItem, incomingPicker);
+        this.renderMoreResults(typedItem, incomingMoreResults);
+        this.setDisabled(true);
       }
       if (result.followUp?.answer) {
         const followUpId = crypto.randomUUID();
@@ -813,13 +979,9 @@ class OrientChat extends HTMLElement {
         if (followUpMessage) followUpMessage.choices = result.followUp.choices || [];
         const followUpItem = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
           .find((candidate) => candidate.dataset.messageId === followUpId);
-        if (followUpItem) this.renderChoices(followUpItem, result.followUp.choices || []);
-      } else {
-        const typedItem = Array.from(this.root.querySelectorAll<HTMLElement>('.message'))
-          .find((candidate) => candidate.dataset.messageId === pendingId);
-        if (typedItem) {
-          this.renderChoices(typedItem, incomingChoices);
-          this.renderMoreResults(typedItem, incomingMoreResults);
+        if (followUpItem) {
+          this.renderChoices(followUpItem, result.followUp.choices || []);
+          this.setDisabled(true);
         }
       }
     } catch (error) {
@@ -861,6 +1023,7 @@ class OrientChat extends HTMLElement {
       redactUserMessage?: boolean;
       hasMoreResults?: boolean;
       followUp?: ChatFollowUp;
+      picker?: ChatDatetimePicker;
     }>(response);
     if (response.status === 401) {
       this.clearStoredSession();
@@ -884,6 +1047,7 @@ class OrientChat extends HTMLElement {
           choices: Array.isArray(data.followUp.choices) ? data.followUp.choices : [],
         }
         : undefined,
+      picker: parseDatetimePicker(data.picker),
     };
   }
 
@@ -919,11 +1083,63 @@ class OrientChat extends HTMLElement {
       return {
         answer: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
         sources: [],
-        choices: [],
+        choices: [] as ChatChoice[],
         policy: 'out_of_scope',
         redactUserMessage: false,
         hasMoreResults: false,
+        followUp: undefined as ChatFollowUp | undefined,
+        picker: undefined as ChatDatetimePicker | undefined,
+      };
+    }
+    if (content.startsWith('見学希望日時:')) {
+      return {
+        answer: '見学のお申し込みだにゃん。お名前を教えてにゃん。',
+        sources: [],
+        choices: [],
+        policy: 'allow',
+        redactUserMessage: false,
+        hasMoreResults: false,
         followUp: undefined,
+        picker: undefined,
+      };
+    }
+    if (content === '見学したい' || /(?:見学|内見)したい/u.test(content)) {
+      return {
+        answer: '見学の希望日時を、カレンダーから選んでにゃん。',
+        sources: [],
+        choices: [],
+        policy: 'allow',
+        redactUserMessage: false,
+        hasMoreResults: false,
+        followUp: undefined,
+        picker: {
+          type: 'datetime' as const,
+          min: jstIsoDay(1),
+          max: jstIsoDay(60),
+          prefix: '見学希望日時:',
+        },
+      };
+    }
+    if (content === '物件を探す' || content === 'もっと見たい') {
+      return {
+        answer: '条件に合う賃貸物件が見つかったにゃん。\n- サンプルマンション 賃料 8.5万円にゃん。',
+        sources: [],
+        choices: [
+          { label: 'もっと見る', value: 'もっと見たい', tone: 'primary' as const },
+          { label: '別条件で探す', value: '物件を探す', size: 'compact' as const },
+        ],
+        policy: 'allow',
+        redactUserMessage: false,
+        hasMoreResults: false,
+        followUp: {
+          answer: '気に入った物件はあったかにゃ？資料請求・お電話・内見から選んでにゃん。',
+          choices: [
+            { label: '資料請求', value: '資料請求したい', tone: 'primary' as const },
+            { label: '電話', value: '電話で相談したい' },
+            { label: '見学', value: '見学したい' },
+          ],
+        },
+        picker: undefined,
       };
     }
     return {
@@ -934,6 +1150,7 @@ class OrientChat extends HTMLElement {
       redactUserMessage: false,
       hasMoreResults: false,
       followUp: undefined,
+      picker: undefined,
     };
   }
 
@@ -998,6 +1215,7 @@ class OrientChat extends HTMLElement {
       if (item) {
         this.renderLineLink(item, Boolean(message.lineLink));
         this.renderChoices(item, message.choices || []);
+        this.renderPicker(item, message.picker);
         this.renderMoreResults(item, this.shouldAttachMoreResults(Boolean(message.moreResults), message.choices || []));
       }
       return;
@@ -1027,6 +1245,7 @@ class OrientChat extends HTMLElement {
     if (item) {
       this.renderLineLink(item, Boolean(message.lineLink));
       this.renderChoices(item, message.choices || []);
+      this.renderPicker(item, message.picker);
       this.renderMoreResults(item, this.shouldAttachMoreResults(Boolean(message.moreResults), message.choices || []));
     }
   }
@@ -1047,7 +1266,9 @@ class OrientChat extends HTMLElement {
 
   private renderChoices(item: HTMLElement, choices: ChatChoice[]) {
     item.querySelector('.message-choices')?.remove();
-    if (choices.length === 0) return;
+    const standard = choices.filter((choice) => choice.size !== 'compact');
+    const compact = choices.filter((choice) => choice.size === 'compact');
+    if (standard.length === 0 && compact.length === 0) return;
     const messageContent = item.querySelector<HTMLElement>('.message-content');
     if (!messageContent) return;
 
@@ -1055,33 +1276,204 @@ class OrientChat extends HTMLElement {
     section.className = 'message-choices';
     section.setAttribute('role', 'group');
     section.setAttribute('aria-label', '回答候補');
-    const label = document.createElement('p');
-    label.className = 'choice-label';
-    label.textContent = 'タップして選べるにゃん';
-    const grid = document.createElement('div');
-    grid.className = 'choice-grid';
-    grid.dataset.count = String(choices.length);
-    grid.setAttribute('role', 'group');
-    grid.setAttribute('aria-label', '回答候補の選択肢');
-    choices.forEach((choice) => {
-      const button = document.createElement('button');
-      button.className = 'choice-button';
-      button.type = 'button';
-      button.dataset.tone = choice.tone || 'default';
-      button.textContent = choice.label;
-      button.addEventListener('click', () => {
-        if (!this.profileReady) {
-          this.selectVisitorProfile(choice.value);
-          return;
-        }
-        void this.sendMessage(choice.value);
-      });
-      grid.append(button);
-    });
-    section.append(label, grid);
+    if (standard.length > 0) {
+      const label = document.createElement('p');
+      label.className = 'choice-label';
+      label.textContent = 'タップして選べるにゃん';
+      const grid = document.createElement('div');
+      grid.className = 'choice-grid';
+      grid.dataset.count = String(standard.length);
+      grid.setAttribute('role', 'group');
+      grid.setAttribute('aria-label', '回答候補の選択肢');
+      standard.forEach((choice) => grid.append(this.createChoiceButton(choice)));
+      section.append(label, grid);
+    }
+    if (compact.length > 0) {
+      const compactRow = document.createElement('div');
+      compactRow.className = 'choice-compact';
+      compactRow.setAttribute('role', 'group');
+      compactRow.setAttribute('aria-label', 'その他の操作');
+      compact.forEach((choice) => compactRow.append(this.createChoiceButton(choice, true)));
+      section.append(compactRow);
+    }
     messageContent.append(section);
     const container = this.root.querySelector<HTMLElement>('.messages');
     if (container) this.revealMessageChoices(item, container);
+  }
+
+  private createChoiceButton(choice: ChatChoice, compact = false) {
+    const button = document.createElement('button');
+    button.className = compact ? 'choice-button compact' : 'choice-button';
+    button.type = 'button';
+    button.dataset.tone = choice.tone || 'default';
+    if (compact) button.dataset.size = 'compact';
+    button.textContent = choice.label;
+    button.addEventListener('click', () => {
+      if (!this.profileReady) {
+        this.selectVisitorProfile(choice.value);
+        return;
+      }
+      void this.sendMessage(choice.value);
+    });
+    return button;
+  }
+
+  private renderPicker(item: HTMLElement, picker?: ChatDatetimePicker) {
+    item.querySelector('.message-picker')?.remove();
+    if (!picker || picker.type !== 'datetime') return;
+    const messageContent = item.querySelector<HTMLElement>('.message-content');
+    if (!messageContent) return;
+    const section = document.createElement('div');
+    section.className = 'message-picker';
+    section.append(this.createDatetimePicker(picker));
+    messageContent.append(section);
+    const container = this.root.querySelector<HTMLElement>('.messages');
+    if (container) this.revealMessageChoices(item, container);
+  }
+
+  private createDatetimePicker(picker: ChatDatetimePicker) {
+    const minParts = parseIsoDay(picker.min) || parseIsoDay(jstIsoDay(1))!;
+    const maxParts = parseIsoDay(picker.max) || parseIsoDay(jstIsoDay(60))!;
+    let viewYear = minParts.y;
+    let viewMonth = minParts.m;
+    let selected = picker.min;
+    const minMonth = `${minParts.y}-${String(minParts.m).padStart(2, '0')}`;
+    const maxMonth = `${maxParts.y}-${String(maxParts.m).padStart(2, '0')}`;
+
+    const root = document.createElement('div');
+    root.className = 'oc-picker-datetime';
+
+    const nav = document.createElement('div');
+    nav.className = 'oc-cal-nav';
+    const prev = document.createElement('button');
+    prev.type = 'button';
+    prev.className = 'oc-cal-prev';
+    prev.setAttribute('aria-label', '前の月');
+    prev.textContent = '‹';
+    const title = document.createElement('div');
+    title.className = 'oc-cal-title';
+    const next = document.createElement('button');
+    next.type = 'button';
+    next.className = 'oc-cal-next';
+    next.setAttribute('aria-label', '次の月');
+    next.textContent = '›';
+    nav.append(prev, title, next);
+
+    const weekdays = document.createElement('div');
+    weekdays.className = 'oc-cal-weekdays';
+    calendarWeekdays.forEach((label) => {
+      const cell = document.createElement('span');
+      cell.textContent = label;
+      weekdays.append(cell);
+    });
+
+    const grid = document.createElement('div');
+    grid.className = 'oc-cal-grid';
+    grid.setAttribute('role', 'grid');
+    grid.setAttribute('aria-label', '見学希望日');
+
+    const summary = document.createElement('p');
+    summary.className = 'oc-cal-summary';
+
+    const timeRow = document.createElement('label');
+    timeRow.className = 'oc-cal-time-row';
+    const timeLabel = document.createElement('span');
+    timeLabel.textContent = '時間';
+    const timeInput = document.createElement('input');
+    timeInput.type = 'time';
+    timeInput.className = 'oc-cal-time';
+    timeInput.step = '900';
+    timeInput.value = '15:00';
+    timeInput.setAttribute('aria-label', '見学希望時間');
+    timeRow.append(timeLabel, timeInput);
+
+    const submit = document.createElement('button');
+    submit.type = 'button';
+    submit.className = 'oc-cal-submit';
+    submit.textContent = 'この日時で送る';
+
+    const formatSelected = () => {
+      const parts = parseIsoDay(selected);
+      const time = timeInput.value || '15:00';
+      if (!parts) {
+        summary.textContent = '日付を選んでにゃん';
+        return;
+      }
+      const weekday = calendarWeekdays[weekdaySunday0(parts.y, parts.m, parts.d)] || '';
+      summary.textContent = `選択中 ${parts.m}月${parts.d}日（${weekday}） ${time}`;
+    };
+
+    const renderMonth = () => {
+      title.textContent = `${viewYear}年${viewMonth}月`;
+      const viewMonthKey = `${viewYear}-${String(viewMonth).padStart(2, '0')}`;
+      prev.disabled = viewMonthKey <= minMonth;
+      prev.dataset.selectable = prev.disabled ? 'false' : 'true';
+      next.disabled = viewMonthKey >= maxMonth;
+      next.dataset.selectable = next.disabled ? 'false' : 'true';
+      grid.replaceChildren();
+      const leading = weekdaySunday0(viewYear, viewMonth, 1);
+      const lastDay = daysInMonth(viewYear, viewMonth);
+      for (let index = 0; index < leading; index += 1) {
+        const empty = document.createElement('button');
+        empty.type = 'button';
+        empty.className = 'oc-cal-day';
+        empty.disabled = true;
+        empty.dataset.selectable = 'false';
+        empty.tabIndex = -1;
+        empty.setAttribute('aria-hidden', 'true');
+        grid.append(empty);
+      }
+      for (let day = 1; day <= lastDay; day += 1) {
+        const iso = isoFromParts(viewYear, viewMonth, day);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'oc-cal-day';
+        button.textContent = String(day);
+        button.dataset.date = iso;
+        const outOfRange = iso < picker.min || iso > picker.max;
+        button.disabled = outOfRange;
+        button.dataset.selectable = outOfRange ? 'false' : 'true';
+        if (iso === selected) {
+          button.dataset.selected = 'true';
+          button.setAttribute('aria-pressed', 'true');
+        } else {
+          button.setAttribute('aria-pressed', 'false');
+        }
+        if (!outOfRange) {
+          button.addEventListener('click', () => {
+            selected = iso;
+            renderMonth();
+            formatSelected();
+          });
+        }
+        grid.append(button);
+      }
+    };
+
+    prev.addEventListener('click', () => {
+      const nextView = shiftMonth(viewYear, viewMonth, -1);
+      viewYear = nextView.y;
+      viewMonth = nextView.m;
+      renderMonth();
+    });
+    next.addEventListener('click', () => {
+      const nextView = shiftMonth(viewYear, viewMonth, 1);
+      viewYear = nextView.y;
+      viewMonth = nextView.m;
+      renderMonth();
+    });
+    timeInput.addEventListener('input', formatSelected);
+    submit.addEventListener('click', () => {
+      const time = /^\d{1,2}:\d{2}$/u.test(timeInput.value) ? timeInput.value : '15:00';
+      const [hour, minute] = time.split(':');
+      const padded = `${String(Number(hour)).padStart(2, '0')}:${minute}`;
+      void this.sendMessage(`${picker.prefix}${selected} ${padded}`);
+    });
+
+    renderMonth();
+    formatSelected();
+    root.append(nav, weekdays, grid, summary, timeRow, submit);
+    return root;
   }
 
   private renderMoreResults(item: HTMLElement, visible: boolean) {
@@ -1246,7 +1638,15 @@ class OrientChat extends HTMLElement {
   }
 
   private setDisabled(disabled: boolean) {
-    this.root.querySelectorAll<HTMLButtonElement>('.suggestions button, .choice-button, .more-results-button, .send').forEach((button) => { button.disabled = disabled; });
+    this.root.querySelectorAll<HTMLButtonElement | HTMLInputElement>(
+      '.suggestions button, .choice-button, .more-results-button, .send, .oc-cal-prev, .oc-cal-next, .oc-cal-day, .oc-cal-submit, .oc-cal-time',
+    ).forEach((control) => {
+      if (disabled) {
+        control.disabled = true;
+        return;
+      }
+      control.disabled = control.dataset.selectable === 'false';
+    });
     const input = this.root.querySelector<HTMLTextAreaElement>('textarea');
     if (disabled) {
       if (input && this.profileReady) input.disabled = true;
@@ -1295,6 +1695,7 @@ class OrientChat extends HTMLElement {
     if (message.role === 'assistant' && !message.pending) {
       if (message.rawContent) this.renderLineLink(item, Boolean(message.lineLink));
       if (message.choices?.length) this.renderChoices(item, message.choices);
+      if (message.picker) this.renderPicker(item, message.picker);
       if (this.shouldAttachMoreResults(Boolean(message.moreResults), message.choices || [])) {
         this.renderMoreResults(item, true);
       }
