@@ -1750,6 +1750,7 @@ class OrientChat extends HTMLElement {
       thinkingLabel.setAttribute('aria-label', 'おりにゃんが考えています');
       const chars = document.createElement('span');
       chars.className = 'thinking-chars';
+      chars.setAttribute('aria-hidden', 'true');
       Array.from('おりにゃんが考えています').forEach((character, index) => {
         const letter = document.createElement('span');
         letter.className = 'thinking-char';
