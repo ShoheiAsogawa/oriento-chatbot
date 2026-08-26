@@ -345,8 +345,6 @@ const styles = `
   .thinking-chars { display: inline-flex; }
   .thinking-char {
     display: inline-block;
-    animation: thinking-wave 1.15s ease-in-out infinite;
-    will-change: transform, color;
   }
   .thinking-dots {
     display: inline-flex;
@@ -360,10 +358,7 @@ const styles = `
     height: 6px;
     border-radius: 50%;
     background: var(--orient-primary);
-    animation: thinking-dot .9s ease-in-out infinite;
   }
-  .thinking-dots span:nth-child(2) { animation-delay: .12s; }
-  .thinking-dots span:nth-child(3) { animation-delay: .24s; }
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
   .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
@@ -498,19 +493,9 @@ const styles = `
   }
   .suggestions button.ready-pop {
     z-index: 1;
-    animation: suggestion-ready 1s cubic-bezier(.22,.8,.28,1) 3 both;
   }
   .suggestions button.ready-pop span {
-    animation: suggestion-ready-icon .65s ease-in-out 3 both;
-  }
-  .suggestions button.ready-pop::after {
-    content: "";
-    position: absolute;
-    inset: -3px;
-    border-radius: 12px;
-    border: 2px solid var(--orient-primary);
-    pointer-events: none;
-    animation: suggestion-ready-ring 1s ease-out 3 both;
+    display: block;
   }
   .composer { display: grid; grid-template-columns: 1fr 44px; gap: 8px; margin: 0 14px; padding: 5px 5px 5px 13px; border: 2px solid var(--orient-primary); border-radius: 12px; background: #fff; }
   .composer:focus-within { box-shadow: 0 0 0 3px rgba(255,104,11,.15); }
@@ -563,41 +548,6 @@ const styles = `
   @keyframes listen { 0%,100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
-  @keyframes thinking-wave {
-    0%, 62%, 100% { transform: translateY(0); color: var(--orient-muted); }
-    31% { transform: translateY(-5px); color: var(--orient-ink); }
-  }
-  @keyframes thinking-dot {
-    0%, 70%, 100% { transform: translateY(0) scale(1); opacity: .35; }
-    40% { transform: translateY(-5px) scale(1.15); opacity: 1; }
-  }
-  @keyframes suggestion-ready {
-    0% { transform: scale(1); background: #fff; box-shadow: 0 0 0 0 rgba(255,104,11,0); }
-    28% { transform: scale(1.1); background: #fff3eb; box-shadow: 0 10px 22px rgba(255,104,11,.28), 0 0 0 7px rgba(255,104,11,.22); }
-    55% { transform: scale(0.96); }
-    100% { transform: scale(1); background: #fff; box-shadow: 0 0 0 0 rgba(255,104,11,0); }
-  }
-  @keyframes suggestion-ready-icon {
-    0%, 100% { transform: scale(1) rotate(0); }
-    40% { transform: scale(1.35) rotate(-12deg); }
-    70% { transform: scale(1.1) rotate(8deg); }
-  }
-  @keyframes suggestion-ready-ring {
-    0% { opacity: .95; transform: scale(1); }
-    100% { opacity: 0; transform: scale(1.16); }
-  }
-  @keyframes thinking-fade {
-    0%, 100% { opacity: .55; transform: none; }
-    50% { opacity: 1; transform: none; }
-  }
-  @keyframes thinking-dot-fade {
-    0%, 100% { opacity: .3; transform: none; }
-    50% { opacity: 1; transform: none; }
-  }
-  @keyframes suggestion-ready-glow {
-    0%, 100% { background: #fff; box-shadow: 0 0 0 0 rgba(255,104,11,0); transform: none; }
-    40% { background: #fff3eb; box-shadow: 0 0 0 5px rgba(255,104,11,.32); transform: none; }
-  }
   @media (max-width: 520px) {
     :host { inset: auto 10px 10px 10px; }
     .root { width: 100%; }
@@ -617,10 +567,6 @@ const styles = `
   }
   @media (prefers-reduced-motion: reduce) {
     .panel, .message, .message-choices, .message-picker, .launcher-character, .cat { animation: none !important; }
-    .thinking-char { animation: thinking-fade 1.2s ease-in-out infinite; }
-    .thinking-dots span { animation: thinking-dot-fade .9s ease-in-out infinite; }
-    .suggestions button.ready-pop { animation: suggestion-ready-glow 1s ease-in-out 3 both; }
-    .suggestions button.ready-pop span, .suggestions button.ready-pop::after { animation: none; }
   }
 `;
 
@@ -1774,6 +1720,11 @@ class OrientChat extends HTMLElement {
     const container = this.root.querySelector<HTMLElement>('.messages');
     if (!container) return;
     container.replaceChildren(...this.messages.map((message) => this.renderMessage(message)));
+    this.root.querySelectorAll<HTMLElement>('.thinking-label').forEach((label) => {
+      const chars = label.querySelector<HTMLElement>('.thinking-chars');
+      const dots = label.querySelector<HTMLElement>('.thinking-dots');
+      if (chars && dots) this.playThinkingAnimation(chars, dots);
+    });
     container.scrollTop = container.scrollHeight;
   }
 
@@ -1811,7 +1762,6 @@ class OrientChat extends HTMLElement {
       dots.setAttribute('aria-hidden', 'true');
       for (let index = 0; index < 3; index += 1) dots.append(document.createElement('span'));
       thinkingLabel.append(chars, dots);
-      this.playThinkingAnimation(chars, dots);
       bubble.append(thinkingLabel);
     } else if (message.role === 'assistant' && message.rawContent) {
       this.renderAnswerWithSources(bubble, message.rawContent, message.sources || []);
