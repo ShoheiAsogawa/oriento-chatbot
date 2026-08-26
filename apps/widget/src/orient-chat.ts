@@ -345,24 +345,25 @@ const styles = `
   .thinking-chars { display: inline-flex; }
   .thinking-char {
     display: inline-block;
-    animation: thinking-wave 1.4s ease-in-out infinite;
+    animation: thinking-wave 1.15s ease-in-out infinite;
+    will-change: transform, color;
   }
   .thinking-dots {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    margin-left: 5px;
-    height: 10px;
+    gap: 4px;
+    margin-left: 6px;
+    height: 12px;
   }
   .thinking-dots span {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--orient-primary);
-    animation: thinking-dot 1.05s ease-in-out infinite;
+    animation: thinking-dot .9s ease-in-out infinite;
   }
-  .thinking-dots span:nth-child(2) { animation-delay: .14s; }
-  .thinking-dots span:nth-child(3) { animation-delay: .28s; }
+  .thinking-dots span:nth-child(2) { animation-delay: .12s; }
+  .thinking-dots span:nth-child(3) { animation-delay: .24s; }
   .message-choices { margin-top: 9px; animation: choices-in 180ms ease-out both; }
   .choice-label { margin: 0 0 6px; color: var(--orient-muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
   .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
@@ -476,9 +477,9 @@ const styles = `
   }
   .oc-cal-submit:hover, .oc-cal-submit:focus-visible { background: var(--orient-primary-strong); outline: 2px solid rgba(255,104,11,.2); outline-offset: 1px; }
   .oc-cal-submit:disabled { opacity: .45; cursor: not-allowed; }
-  .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); }
+  .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 9px 14px 11px; border-top: 1px solid var(--orient-border); overflow: visible; }
   .composer.locked { opacity: .55; }
-  .suggestions button { min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease; }
+  .suggestions button { position: relative; min-width: 0; min-height: 42px; padding: 8px 6px; border: 1px solid var(--orient-primary); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: background 180ms ease, box-shadow 180ms ease; }
   .suggestions button span { display: block; color: var(--orient-primary); font-size: 17px; line-height: 1; }
   .suggestions button:hover, .suggestions button:focus-visible { background: #fff5ef; outline: 2px solid rgba(255,104,11,.25); outline-offset: 1px; }
   .suggestions button:disabled {
@@ -497,10 +498,19 @@ const styles = `
   }
   .suggestions button.ready-pop {
     z-index: 1;
-    animation: suggestion-ready 1.15s cubic-bezier(.22,.8,.28,1) 2 both;
+    animation: suggestion-ready 1s cubic-bezier(.22,.8,.28,1) 3 both;
   }
   .suggestions button.ready-pop span {
-    animation: suggestion-ready-icon .7s ease-in-out 2 both;
+    animation: suggestion-ready-icon .65s ease-in-out 3 both;
+  }
+  .suggestions button.ready-pop::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 12px;
+    border: 2px solid var(--orient-primary);
+    pointer-events: none;
+    animation: suggestion-ready-ring 1s ease-out 3 both;
   }
   .composer { display: grid; grid-template-columns: 1fr 44px; gap: 8px; margin: 0 14px; padding: 5px 5px 5px 13px; border: 2px solid var(--orient-primary); border-radius: 12px; background: #fff; }
   .composer:focus-within { box-shadow: 0 0 0 3px rgba(255,104,11,.15); }
@@ -554,23 +564,39 @@ const styles = `
   @keyframes speak { from { transform: translateY(0); } to { transform: translateY(-2px); } }
   @keyframes think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
   @keyframes thinking-wave {
-    0%, 68%, 100% { transform: translateY(0); color: var(--orient-muted); }
-    34% { transform: translateY(-3px); color: var(--orient-ink); }
+    0%, 62%, 100% { transform: translateY(0); color: var(--orient-muted); }
+    31% { transform: translateY(-5px); color: var(--orient-ink); }
   }
   @keyframes thinking-dot {
-    0%, 75%, 100% { transform: translateY(0); opacity: .35; }
-    40% { transform: translateY(-4px); opacity: 1; }
+    0%, 70%, 100% { transform: translateY(0) scale(1); opacity: .35; }
+    40% { transform: translateY(-5px) scale(1.15); opacity: 1; }
   }
   @keyframes suggestion-ready {
     0% { transform: scale(1); background: #fff; box-shadow: 0 0 0 0 rgba(255,104,11,0); }
-    32% { transform: scale(1.08); background: #fff5ef; box-shadow: 0 8px 18px rgba(255,104,11,.22), 0 0 0 6px rgba(255,104,11,.2); }
-    58% { transform: scale(0.97); }
+    28% { transform: scale(1.1); background: #fff3eb; box-shadow: 0 10px 22px rgba(255,104,11,.28), 0 0 0 7px rgba(255,104,11,.22); }
+    55% { transform: scale(0.96); }
     100% { transform: scale(1); background: #fff; box-shadow: 0 0 0 0 rgba(255,104,11,0); }
   }
   @keyframes suggestion-ready-icon {
     0%, 100% { transform: scale(1) rotate(0); }
-    40% { transform: scale(1.28) rotate(-10deg); }
-    70% { transform: scale(1.08) rotate(8deg); }
+    40% { transform: scale(1.35) rotate(-12deg); }
+    70% { transform: scale(1.1) rotate(8deg); }
+  }
+  @keyframes suggestion-ready-ring {
+    0% { opacity: .95; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.16); }
+  }
+  @keyframes thinking-fade {
+    0%, 100% { opacity: .55; transform: none; }
+    50% { opacity: 1; transform: none; }
+  }
+  @keyframes thinking-dot-fade {
+    0%, 100% { opacity: .3; transform: none; }
+    50% { opacity: 1; transform: none; }
+  }
+  @keyframes suggestion-ready-glow {
+    0%, 100% { background: #fff; box-shadow: 0 0 0 0 rgba(255,104,11,0); transform: none; }
+    40% { background: #fff3eb; box-shadow: 0 0 0 5px rgba(255,104,11,.32); transform: none; }
   }
   @media (max-width: 520px) {
     :host { inset: auto 10px 10px 10px; }
@@ -590,7 +616,11 @@ const styles = `
     .oc-picker-datetime { padding: 8px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    .panel, .message, .message-choices, .message-picker, .launcher-character, .cat { animation: none !important; }
+    .thinking-char { animation: thinking-fade 1.2s ease-in-out infinite; }
+    .thinking-dots span { animation: thinking-dot-fade .9s ease-in-out infinite; }
+    .suggestions button.ready-pop { animation: suggestion-ready-glow 1s ease-in-out 3 both; }
+    .suggestions button.ready-pop span, .suggestions button.ready-pop::after { animation: none; }
   }
 `;
 
@@ -1141,7 +1171,7 @@ class OrientChat extends HTMLElement {
   }
 
   private async demoResponse(content: string) {
-    await new Promise((resolve) => window.setTimeout(resolve, 650));
+    await new Promise((resolve) => window.setTimeout(resolve, 1800));
     if (/値引|価格交渉|法的|重要事項/u.test(content)) {
       return {
         answer: 'ごめんね、その内容はオリにゃんでは案内できないにゃん。お部屋探しや住まいのことを聞いてにゃん。',
