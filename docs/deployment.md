@@ -23,15 +23,24 @@ pnpm --filter @orient/worker exec wrangler queues create orient-chat-custom-home
 
 AI SearchはCloudflareダッシュボードまたはnamespace bindingで `orient-knowledge` を作成する。built-in storage、vector+keyword、RRF、query rewrite、rerankingを有効にする。Workerデプロイ後はAccess認証済みで `POST /api/admin/knowledge/bootstrap` を1回呼ぶことでも同じ初期化ができる。
 
-## 注文住宅のテスト通知
+## 注文住宅のメール通知（Resend）
 
-注文住宅のヒアリング完了時は、氏名・電話番号を会話履歴へ残さず暗号化してD1へ保存し、`orient-chat-custom-home-leads` Queueから通知を送る。Cloudflare Email Sending の宛先は確認済みアドレスだけが使えるため、テスト期間の通知先は `uken.shohei@gmail.com` に固定する。未確認のオリエント社内アドレスへ変えると送信できなくなる。
+注文住宅のヒアリング完了時は、氏名・電話番号を会話履歴へ残さず暗号化してD1へ保存し、`orient-chat-custom-home-leads` QueueからResend APIで通知する。会社メールとDNSを分離するため、送信専用サブドメイン `notify.orijyu.com` を使用する。
 
-1. Cloudflare Email Serviceで `orijyu.com` を送信ドメインとしてオンボードし、`no-reply@orijyu.com` を送信元として認証する。
-2. テスト通知先のGmailアドレスをCloudflare Email Routingで確認済みの宛先として登録する。
-3. `wrangler.jsonc` の `CUSTOM_HOME_LEAD_EMAIL` binding をデプロイする。
+1. Resendでアカウントを作成し、**Domains > Add Domain** から `notify.orijyu.com` を追加する。
+2. Resendが表示したSPF・DKIMなどのDNSレコードを、Xserverの **DNSレコード設定 > DNSレコード追加** にそのまま登録する。ルート`orijyu.com`のMX・SPF・ネームサーバーは変更しない。
+3. Resendでドメインが **Verified** になるまで待つ。
+4. Resendの **API Keys > Create API Key** で、送信権限を `notify.orijyu.com` に限定したキーを作成する。
+5. Cloudflare WorkerのSecret `RESEND_API_KEY` にAPIキーを登録する。APIキーをリポジトリ、チャット、`.env`の恒久ファイルへ保存しない。
+6. `CUSTOM_HOME_NOTIFICATION_SENDER` と `CUSTOM_HOME_NOTIFICATION_RECIPIENT` を確認してデプロイする。通知先はResendで個別確認する必要がない。
 
-送信失敗時はQueueが最大5回再試行する。Queue・監査ログには問い合わせIDだけを入れ、氏名・電話番号・相談内容は入れない。
+```powershell
+pnpm --filter @orient/worker exec wrangler secret put RESEND_API_KEY
+pnpm build
+pnpm deploy:production
+```
+
+送信失敗時はQueueが最大5回再試行する。同じ問い合わせIDをResendのIdempotency Keyに使用し、応答欠落時の重複送信を防ぐ。Queue・監査ログには問い合わせIDだけを入れ、氏名・電話番号・相談内容は入れない。
 
 ## シークレット
 
@@ -45,6 +54,7 @@ AI SearchはCloudflareダッシュボードまたはnamespace bindingで `orient
 - `ACCESS_AUD`: Access Application Audience tag
 - `ADMIN_ALLOWED_EMAILS`: カンマ区切りの管理者メール
 - `AI_GATEWAY_TOKEN`: AI Gateway 実行専用の最小権限トークン。OpenAIキー本体はWorkerへ保存せず、AI Gateway BYOKで管理する
+- `RESEND_API_KEY`: `notify.orijyu.com` の送信に限定したResend APIキー
 
 初回デプロイは、これらを含むGit管理外の一時 `.env` を `wrangler deploy --secrets-file <path>` に渡す。完了後は一時ファイルを安全に削除する。`DEV_ADMIN_BYPASS` は通常変数として本番 `false` に固定されている。複数Worker間で鍵共有が必要になった段階ではSecrets Storeへ移行する。
 
