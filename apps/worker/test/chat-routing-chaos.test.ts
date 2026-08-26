@@ -217,7 +217,7 @@ describe('whole-chat routing chaos audit', () => {
       user('資料請求したい'),
       assistant('資料をお届けするにゃん。お名前を教えてにゃん。'),
       user('[お名前]'),
-      assistant('資料を届ける住所を教えてにゃん。番地まで書けるとにゃん。'),
+      assistant('資料をお届けする住所を、番地まで教えてにゃん。'),
       user('[住所]'),
       assistant('連絡用の電話番号を教えてにゃん。'),
       user('[電話番号]'),

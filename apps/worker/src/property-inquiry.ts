@@ -80,7 +80,7 @@ const VIEWING_INTENT = /(?:(?:見学|内見|内覧)(?:を)?(?:したい|予約)|
 const NAME_PROMPT = /(?:お名前|氏名|名前).*(?:教えて|聞かせ|入力)/u;
 const ADDRESS_PROMPT = /(?:住所|ご住所|届ける住所|現在の(?:ご)?住所).*(?:教えて|聞かせ|入力|書ける)/u;
 const PHONE_PROMPT = /(?:電話番号|連絡用の電話).*(?:教えて|入力|聞かせ)/u;
-const DATETIME_TEXT_PROMPT = /(?:希望日時を(?:自由に|そのまま)|日時を(?:教えて|書いて))/u;
+const DATETIME_TEXT_PROMPT = /(?:希望日時を(?:自由に|そのまま)|希望日時を[、，].*(?:教えて|書いて)|日時を(?:教えて|書いて))/u;
 const NAME_REDACTED = /\[お名前\]/u;
 const PHONE_REDACTED = /\[電話番号\]/u;
 const ADDRESS_REDACTED = /\[住所\]/u;
@@ -433,17 +433,17 @@ function nextStep(state: PropertyInquiryState): PropertyInquiryStep | undefined 
 
 function promptForStep(kind: PropertyInquiryKind, step: PropertyInquiryStep) {
   if (step === 'viewing_datetime') return '見学の希望日時を、カレンダーから選んでにゃん。';
-  if (step === 'viewing_day') return '見学の希望日を選んでにゃん。ボタンから選ぶとかんたんにゃん。';
-  if (step === 'viewing_time') return 'その日の希望時間はどれかにゃん。';
-  if (step === 'viewing_datetime_text') return '見学の希望日時を、日付と時間のつきで教えてにゃん。';
+  if (step === 'viewing_day') return '見学の希望日を選んでにゃん。ボタンから選べるにゃん。';
+  if (step === 'viewing_time') return 'その日の希望時間を選んでにゃん。';
+  if (step === 'viewing_datetime_text') return '見学の希望日時を、日付と時間つきで教えてにゃん。';
   if (step === 'contact_name') {
     if (kind === 'document_request') return '資料をお届けするにゃん。お名前を教えてにゃん。';
     if (kind === 'phone') return '担当者からお電話するにゃん。お名前を教えてにゃん。';
     return '見学のお申し込みだにゃん。お名前を教えてにゃん。';
   }
   if (step === 'contact_address') {
-    if (kind === 'document_request') return '資料を届ける住所を教えてにゃん。番地まで書けるとにゃん。';
-    return '現在のご住所を教えてにゃん。番地まで書けるとにゃん。';
+    if (kind === 'document_request') return '資料をお届けする住所を、番地まで教えてにゃん。';
+    return '現在のご住所を、番地まで教えてにゃん。';
   }
   if (step === 'contact_phone') return '連絡用の電話番号を教えてにゃん。';
   return undefined;
