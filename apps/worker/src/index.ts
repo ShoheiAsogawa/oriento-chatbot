@@ -33,6 +33,7 @@ import {
 } from './custom-home-leads';
 import { customHomeIntakeFromState, redactCustomHomeContactTurn } from './custom-home-chat';
 import { processCustomHomeNotification, type CustomHomeNotificationPayload } from './custom-home-notifications';
+import { sendEmailWithResend } from './resend-email';
 import {
   evaluatePropertyInquiry,
   extractPropertyInquiryContact,
@@ -3016,10 +3017,14 @@ async function consumeCustomHomeLeadBatch(
 ) {
   for (const message of batch.messages) {
     if (isPropertyInquiryQueuePayload(message.body)) {
+      const propertyInquiryId = message.body.propertyInquiryId;
       const result = await processPropertyInquiryNotification(env.DB, env, message.body, {
-        sender: 'no-reply@orijyu.com',
-        recipient: 'uken.shohei@gmail.com',
-        send: (email) => env.CUSTOM_HOME_LEAD_EMAIL.send(email),
+        sender: env.LEAD_NOTIFICATION_SENDER,
+        recipient: env.LEAD_NOTIFICATION_RECIPIENT,
+        send: (email) => sendEmailWithResend(email, {
+          apiKey: env.RESEND_API_KEY,
+          idempotencyKey: `property-inquiry/${propertyInquiryId}`,
+        }),
       });
       if (result.disposition === 'retry') {
         message.retry({ delaySeconds: Math.min(60, Math.max(10, result.attempt * 10)) });
@@ -3033,17 +3038,25 @@ async function consumeCustomHomeLeadBatch(
             : 'property_inquiry.notification_failed',
           actorType: 'system',
           subjectType: 'property_inquiry',
-          subjectId: message.body.propertyInquiryId,
+          subjectId: propertyInquiryId,
           metadata: { attempt: result.attempt },
         });
       }
       continue;
     }
 
+    if (!('leadId' in message.body)) {
+      message.ack();
+      continue;
+    }
+    const leadId = message.body.leadId;
     const result = await processCustomHomeNotification(env.DB, env, message.body, {
-      sender: 'no-reply@orijyu.com',
-      recipient: 'uken.shohei@gmail.com',
-      send: (email) => env.CUSTOM_HOME_LEAD_EMAIL.send(email),
+      sender: env.LEAD_NOTIFICATION_SENDER,
+      recipient: env.LEAD_NOTIFICATION_RECIPIENT,
+      send: (email) => sendEmailWithResend(email, {
+        apiKey: env.RESEND_API_KEY,
+        idempotencyKey: `custom-home-lead/${leadId}`,
+      }),
     });
     if (result.disposition === 'retry') {
       message.retry({ delaySeconds: Math.min(60, Math.max(10, result.attempt * 10)) });
@@ -3057,7 +3070,7 @@ async function consumeCustomHomeLeadBatch(
           : 'custom_home.notification_failed',
         actorType: 'system',
         subjectType: 'custom_home_lead',
-        subjectId: message.body.leadId,
+        subjectId: leadId,
         metadata: { attempt: result.attempt },
       });
     }

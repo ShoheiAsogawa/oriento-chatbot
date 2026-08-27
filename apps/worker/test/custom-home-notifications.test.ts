@@ -86,12 +86,12 @@ describe('processCustomHomeNotification', () => {
     const store = await seededDb();
     let sent: { to: string; subject?: string; text: string } | undefined;
     const result = await processCustomHomeNotification(store.db, env(), { leadId }, {
-      sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com',
+      sender: 'オリにゃん <no-reply@orijyu.com>', recipient: 'hankyo@orijyu.com',
       send: async (email) => { sent = { to: email.to, subject: email.subject, text: email.text }; },
     });
     expect(result).toEqual({ disposition: 'ack', status: 'sent', attempt: 1 });
     expect(store.state.status).toBe('sent');
-    expect(sent?.to).toBe('uken.shohei@gmail.com');
+    expect(sent?.to).toBe('hankyo@orijyu.com');
     expect(sent?.subject).toBe('【オリにゃん】注文住宅のご相談が届きました');
     expect(sent?.text).toContain('山田 太郎');
     expect(sent?.text).toContain('大阪市');
@@ -108,7 +108,7 @@ describe('processCustomHomeNotification', () => {
     }), env() as Env) as string;
     let sentText = '';
     await processCustomHomeNotification(store.db, env(), { leadId }, {
-      sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com',
+      sender: 'オリにゃん <no-reply@orijyu.com>', recipient: 'hankyo@orijyu.com',
       send: async (email) => { sentText = email.text; },
     });
     expect(sentText).toContain('土地: 未定');
@@ -119,7 +119,7 @@ describe('processCustomHomeNotification', () => {
   it('retries a transient send failure without persisting the exception message', async () => {
     const store = await seededDb();
     const result = await processCustomHomeNotification(store.db, env(), { leadId }, {
-      sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com',
+      sender: 'オリにゃん <no-reply@orijyu.com>', recipient: 'hankyo@orijyu.com',
       send: async () => { throw new Error('phone=09012345678 should not be persisted'); },
     });
     expect(result).toEqual({ disposition: 'retry', status: 'failed', attempt: 1 });
@@ -131,7 +131,7 @@ describe('processCustomHomeNotification', () => {
     const store = await seededDb({ status: 'sent', attempts: 1 });
     let sendCount = 0;
     const result = await processCustomHomeNotification(store.db, env(), { leadId }, {
-      sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com',
+      sender: 'オリにゃん <no-reply@orijyu.com>', recipient: 'hankyo@orijyu.com',
       send: async () => { sendCount += 1; },
     });
     expect(result.status).toBe('skipped');
@@ -143,7 +143,7 @@ describe('processCustomHomeNotification', () => {
     store.state.updatedAt = new Date(Date.now() - 31 * 1000).toISOString();
     let sendCount = 0;
     const result = await processCustomHomeNotification(store.db, env(), { leadId }, {
-      sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com',
+      sender: 'オリにゃん <no-reply@orijyu.com>', recipient: 'hankyo@orijyu.com',
       send: async () => { sendCount += 1; },
     });
     expect(result).toEqual({ disposition: 'ack', status: 'sent', attempt: 2 });
@@ -154,7 +154,7 @@ describe('processCustomHomeNotification', () => {
   it('retries a freshly processing lead instead of acknowledging it forever', async () => {
     const store = await seededDb({ status: 'processing', attempts: 1 });
     const result = await processCustomHomeNotification(store.db, env(), { leadId }, {
-      sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com', send: async () => undefined,
+      sender: 'オリにゃん <no-reply@orijyu.com>', recipient: 'hankyo@orijyu.com', send: async () => undefined,
     });
     expect(result).toEqual({ disposition: 'retry', status: 'skipped', attempt: 1 });
   });
@@ -162,7 +162,7 @@ describe('processCustomHomeNotification', () => {
   it('acks malformed or missing payloads without touching the database', async () => {
     const store = await seededDb();
     const result = await processCustomHomeNotification(store.db, env(), { leadId: 'not-an-id' }, {
-      sender: 'no-reply@orijyu.com', recipient: 'uken.shohei@gmail.com', send: async () => undefined,
+      sender: 'オリにゃん <no-reply@orijyu.com>', recipient: 'hankyo@orijyu.com', send: async () => undefined,
     });
     expect(result).toEqual({ disposition: 'ack', status: 'skipped', attempt: 0 });
     expect(store.calls).toHaveLength(0);

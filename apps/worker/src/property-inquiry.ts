@@ -238,11 +238,14 @@ export function viewingDatetimeFromMessage(content: string, now = new Date()): s
   const value = normalized.slice(VIEWING_DATETIME_PREFIX.length).trim();
   if (!value || value.length > 80) return undefined;
   const iso = value.match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{1,2}):(\d{2}))?$/u);
-  if (!iso) return undefined;
-  if (!isRealIsoDay(iso[1]) || !isViewingDayInWindow(iso[1], now)) return undefined;
-  if (iso[2] === undefined || iso[3] === undefined) return undefined;
-  if (!isRealClockTime(iso[2], iso[3])) return undefined;
-  return `${iso[1]} ${pad2(Number(iso[2]))}:${iso[3]}`;
+  const day = iso?.[1];
+  const hour = iso?.[2];
+  const minute = iso?.[3];
+  if (!iso || !day) return undefined;
+  if (!isRealIsoDay(day) || !isViewingDayInWindow(day, now)) return undefined;
+  if (hour === undefined || minute === undefined) return undefined;
+  if (!isRealClockTime(hour, minute)) return undefined;
+  return `${day} ${pad2(Number(hour))}:${minute}`;
 }
 
 function formatPreferredDatetime(date?: string, time?: string, fallback?: string) {

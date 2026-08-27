@@ -23,15 +23,32 @@ pnpm --filter @orient/worker exec wrangler queues create orient-chat-custom-home
 
 AI SearchはCloudflareダッシュボードまたはnamespace bindingで `orient-knowledge` を作成する。built-in storage、vector+keyword、RRF、query rewrite、rerankingを有効にする。Workerデプロイ後はAccess認証済みで `POST /api/admin/knowledge/bootstrap` を1回呼ぶことでも同じ初期化ができる。
 
-## チャットからの問い合わせ通知
+## チャットからの問い合わせ通知（Resend）
 
-注文住宅のヒアリング完了時、および購入・賃貸の候補表示後に届く資料請求・電話相談・見学予約は、氏名・電話番号・住所を会話履歴へ残さず暗号化してD1へ保存し、`orient-chat-custom-home-leads` Queueから通知を送る。管理画面の「お問い合わせ」にも同じ内容が残る。Cloudflare Email Sending の宛先は確認済みアドレスだけが使えるため、テスト期間の通知先は `uken.shohei@gmail.com` に固定する。未確認のオリエント社内アドレスへ変えると送信できなくなる。
+注文住宅のヒアリング完了時、および購入・賃貸の候補表示後に届く資料請求・電話相談・見学予約は、氏名・電話番号・住所を会話履歴へ残さず暗号化してD1へ保存し、`orient-chat-custom-home-leads` QueueからResend APIで通知する。管理画面の「お問い合わせ」にも同じ内容が残る。
 
-1. Cloudflare Email Serviceで `orijyu.com` を送信ドメインとしてオンボードし、`no-reply@orijyu.com` を送信元として認証する。
-2. テスト通知先のGmailアドレスをCloudflare Email Routingで確認済みの宛先として登録する。
-3. `wrangler.jsonc` の `CUSTOM_HOME_LEAD_EMAIL` binding をデプロイする。
+差出人は `オリにゃん <no-reply@orijyu.com>`、通知先は `hankyo@orijyu.com`。Resendは送信ドメインさえ認証すれば、宛先を個別確認しなくてよい。会社メールが使うルートMX・SPFは変更しない。
 
-送信失敗時はQueueが最大5回再試行する。Queue・監査ログには問い合わせIDだけを入れ、氏名・電話番号・相談内容は入れない。
+### Resendでの設定
+
+1. [Resend](https://resend.com/) でアカウントを作成し、ダッシュボードの **Domains > Add Domain** から `orijyu.com` を追加する。リージョンは受信者に近い場所（例: アジア）を選ぶ。
+2. Resendの **Records** に出るDNSレコードを、Xserverの **DNSレコード設定 > DNSレコード追加** にそのまま登録する。よく出るのは次の3つで、ホスト名にルートドメインは付けない。
+   - `MX` / ホスト `send` / 値はResendが表示した `feedback-smtp....amazonses.com`（優先度も画面の値）
+   - `TXT` / ホスト `send` / 値はResendが表示した SPF（`v=spf1 ...`）
+   - `TXT` / ホスト `resend._domainkey` / 値はResendが表示した DKIM（長い `p=...` を途中で切らない）
+3. ルートの `orijyu.com` にある既存の MX（会社メール受信用）と SPF は触らない。Resend用のレコードをルートへ足すと、社内メールが届かなくなる。
+4. Xserverで保存したあと、Resendのドメイン画面で **Verify** を押し、状態が **Verified** になるまで待つ。早ければ十数分、遅いと数時間かかる。確認は [dns.email](https://dns.email/orijyu.com) でもできる。
+5. Resendの **API Keys > Create API Key** で、送信権限を `orijyu.com` に限定したキーを作る。表示されたキーは一度しか見られない。
+6. キーをCloudflare WorkerのSecretへ登録する。リポジトリ、チャット、恒久的な `.env` には置かない。
+
+```powershell
+pnpm --filter @orient/worker exec wrangler secret put RESEND_API_KEY
+```
+
+7. `wrangler.jsonc` の `LEAD_NOTIFICATION_SENDER` と `LEAD_NOTIFICATION_RECIPIENT` を確認してデプロイする。今の通知先は `hankyo@orijyu.com`。
+8. 送信結果は Resend の **Emails** で確認する。届かないときは迷惑メールと、Resendの失敗理由を見る。
+
+送信失敗時はQueueが最大5回再試行する。同じ問い合わせIDをResendのIdempotency Keyに使い、応答欠落時の重複送信を防ぐ。Queue・監査ログには問い合わせIDだけを入れ、氏名・電話番号・相談内容は入れない。
 
 ## シークレット
 
@@ -45,6 +62,7 @@ AI SearchはCloudflareダッシュボードまたはnamespace bindingで `orient
 - `ACCESS_AUD`: Access Application Audience tag
 - `ADMIN_ALLOWED_EMAILS`: カンマ区切りの管理者メール
 - `AI_GATEWAY_TOKEN`: AI Gateway 実行専用の最小権限トークン。OpenAIキー本体はWorkerへ保存せず、AI Gateway BYOKで管理する
+- `RESEND_API_KEY`: `orijyu.com` の送信に限定したResend APIキー
 
 初回デプロイは、これらを含むGit管理外の一時 `.env` を `wrangler deploy --secrets-file <path>` に渡す。完了後は一時ファイルを安全に削除する。`DEV_ADMIN_BYPASS` は通常変数として本番 `false` に固定されている。複数Worker間で鍵共有が必要になった段階ではSecrets Storeへ移行する。
 

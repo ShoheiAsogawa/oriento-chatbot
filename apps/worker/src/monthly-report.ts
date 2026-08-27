@@ -92,6 +92,7 @@ export function japanMonth(now = new Date()) {
 export function shiftJapanMonth(month: string, delta: number) {
   if (!isReportMonth(month)) throw new Error('Invalid month');
   const [year, monthNumber] = month.split('-').map(Number);
+  if (year === undefined) throw new Error('Invalid month');
   return new Date(Date.UTC(year, (monthNumber || 1) - 1 + delta, 1)).toISOString().slice(0, 7);
 }
 
