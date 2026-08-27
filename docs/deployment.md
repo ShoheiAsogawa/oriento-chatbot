@@ -88,8 +88,8 @@ pnpm --filter @orient/worker exec wrangler deploy --secrets-file <Git管理外�
 
 ## コスト制御
 
-- `DAILY_SESSION_LIMIT=500`: 日本時間1日あたりの新規会話ハード上限
-- `DAILY_AI_REQUEST_LIMIT=500`: 日本時間1日あたりのAI Search・OpenAI推論ハード上限
+- `DAILY_SESSION_LIMIT=1000`: 日本時間1日あたりの新規会話ハード上限
+- `DAILY_AI_REQUEST_LIMIT=1000`: 日本時間1日あたりのAI Search・OpenAI推論ハード上限
 - Cloudflare Budget Alert: 既存のアカウント全体 $10 通知を維持
 - R2 Lifecycle: `audit/` は400日、`reports/` は1,095日で削除
 - R2バケットは非公開とし、Public Development URLを有効にしない

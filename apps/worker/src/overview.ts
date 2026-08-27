@@ -459,9 +459,9 @@ export async function loadOverview(
     costGuard: {
       day: dailyUsage.day,
       sessions: asCount(dailyUsage.counts.chat_sessions),
-      sessionLimit: parseDailyLimit(options.sessionLimit, 500),
+      sessionLimit: parseDailyLimit(options.sessionLimit, 1000),
       aiRequests: asCount(dailyUsage.counts.ai_requests),
-      aiRequestLimit: parseDailyLimit(options.aiRequestLimit, 500),
+      aiRequestLimit: parseDailyLimit(options.aiRequestLimit, 1000),
     },
   };
 }

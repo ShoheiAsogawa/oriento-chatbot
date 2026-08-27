@@ -437,9 +437,9 @@ function mockOverviewData(today = '2026-08-13'): OverviewData {
     costGuard: {
       day: today,
       sessions: last?.conversations || 84,
-      sessionLimit: 500,
+      sessionLimit: 1000,
       aiRequests: 312,
-      aiRequestLimit: 500,
+      aiRequestLimit: 1000,
     },
   };
 }

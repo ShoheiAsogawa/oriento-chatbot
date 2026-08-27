@@ -394,7 +394,7 @@ app.post('/api/chat/session', async (context) => {
     context.env.DB,
     'chat_sessions',
     context.env.DAILY_SESSION_LIMIT,
-    500,
+    1000,
   );
   if (!dailySessions.allowed) {
     console.warn(JSON.stringify({ level: 'warn', event: 'cost_guard.sessions_exhausted', day: dailySessions.day, limit: dailySessions.limit }));
@@ -1684,7 +1684,7 @@ app.post('/api/chat/message', async (context) => {
     context.env.DB,
     'ai_requests',
     context.env.DAILY_AI_REQUEST_LIMIT,
-    500,
+    1000,
   );
   if (!dailyAi.allowed) {
     console.warn(JSON.stringify({ level: 'warn', event: 'cost_guard.ai_exhausted', day: dailyAi.day, limit: dailyAi.limit }));

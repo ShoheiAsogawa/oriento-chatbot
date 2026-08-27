@@ -24,8 +24,8 @@
     "CLOUDFLARE_ACCOUNT_ID": "d2874089eebcda705bf220d39f117aec",
     "AI_GATEWAY_ID": "orient-chat",
     "GENERATION_MODEL": "gpt-5.4-nano",
-    "DAILY_SESSION_LIMIT": "500",
-    "DAILY_AI_REQUEST_LIMIT": "500",
+    "DAILY_SESSION_LIMIT": "1000",
+    "DAILY_AI_REQUEST_LIMIT": "1000",
     "LEAD_NOTIFICATION_SENDER": "オリにゃん <no-reply@orijyu.com>",
     "LEAD_NOTIFICATION_RECIPIENT": "hankyo@orijyu.com",
     "DEV_ADMIN_BYPASS": "false"
