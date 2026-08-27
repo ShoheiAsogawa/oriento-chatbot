@@ -1,4 +1,5 @@
 import { decryptPII, encryptPII, sha256 } from './security';
+import { normalizePhoneNumber } from './phone';
 
 /**
  * The fields that may be retained as the custom-home consultation summary.
@@ -65,13 +66,7 @@ export class CustomHomeLeadValidationError extends Error {
 }
 
 function normalizePhone(input: string) {
-  const normalized = input.normalize('NFKC').trim();
-  const digits = normalized.replace(/\D/gu, '');
-  const japanese = normalized.startsWith('+81') || normalized.startsWith('0081') || /^81[789]0/u.test(digits)
-    ? `0${digits.slice(digits.startsWith('0081') ? 4 : 2)}`
-    : digits;
-  if (/^0[789]0/u.test(japanese)) return /^0[789]0\d{8}$/u.test(japanese) ? japanese : '';
-  return /^0[1-9]\d{8,9}$/u.test(japanese) ? japanese : '';
+  return normalizePhoneNumber(input, { lenient: true }) || '';
 }
 
 function safeIntake(input: CustomHomeLeadIntake) {
@@ -111,7 +106,7 @@ export async function persistCustomHomeLead(
 ): Promise<CustomHomeLeadResult> {
   const conversationId = safeText(input.conversationId, 100);
   const phone = normalizePhone(input.contact.phone);
-  if (!conversationId || !/^0\d{9,10}$/u.test(phone)) {
+  if (!conversationId || !phone) {
     throw new CustomHomeLeadValidationError();
   }
 

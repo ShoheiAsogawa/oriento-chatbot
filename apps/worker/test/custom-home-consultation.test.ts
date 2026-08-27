@@ -310,7 +310,11 @@ describe('custom home consultation', () => {
     expect(normalizeCustomHomePhone('090-1234-5678')).toBe('09012345678');
     expect(normalizeCustomHomePhone('+81 90 1234 5678')).toBe('09012345678');
     expect(normalizeCustomHomePhone('03-1234-5678')).toBe('0312345678');
+    expect(normalizeCustomHomePhone('090ー1234ー5678')).toBe('09012345678');
+    expect(normalizeCustomHomePhone('090-1234-56')).toBe('090123456');
+    expect(normalizeCustomHomePhone('090-1234-56789')).toBe('090123456789');
     expect(normalizeCustomHomePhone('12345')).toBeUndefined();
+    expect(normalizeCustomHomePhone('090-秘密', { lenient: true })).toBe('090');
     expect(extractCustomHomeContact('名前は山田太郎、電話番号は090-1234-5678')).toEqual({
       name: '山田太郎',
       phone: '09012345678',
@@ -354,18 +358,23 @@ describe('custom home consultation', () => {
     ['+81 6 1234 5678', '0612345678'],
     ['090.1234.5678', '09012345678'],
     ['0120-123-456', '0120123456'],
+    ['090ー1234ー5678', '09012345678'],
+    ['０９０−１２３４−５６７８', '09012345678'],
+    ['090-1234-56', '090123456'],
   ])('accepts common phone format: %s', (input, expected) => {
     expect(normalizeCustomHomePhone(input)).toBe(expected);
     expect(extractCustomHomeContact(input, { expectingName: true }).phone).toBe(expected);
   });
 
   it.each([
-    '000-0000-0000',
-    '090-1234-56',
-    '090-1234-56789',
     'https://page.line.me/089wmudt',
   ])('does not mistake an invalid/contact link value for a phone: %s', (input) => {
     expect(extractCustomHomeContact(input, { expectingName: true })).toEqual({});
+  });
+
+  it('accepts a short or messy number while the phone prompt is showing', () => {
+    expect(extractCustomHomeContact('090-秘密', { expectingPhone: true }).phone).toBe('090');
+    expect(extractCustomHomeContact('内線1234', { expectingPhone: true }).phone).toBe('1234');
   });
 
   it('does not treat an official LINE link or instruction as the visitor name', () => {

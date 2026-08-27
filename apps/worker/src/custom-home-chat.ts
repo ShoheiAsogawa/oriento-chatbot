@@ -48,7 +48,10 @@ export function redactCustomHomeContactTurn(
   const redacted = redactPII(rawMessage);
   if (!expectedStep) return { redacted, contact: {} };
 
-  const contact = extractCustomHomeContact(rawMessage, { expectingName: true });
+  const contact = extractCustomHomeContact(rawMessage, {
+    expectingName: true,
+    expectingPhone: expectedStep === 'contact_phone',
+  });
   if (!contact.name && !contact.phone) return { redacted, contact: {}, expectedStep };
   const markers = [contact.name ? '[お名前]' : '', contact.phone ? '[電話番号]' : ''].filter(Boolean);
   return { redacted: markers.join(' '), contact, expectedStep };

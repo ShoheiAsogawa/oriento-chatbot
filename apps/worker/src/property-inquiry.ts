@@ -536,7 +536,10 @@ export function extractPropertyInquiryState(
       continue;
     }
 
-    const contact = extractCustomHomeContact(content, { expectingName: expectingName || expectingPhone });
+    const contact = extractCustomHomeContact(content, {
+      expectingName: expectingName || expectingPhone,
+      expectingPhone,
+    });
     if (contact.name || NAME_REDACTED.test(normalize(content))) state.nameSet = true;
     if (contact.phone || PHONE_REDACTED.test(normalize(content))) state.phoneSet = true;
 
@@ -713,6 +716,7 @@ export function extractPropertyInquiryContact(
   const expectingAddress = decision.step === 'contact_address';
   const contact = extractCustomHomeContact(currentMessage, {
     expectingName: expectingName || expectingPhone || expectingAddress,
+    expectingPhone,
   });
   const address = addressFromMessage(currentMessage, expectingAddress);
   return {

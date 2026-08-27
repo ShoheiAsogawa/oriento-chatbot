@@ -3,6 +3,7 @@ import type { ConversationContextMessage } from '../src/conversation-context';
 import {
   PROPERTY_INQUIRY_VALUES,
   evaluatePropertyInquiry,
+  extractPropertyInquiryContact,
   extractPropertyInquiryState,
   inquiryPropertiesForLead,
   kindFromInquiryMessage,
@@ -92,6 +93,8 @@ describe('property inquiry flow', () => {
       phoneSet: true,
       leadReady: true,
     });
+    expect(evaluatePropertyInquiry(askingPhone, '090ー1234ー5678').leadReady).toBe(true);
+    expect(extractPropertyInquiryContact(askingPhone, '090ー1234ー5678').phone).toBe('09012345678');
   });
 
   it('only asks a phone-consult visitor for name and phone', () => {

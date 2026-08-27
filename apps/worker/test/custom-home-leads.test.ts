@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { decryptPII } from '../src/security';
-import {
-  CustomHomeLeadValidationError,
-  persistCustomHomeDraft,
-  persistCustomHomeLead,
-} from '../src/custom-home-leads';
+import { persistCustomHomeDraft, persistCustomHomeLead } from '../src/custom-home-leads';
 
 type Customer = { id: string; phoneHash: string; nameEnc: string | null; phoneEnc: string | null };
 type Lead = { id: string; conversationId: string; customerId: string | null; intakeEnc: string; nameEnc?: string | null };
@@ -158,13 +154,15 @@ describe('persistCustomHomeLead', () => {
     expect(result.customerId).toBe(store.customers[0]!.id);
   });
 
-  it('rejects invalid phone numbers without exposing the input', async () => {
+  it('stores unusual phone formats instead of rejecting the lead', async () => {
     const store = mockDb();
-    await expect(persistCustomHomeLead(store.db, env(), {
+    const result = await persistCustomHomeLead(store.db, env(), {
       conversationId: 'conversation-3',
-      contact: { name: 'テスト', phone: '090-秘密' },
+      contact: { name: 'テスト', phone: '090ー1234ー5678' },
       intake: {},
-    })).rejects.toBeInstanceOf(CustomHomeLeadValidationError);
+    });
+    expect(result.created).toBe(true);
+    expect(await decryptPII(store.customers[0]!.phoneEnc, env())).toBe('09012345678');
   });
 
   it('stores the name step encrypted as a collecting draft', async () => {

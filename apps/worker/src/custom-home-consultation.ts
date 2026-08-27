@@ -1,4 +1,5 @@
 import type { ConversationContextMessage } from './conversation-context';
+import { normalizePhoneNumber } from './phone';
 import { isObviousConversationDetour } from './property-search-continuation';
 
 /**
@@ -78,6 +79,8 @@ export type CustomHomeContact = {
 export type CustomHomeContactExtractionOptions = {
   /** Set when the preceding prompt asks for the visitor's name. */
   expectingName?: boolean;
+  /** Set when the preceding prompt asks for a phone number. */
+  expectingPhone?: boolean;
 };
 
 const CUSTOM_HOME_INTENT = /(?:注文住宅|注文建築|自由設計|マイホームを建て|家を建て(?:たい|る|よう))/u;
@@ -103,7 +106,7 @@ const UNKNOWN_NOTE = '未定（相談希望）';
 const CONTACT_DECLINE = /(?:^(?:なし|ない|ありません|未定|後で|あとで|匿名(?:で|希望)?|名無し)[。！!？?]?$|(?:名前|氏名|電話番号|連絡先|個人情報).*(?:教えたくない|言いたくない|入力したくない|送りたくない|不安|心配)|LINEで(?:相談|送る|連絡))/u;
 const BUDGET_TO_CONSULT = /^(?:予算(?:は|を)?(?:相談(?:して)?(?:決めたい|したい)|未定)|相談(?:して)?(?:決めたい|したい)|未定)[。！!？?]?$/u;
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/iu;
-const PHONE_CANDIDATE = /((?:(?:\+?81|0081)[-\s()]?[1-9]\d{0,3}|0\d{1,4})[\d\s().\-]{7,20}\d)/u;
+const PHONE_CANDIDATE = /((?:(?:\+?81|0081)[-ー－−\s()]?[1-9]\d{0,3}|0\d{1,4})[\d\s().\-ー－−]{3,20}\d)/u;
 const LAYOUT = /(?:\d+\s*[SLDKR]+|平屋|二世帯住宅?|自由設計)/iu;
 const AREA_SUFFIX = /(?:都|道|府|県|市|区|町|村|駅)/u;
 const LOCATION_NOISE = /(?:ありがとう|どうも|よろしく|わからない|分からない|おなか|ごはん|誰|だれ)/u;
@@ -314,18 +317,9 @@ function nameFromMessage(content: string, answeredPrompt: boolean) {
   return normalized;
 }
 
-/** Returns a normalized Japanese phone number, or undefined for invalid input. */
-export function normalizeCustomHomePhone(value: string) {
-  const normalized = normalize(value);
-  const digits = normalized.replace(/\D/gu, '');
-  const japanese = normalized.startsWith('+81') || normalized.startsWith('0081') || /^81[789]0/u.test(digits)
-    ? `0${digits.slice(digits.startsWith('0081') ? 4 : 2)}`
-    : digits;
-  // Mobile/IP phones are 11 digits; ordinary Japanese fixed-line numbers are
-  // 10 or 11 digits. Reject all-zero and other short/fake values while still
-  // accepting common 03/06/0120 and international +81 formats.
-  if (/^0[789]0/u.test(japanese)) return /^0[789]0\d{8}$/u.test(japanese) ? japanese : undefined;
-  return /^0[1-9]\d{8,9}$/u.test(japanese) ? japanese : undefined;
+/** Returns a normalized phone number, or undefined when nothing digit-like is present. */
+export function normalizeCustomHomePhone(value: string, options: { lenient?: boolean } = {}) {
+  return normalizePhoneNumber(value, options);
 }
 
 /**
@@ -337,7 +331,10 @@ export function extractCustomHomeContact(
   options: CustomHomeContactExtractionOptions = {},
 ): CustomHomeContact {
   const phoneMatch = normalize(content).match(PHONE_CANDIDATE)?.[1];
-  const phone = phoneMatch ? normalizeCustomHomePhone(phoneMatch) : undefined;
+  const phone = normalizeCustomHomePhone(
+    phoneMatch || (options.expectingPhone ? content : ''),
+    { lenient: Boolean(options.expectingPhone) },
+  );
   // Remove the phone before parsing a name so a final single-message reply such
   // as "山田太郎 090-1234-5678" can be split without persisting either value.
   const nameInput = phoneMatch ? normalize(content).replace(phoneMatch, ' ') : content;
@@ -348,8 +345,9 @@ export function extractCustomHomeContact(
   };
 }
 
-function customHomePhoneProvided(content: string) {
-  return PHONE_REDACTED.test(normalize(content)) || Boolean(extractCustomHomeContact(content).phone);
+function customHomePhoneProvided(content: string, expectingPhone = false) {
+  return PHONE_REDACTED.test(normalize(content))
+    || Boolean(extractCustomHomeContact(content, { expectingPhone }).phone);
 }
 
 function isNoPreferenceAnswer(content: string) {
@@ -592,6 +590,7 @@ export function extractCustomHomeConsultationState(
     }
     const contact = extractCustomHomeContact(content, {
       expectingName: NAME_PROMPT.test(assistant) || PHONE_PROMPT.test(assistant),
+      expectingPhone: PHONE_PROMPT.test(assistant),
     });
     if (contact.name || (NAME_PROMPT.test(assistant) && NAME_REDACTED.test(content))) {
       state.contactNameSet = true;
@@ -600,7 +599,10 @@ export function extractCustomHomeConsultationState(
     // or a deliberately malicious long number) must not silently complete the
     // contact step. Only count it while asking for contact details, or when a
     // privacy marker has already been produced for the current turn.
-    if ((PHONE_PROMPT.test(assistant) || NAME_PROMPT.test(assistant)) && customHomePhoneProvided(content)) {
+    if (
+      (PHONE_PROMPT.test(assistant) || NAME_PROMPT.test(assistant))
+      && customHomePhoneProvided(content, PHONE_PROMPT.test(assistant))
+    ) {
       const phone = contact.phone;
       state.contactPhoneLast4 = phone?.slice(-4) || state.contactPhoneLast4 || '番号入力済み';
       state.contactPhoneSet = true;

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   persistPropertyInquiryDraft,
   persistPropertyInquiryLead,
-  PropertyInquiryValidationError,
 } from '../src/property-inquiry-leads';
+import { decryptPII } from '../src/security';
 
 type Customer = { id: string; phoneHash: string; nameEnc: string | null; phoneEnc: string | null };
 type Inquiry = {
@@ -182,12 +182,14 @@ describe('persistPropertyInquiryLead', () => {
     expect(store.inquiries).toHaveLength(2);
   });
 
-  it('rejects an invalid phone number', async () => {
+  it('stores unusual phone formats instead of rejecting the lead', async () => {
     const store = mockDb();
-    await expect(persistPropertyInquiryLead(store.db, env(), {
+    const result = await persistPropertyInquiryLead(store.db, env(), {
       conversationId: 'conversation-4',
       kind: 'phone',
-      contact: { name: 'テスト', phone: '090-秘密' },
-    })).rejects.toBeInstanceOf(PropertyInquiryValidationError);
+      contact: { name: 'テスト', phone: '090ー1234ー5678' },
+    });
+    expect(result.created).toBe(true);
+    expect(await decryptPII(store.customers[0]!.phoneEnc, env())).toBe('09012345678');
   });
 });

@@ -56,7 +56,7 @@ export async function verifySessionToken(token: string, conversationId: string, 
 export function redactPII(input: string) {
   return input
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, '[メールアドレス]')
-    .replace(/(?:\+81[- ]?|0)\d{1,4}[- ]?\d{1,4}[- ]?\d{3,4}/gu, '[電話番号]');
+    .replace(/(?:\+81[- ー－−]?|0)\d{1,4}[- ー－−]?\d{1,4}[- ー－−]?\d{3,4}/gu, '[電話番号]');
 }
 
 async function getEncryptionKey(env: Env) {
