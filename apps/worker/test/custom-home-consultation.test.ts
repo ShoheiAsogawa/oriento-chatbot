@@ -165,6 +165,65 @@ describe('custom home consultation', () => {
     expect(state).not.toHaveProperty('budgetYen');
   });
 
+  it('does not treat a budget button as the move-in date', () => {
+    const history = [
+      user('注文住宅'),
+      assistant('土地を持っているか教えてにゃん。'),
+      user('土地を持っていない'),
+      assistant('建てたいエリアを教えてにゃん。'),
+      user('未定'),
+      assistant('ご家族の人数や構成を教えてにゃん。'),
+      user('2人'),
+      assistant('希望する間取りや住まい方を教えてにゃん。'),
+      user('4LDK'),
+      assistant('土地と建物を含めた総予算の目安を教えてにゃん。例：4,000万円まで、未定、相談したいなどで大丈夫にゃん。'),
+    ];
+
+    const afterBudget = extractCustomHomeConsultationState(history, '5,000万円まで');
+    expect(afterBudget).toMatchObject({
+      landOwnership: 'not_owned',
+      desiredArea: '未定（相談希望）',
+      householdSize: 2,
+      layout: '4LDK',
+      budgetYen: 50_000_000,
+      budgetSet: true,
+      timingSet: false,
+    });
+    expect(afterBudget.timing).toBeUndefined();
+    expect(evaluateCustomHomeConsultation(history, '5,000万円まで')).toMatchObject({
+      step: 'timing',
+      response: expect.stringContaining('入居'),
+    });
+
+    const afterTiming = [
+      ...history,
+      user('5,000万円まで'),
+      assistant('いつ頃の完成・入居を希望しているか教えてにゃん。未定でも大丈夫にゃん。'),
+    ];
+    expect(extractCustomHomeConsultationState(afterTiming, 'できるだけ早く')).toMatchObject({
+      budgetYen: 50_000_000,
+      timing: 'できるだけ早く',
+      timingSet: true,
+    });
+    expect(evaluateCustomHomeConsultation(afterTiming, 'できるだけ早く')).toMatchObject({ step: 'priorities' });
+  });
+
+  it('does not fill timing from an earlier 未定 answer to another question', () => {
+    const history = [
+      user('注文住宅'),
+      assistant('土地を持っているか教えてにゃん。'),
+      user('未定'),
+      assistant('建てたいエリアを教えてにゃん。'),
+    ];
+    const state = extractCustomHomeConsultationState(history, '未定');
+    expect(state).toMatchObject({
+      landOwnership: 'unknown',
+      desiredArea: '未定（相談希望）',
+      timingSet: false,
+    });
+    expect(evaluateCustomHomeConsultation(history, '未定')).toMatchObject({ step: 'household' });
+  });
+
   it('accepts unknown answers for every non-contact intake question and keeps the uncertainty explicit', () => {
     const history = [
       user('注文住宅'), assistant('土地を持っているか教えてにゃん。'),

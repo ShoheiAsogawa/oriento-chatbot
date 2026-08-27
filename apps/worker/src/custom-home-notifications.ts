@@ -56,6 +56,32 @@ function safeDisplay(value: unknown, max = 500) {
     .slice(0, max);
 }
 
+const LAND_OWNERSHIP_LABELS: Record<string, string> = {
+  owned: 'あり',
+  not_owned: 'なし',
+  unknown: '未定',
+};
+
+function formatBudgetYen(value: number) {
+  if (value >= 10_000 && value % 10_000 === 0) {
+    return `${(value / 10_000).toLocaleString('ja-JP')}万円`;
+  }
+  return `${value.toLocaleString('ja-JP')}円`;
+}
+
+function formatIntakeField(key: string, raw: string | number) {
+  if (key === 'landOwnership' && typeof raw === 'string') {
+    return LAND_OWNERSHIP_LABELS[raw] || raw;
+  }
+  if (key === 'budgetYen' && typeof raw === 'number') return formatBudgetYen(raw);
+  if (key === 'landSizeSqm' && typeof raw === 'number') {
+    const rounded = Number.isInteger(raw) ? String(raw) : raw.toFixed(1);
+    return `${rounded}㎡`;
+  }
+  if (key === 'householdSize' && typeof raw === 'number') return `${raw}人`;
+  return String(raw);
+}
+
 function displayIntake(value: string) {
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>;
@@ -68,7 +94,7 @@ function displayIntake(value: string) {
     for (const [key, label] of Object.entries(labels)) {
       const raw = parsed[key];
       if (typeof raw === 'string' || typeof raw === 'number') {
-        const shown = safeDisplay(key === 'landOwnership' && raw === 'unknown' ? '未定' : String(raw));
+        const shown = safeDisplay(formatIntakeField(key, raw));
         if (shown) lines.push(`${label}: ${shown}`);
       }
     }

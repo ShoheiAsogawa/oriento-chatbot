@@ -79,6 +79,30 @@ describe('formatCustomHomeLeadEmail', () => {
     expect(email.text).toContain('希望間取り: 4LDK');
     expect(email.text).toContain('お客様への折り返し連絡をお願いします。');
   });
+
+  it('renders land, household, and budget in Japanese instead of internal values', () => {
+    const email = formatCustomHomeLeadEmail(
+      'テスト次郎',
+      '09012345678',
+      JSON.stringify({
+        landOwnership: 'not_owned',
+        desiredArea: '未定(相談希望)',
+        householdSize: 2,
+        layout: '4LDK',
+        budgetYen: 50_000_000,
+        timing: 'できるだけ早く',
+        priorities: 'デザイン重視',
+      }),
+    );
+    expect(email.text).toContain('土地: なし');
+    expect(email.text).not.toContain('not_owned');
+    expect(email.text).toContain('世帯人数: 2人');
+    expect(email.text).toContain('予算: 5,000万円');
+    expect(email.text).not.toContain('50000000');
+    expect(email.text).toContain('入居時期: できるだけ早く');
+    expect(email.text).toContain('こだわり: デザイン重視');
+    expect(email.text).not.toMatch(/入居時期: 5,000万円まで/u);
+  });
 });
 
 describe('processCustomHomeNotification', () => {

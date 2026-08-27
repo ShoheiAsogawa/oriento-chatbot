@@ -291,9 +291,15 @@ function layoutFromMessage(content: string, answeredPrompt: boolean) {
   return undefined;
 }
 
+function isBudgetAmountAnswer(content: string) {
+  return budgetFromMessage(content, false) != null;
+}
+
 function timingFromMessage(content: string, answeredPrompt: boolean) {
   const normalized = stripAnswer(content);
-  if (!answeredPrompt && !/(?:以内|まで|年後|か月後|月頃|春|夏|秋|冬|未定|決まっていない|すぐ|できるだけ早く)/u.test(normalized)) return undefined;
+  // Budget buttons such as "5,000万円まで" contain "まで" and must not fill
+  // the timing slot, or the flow skips the actual move-in question.
+  if (!answeredPrompt || isBudgetAmountAnswer(normalized)) return undefined;
   if (LOCATION_NOISE.test(normalized) || CONTACT_LINK_OR_URL.test(normalized) || normalized.length < 1 || normalized.length > 80 || !hasMeaningfulText(normalized)) return undefined;
   return normalized;
 }
@@ -560,18 +566,20 @@ export function extractCustomHomeConsultationState(
         state.budgetSet = true;
       }
     }
-    const timing = timingFromMessage(content, TIMING_PROMPT.test(assistant));
-    if (timing) {
-      state.timing = timing;
-      state.timingSet = true;
-    } else if (TIMING_PROMPT.test(assistant) && isUnknownAnswer(content)) {
-      state.timing = UNKNOWN_NOTE;
-      state.timingSet = true;
-    } else if (TIMING_PROMPT.test(assistant)) {
-      const note = freeTextAnswer(content);
-      if (note) {
-        state.timing = note;
+    if (TIMING_PROMPT.test(assistant) && !isBudgetAmountAnswer(content)) {
+      const timing = timingFromMessage(content, true);
+      if (timing) {
+        state.timing = timing;
         state.timingSet = true;
+      } else if (isUnknownAnswer(content)) {
+        state.timing = UNKNOWN_NOTE;
+        state.timingSet = true;
+      } else {
+        const note = freeTextAnswer(content);
+        if (note) {
+          state.timing = note;
+          state.timingSet = true;
+        }
       }
     }
     const priorities = prioritiesFromMessage(content, PRIORITIES_PROMPT.test(assistant));
