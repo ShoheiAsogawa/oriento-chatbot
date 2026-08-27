@@ -38,6 +38,9 @@ import {
   evaluatePropertyInquiry,
   extractPropertyInquiryContact,
   extractPropertyInquiryState,
+  inquiryPropertiesForLead,
+  latestListedInquiryProperties,
+  mergeInquiryProperties,
   propertyInquiryChoicesForResponse,
   propertyInquiryFollowUp,
   propertyInquiryPickerForResponse,
@@ -1335,14 +1338,22 @@ app.post('/api/chat/message', async (context) => {
     }
   }
 
-  const propertyInquiry = evaluatePropertyInquiry(conversationHistory, redacted);
+  let propertyInquiry = evaluatePropertyInquiry(conversationHistory, redacted);
   if (propertyInquiry.active) {
+    const citedProperties = await loadRecentCitedProperties(context.env.DB, input.conversationId);
+    const listedProperties = mergeInquiryProperties(
+      latestListedInquiryProperties(conversationHistory),
+      citedProperties,
+    );
+    if (listedProperties.length > 0) {
+      propertyInquiry = evaluatePropertyInquiry(conversationHistory, redacted, new Date(), listedProperties);
+    }
     const inquiryContact = {
       ...extractPropertyInquiryContact(conversationHistory, input.message),
       ...propertyInquiryTurn.contact,
     };
-    const inquiryState = extractPropertyInquiryState(conversationHistory, redacted);
-    const citedProperties = await loadRecentCitedProperties(context.env.DB, input.conversationId);
+    const inquiryState = extractPropertyInquiryState(conversationHistory, redacted, new Date(), listedProperties);
+    const leadProperties = inquiryPropertiesForLead(inquiryState.selectedProperty, citedProperties);
 
     if (propertyInquiry.leadReady) {
       const contactPhone = inquiryContact.phone;
@@ -1380,7 +1391,7 @@ app.post('/api/chat/message', async (context) => {
         kind: propertyInquiry.kind || 'document_request',
         contact: { ...inquiryContact, phone: contactPhone },
         preferredDatetime: inquiryState.preferredDatetime,
-        properties: citedProperties,
+        properties: leadProperties,
       });
       let notificationQueued = false;
       if (lead.queueRequired) {
@@ -1431,14 +1442,14 @@ app.post('/api/chat/message', async (context) => {
       });
     }
 
-    if (propertyInquiry.kind && (inquiryContact.name || inquiryContact.address || inquiryState.preferredDatetime)) {
+    if (propertyInquiry.kind && (inquiryContact.name || inquiryContact.address || inquiryState.preferredDatetime || inquiryState.selectedProperty)) {
       await persistPropertyInquiryDraft(context.env.DB, context.env, {
         conversationId: input.conversationId,
         kind: propertyInquiry.kind,
         name: inquiryContact.name,
         address: inquiryContact.address,
         preferredDatetime: inquiryState.preferredDatetime,
-        properties: citedProperties,
+        properties: leadProperties,
       });
     }
 

@@ -479,8 +479,11 @@ describe('live catalog conversation walkthroughs', () => {
     const rental = autoComplete(['賃貸', '大阪府'], inventoryChoice);
     const started = applyTurn(rental.history, '資料請求したい');
     expect(started.turn.route).toBe('property_inquiry');
-    expect(started.turn.answer).toMatch(/お名前/u);
-    const named = applyTurn(started.history, '山田 太郎');
+    expect(started.turn.answer).toMatch(/どの物件の資料/u);
+    expect(started.turn.choices.length).toBeGreaterThan(1);
+    const pickedProperty = applyTurn(started.history, started.turn.choices[0]!.value);
+    expect(pickedProperty.turn.answer).toMatch(/お名前/u);
+    const named = applyTurn(pickedProperty.history, '山田 太郎');
     expect(named.turn.answer).toMatch(/住所/u);
     const addressed = applyTurn(named.history, '大阪府大阪市北区梅田1-1-1');
     expect(addressed.turn.answer).toMatch(/電話番号/u);
@@ -491,16 +494,21 @@ describe('live catalog conversation walkthroughs', () => {
     expect(JSON.stringify(phoned.history)).not.toContain('090-1234-5678');
   });
 
-  it('lets a visitor pick a viewing datetime from the calendar', () => {
+  it('lets a visitor pick a listed property, then a viewing datetime from the calendar', () => {
     const purchase = autoComplete(['購入', '大阪府'], inventoryChoice);
     const started = applyTurn(purchase.history, '見学したい');
     expect(started.turn.route).toBe('property_inquiry');
-    expect(started.turn.answer).toMatch(/カレンダー/u);
-    expect(started.turn.choices).toEqual([]);
-    expect(started.turn.picker?.type).toBe('datetime');
-    expect(started.turn.picker?.prefix).toBe('見学希望日時:');
-    expect(started.turn.picker?.min).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
-    const picked = applyTurn(started.history, `見学希望日時:${started.turn.picker!.min} 15:00`);
+    expect(started.turn.answer).toMatch(/どの物件を見学したい/u);
+    expect(started.turn.picker).toBeUndefined();
+    expect(started.turn.choices.map((choice) => choice.value).at(-1)).toBe('対象物件:未定');
+    expect(started.turn.choices[0]?.value).toMatch(/^対象物件:/u);
+    const pickedProperty = applyTurn(started.history, started.turn.choices[0]!.value);
+    expect(pickedProperty.turn.answer).toMatch(/カレンダー/u);
+    expect(pickedProperty.turn.choices).toEqual([]);
+    expect(pickedProperty.turn.picker?.type).toBe('datetime');
+    expect(pickedProperty.turn.picker?.prefix).toBe('見学希望日時:');
+    expect(pickedProperty.turn.picker?.min).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
+    const picked = applyTurn(pickedProperty.history, `見学希望日時:${pickedProperty.turn.picker!.min} 15:00`);
     expect(picked.turn.answer).toMatch(/お名前/u);
     const named = applyTurn(picked.history, '山田 太郎');
     expect(named.turn.answer).toMatch(/住所/u);
@@ -512,19 +520,20 @@ describe('live catalog conversation walkthroughs', () => {
     expect(JSON.stringify(phoned.history)).not.toContain('090-1234-5678');
   });
 
-  it('lets a visitor leave a viewing calendar to see more listings', () => {
+  it('lets a visitor leave a viewing property picker to see more listings', () => {
     const rental = autoComplete(['賃貸', '大阪府'], inventoryChoice);
     const started = applyTurn(rental.history, '見学したい');
-    expect(started.turn.picker?.type).toBe('datetime');
+    expect(started.turn.answer).toMatch(/どの物件を見学したい/u);
     const more = applyTurn(started.history, 'もっと見たい');
     expect(more.turn.route).toBe('rental');
-    expect(more.turn.answer).not.toMatch(/カレンダー|お名前/u);
+    expect(more.turn.answer).not.toMatch(/カレンダー|お名前|どの物件/u);
   });
 
   it('does not accept a past calendar datetime as a viewing slot', () => {
     const purchase = autoComplete(['購入', '大阪府'], inventoryChoice);
     const started = applyTurn(purchase.history, '見学したい');
-    const past = applyTurn(started.history, '見学希望日時:2020-01-01 15:00');
+    const pickedProperty = applyTurn(started.history, started.turn.choices[0]!.value);
+    const past = applyTurn(pickedProperty.history, '見学希望日時:2020-01-01 15:00');
     expect(past.turn.route).toBe('property_inquiry');
     expect(past.turn.answer).toMatch(/カレンダー|選べない/u);
     expect(past.turn.picker?.type).toBe('datetime');
@@ -533,7 +542,8 @@ describe('live catalog conversation walkthroughs', () => {
   it('does not reopen a completed inquiry when the visitor asks about a listing', () => {
     const rental = autoComplete(['賃貸', '大阪府'], inventoryChoice);
     const started = applyTurn(rental.history, '資料請求したい');
-    const named = applyTurn(started.history, '山田 太郎');
+    const pickedProperty = applyTurn(started.history, started.turn.choices[0]!.value);
+    const named = applyTurn(pickedProperty.history, '山田 太郎');
     const addressed = applyTurn(named.history, '大阪府大阪市北区梅田1-1-1');
     const phoned = applyTurn(addressed.history, '090-1234-5678');
     expect(phoned.turn.answer).toContain('お問い合わせを受け付けた');

@@ -4,7 +4,10 @@ import {
   PROPERTY_INQUIRY_VALUES,
   evaluatePropertyInquiry,
   extractPropertyInquiryState,
+  inquiryPropertiesForLead,
   kindFromInquiryMessage,
+  latestListedInquiryProperties,
+  mergeInquiryProperties,
   propertyInquiryChoicesForResponse,
   propertyInquiryFollowUp,
   propertyInquiryPickerForResponse,
@@ -19,6 +22,26 @@ const user = (content: string): ConversationContextMessage => ({ role: 'user', c
 const assistant = (content: string): ConversationContextMessage => ({ role: 'assistant', content });
 
 const frozenNow = new Date('2026-08-26T05:00:00.000Z');
+
+const listedAnswer = [
+  '貝塚市で条件に合う購入物件が見つかったにゃん。',
+  '- 貝塚市堤：新築一戸建て、販売価格3980万円、4LDK、大阪府貝塚市堤にゃん。[1]',
+  '- OrientCity 貝塚：新築一戸建て、販売価格4280万円、4LDK、大阪府貝塚市にゃん。[2]',
+  '- OrientCity 和泉橋本：新築一戸建て、販売価格4480万円、4LDK、大阪府和泉市にゃん。[3]',
+].join('\n');
+
+const listedHistory: ConversationContextMessage[] = [
+  user('購入'),
+  assistant('希望の都道府県を選んでにゃん。'),
+  user('貝塚市'),
+  assistant(listedAnswer),
+];
+
+const listedProperties = [
+  { title: '貝塚市堤', url: 'https://orijyu.com/buy/post-127163.html' },
+  { title: 'OrientCity 貝塚', url: 'https://orijyu.com/buy/post-77134.html' },
+  { title: 'OrientCity 和泉橋本', url: 'https://orijyu.com/buy/post-114537.html' },
+];
 
 describe('property inquiry flow', () => {
   it('recognizes the three post-result inquiry intents', () => {
@@ -248,5 +271,126 @@ describe('property inquiry flow', () => {
     const followUp = propertyInquiryFollowUp();
     expect(followUp.choices.map((choice) => choice.label)).toEqual(['資料請求', '電話', '見学']);
     expect(followUp.answer).toBe('気に入った物件はあったかにゃ？資料請求・電話・見学から選んでにゃん。');
+  });
+
+  it('parses the latest listed properties and attaches cited URLs', () => {
+    expect(latestListedInquiryProperties(listedHistory).map((item) => item.title)).toEqual([
+      '貝塚市堤',
+      'OrientCity 貝塚',
+      'OrientCity 和泉橋本',
+    ]);
+    expect(mergeInquiryProperties(latestListedInquiryProperties(listedHistory), listedProperties)).toEqual(listedProperties);
+    expect(inquiryPropertiesForLead({ title: 'OrientCity 和泉橋本' }, listedProperties)).toEqual([listedProperties[2]]);
+  });
+
+  it('asks which listed property to view before the calendar', () => {
+    const started = evaluatePropertyInquiry(listedHistory, '見学したい');
+    expect(started).toMatchObject({
+      active: true,
+      kind: 'viewing',
+      step: 'select_property',
+    });
+    expect(started.response).toMatch(/どの物件を見学したい/u);
+    expect(propertyInquiryChoicesForResponse(started).map((choice) => choice.value)).toEqual([
+      '対象物件:貝塚市堤',
+      '対象物件:OrientCity 貝塚',
+      '対象物件:OrientCity 和泉橋本',
+      PROPERTY_INQUIRY_VALUES.propertyUndecided,
+    ]);
+    expect(propertyInquiryPickerForResponse(started)).toBeUndefined();
+
+    const asking = [...listedHistory, user('見学したい'), assistant(started.response || '')];
+    const selected = evaluatePropertyInquiry(asking, '対象物件:OrientCity 和泉橋本', frozenNow);
+    expect(selected.step).toBe('viewing_datetime');
+    expect(selected.response).toMatch(/カレンダー/u);
+    expect(extractPropertyInquiryState(asking, '対象物件:OrientCity 和泉橋本').selectedProperty).toEqual({
+      title: 'OrientCity 和泉橋本',
+    });
+  });
+
+  it('accepts a typed listing title, including the property-type suffix from the card', () => {
+    const asking = [
+      ...listedHistory,
+      user('見学したい'),
+      assistant('どの物件を見学したいにゃ？候補から選んでにゃん。'),
+    ];
+    const typed = evaluatePropertyInquiry(asking, 'OrientCity 和泉橋本：新築一戸建て', frozenNow);
+    expect(typed.step).toBe('viewing_datetime');
+    expect(extractPropertyInquiryState(asking, 'OrientCity 和泉橋本：新築一戸建て').selectedProperty?.title)
+      .toBe('OrientCity 和泉橋本');
+  });
+
+  it('lets the visitor skip a property choice and still continue', () => {
+    const started = evaluatePropertyInquiry(listedHistory, '資料請求したい');
+    expect(started.step).toBe('select_property');
+    expect(started.response).toMatch(/どの物件の資料/u);
+    const asking = [...listedHistory, user('資料請求したい'), assistant(started.response || '')];
+    const skipped = evaluatePropertyInquiry(asking, PROPERTY_INQUIRY_VALUES.propertyUndecided);
+    expect(skipped.step).toBe('contact_name');
+    expect(extractPropertyInquiryState(asking, PROPERTY_INQUIRY_VALUES.propertyUndecided)).toMatchObject({
+      propertySet: true,
+      selectedProperty: undefined,
+    });
+  });
+
+  it('reopens the phone prompt after a failed number instead of handing off to AI', () => {
+    const history = [
+      ...listedHistory,
+      user('見学したい'),
+      assistant('どの物件を見学したいにゃ？候補から選んでにゃん。'),
+      user('対象物件:OrientCity 和泉橋本'),
+      assistant('見学の希望日時を、カレンダーから選んでにゃん。'),
+      user('見学希望日時:2026-08-28 15:00'),
+      assistant('見学のお申し込みだにゃん。お名前を教えてにゃん。'),
+      user('[お名前]'),
+      assistant('現在のご住所を、番地まで教えてにゃん。'),
+      user('[住所]'),
+      assistant('連絡用の電話番号を教えてにゃん。'),
+      user('[電話番号]'),
+      assistant('お電話番号を確認できなかったにゃん。数字を続けてもう一度入力してにゃん。'),
+    ];
+    expect(extractPropertyInquiryState(history, '', frozenNow)).toMatchObject({
+      kind: 'viewing',
+      phoneSet: false,
+      leadReady: false,
+    });
+    expect(evaluatePropertyInquiry(history, 'あああ', frozenNow)).toMatchObject({
+      active: true,
+      step: 'contact_phone',
+    });
+    expect(evaluatePropertyInquiry(history, '[電話番号]', frozenNow)).toMatchObject({
+      active: true,
+      leadReady: true,
+      kind: 'viewing',
+    });
+  });
+
+  it('asks for a listed property after recovering a viewing that skipped the picker', () => {
+    const history = [
+      ...listedHistory,
+      user('見学したい'),
+      assistant('見学の希望日時を、カレンダーから選んでにゃん。'),
+      user('見学希望日時:2026-08-28 15:00'),
+      assistant('見学のお申し込みだにゃん。お名前を教えてにゃん。'),
+      user('[お名前]'),
+      assistant('現在のご住所を、番地まで教えてにゃん。'),
+      user('[住所]'),
+      assistant('連絡用の電話番号を教えてにゃん。'),
+      user('[電話番号]'),
+      assistant('お電話番号を確認できなかったにゃん。数字を続けてもう一度入力してにゃん。'),
+    ];
+    const retried = evaluatePropertyInquiry(history, '[電話番号]', frozenNow);
+    expect(retried.leadReady).toBeFalsy();
+    expect(retried).toMatchObject({
+      active: true,
+      step: 'select_property',
+    });
+    expect(retried.response).toMatch(/どの物件を見学したい/u);
+    const asking = [...history, user('[電話番号]'), assistant(retried.response || '')];
+    expect(evaluatePropertyInquiry(asking, 'OrientCity 和泉橋本：新築一戸建て', frozenNow)).toMatchObject({
+      active: true,
+      leadReady: true,
+      kind: 'viewing',
+    });
   });
 });

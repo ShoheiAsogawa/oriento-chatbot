@@ -9,6 +9,7 @@ import { isObviousConversationDetour, wantsOtherPropertyCandidates } from './pro
 export type PropertyInquiryKind = 'document_request' | 'phone' | 'viewing';
 
 export type PropertyInquiryStep =
+  | 'select_property'
   | 'viewing_datetime'
   | 'viewing_day'
   | 'viewing_time'
@@ -25,6 +26,11 @@ export type ChatDatetimePicker = {
   prefix: string;
 };
 
+export type InquiryPropertyOption = {
+  title: string;
+  url?: string;
+};
+
 export type PropertyInquiryDecision = {
   active: boolean;
   response?: string;
@@ -32,6 +38,7 @@ export type PropertyInquiryDecision = {
   leadReady?: boolean;
   kind?: PropertyInquiryKind;
   picker?: ChatDatetimePicker;
+  properties?: InquiryPropertyOption[];
 };
 
 export type PropertyInquiryContact = {
@@ -46,6 +53,9 @@ export type PropertyInquiryState = {
   preferredTime?: string;
   preferredDatetime?: string;
   wantsFreeDatetime: boolean;
+  propertySet: boolean;
+  selectedProperty?: InquiryPropertyOption;
+  needsPropertyChoice: boolean;
   nameSet: boolean;
   addressSet: boolean;
   phoneSet: boolean;
@@ -57,6 +67,7 @@ export const PROPERTY_INQUIRY_VALUES = {
   phone: '電話で相談したい',
   viewing: '見学したい',
   viewingFreeText: '見学日時を自分で書く',
+  propertyUndecided: '対象物件:未定',
 } as const;
 
 export const PROPERTY_INQUIRY_FOLLOW_UP_ANSWER =
@@ -71,6 +82,7 @@ export const PROPERTY_INQUIRY_FOLLOW_UP_CHOICES: ChatChoice[] = [
 const VIEWING_DAY_PREFIX = '見学希望日:';
 const VIEWING_TIME_PREFIX = '見学希望時間:';
 const VIEWING_DATETIME_PREFIX = '見学希望日時:';
+const PROPERTY_SELECT_PREFIX = '対象物件:';
 const WEEKDAYS = '日月火水木金土';
 const MODE_SWITCH = /^(?:(?:賃貸|購入)(?:物件)?(?:を?(?:探す|探したい)|に変更|で探したい|がいい|を希望|にしたい|したい|に切り替え|へ切り替え|へ変更)?|(?:注文住宅|注文建築|自由設計)(?:(?:から|じゃなくて?|ではなく|をやめて?)\s*(?:賃貸|購入)|.*(?:賃貸|購入).*(?:切り替え|変更|探したい|にする))|物件を?(?:探す|探したい)|物件探し(?:をしたい|したい)?)(?:[。！!？?])?$/u;
 const RESET_INTENT = /^(?:やり直し|リセット|最初から|キャンセル|やめる)[。！!？?]*$/u;
@@ -80,6 +92,8 @@ const VIEWING_INTENT = /(?:(?:見学|内見|内覧)(?:を)?(?:したい|予約)|
 const NAME_PROMPT = /(?:お名前|氏名|名前).*(?:教えて|聞かせ|入力)/u;
 const ADDRESS_PROMPT = /(?:住所|ご住所|届ける住所|現在の(?:ご)?住所).*(?:教えて|聞かせ|入力|書ける)/u;
 const PHONE_PROMPT = /(?:電話番号|連絡用の電話).*(?:教えて|入力|聞かせ)/u;
+const PROPERTY_PROMPT = /どの物件(?:を見学したい|の資料|について相談)|候補から選んでにゃん/u;
+const PHONE_RETRY_PROMPT = /お電話番号を確認できなかった/u;
 const DATETIME_TEXT_PROMPT = /(?:希望日時を(?:自由に|そのまま)|希望日時を[、，].*(?:教えて|書いて)|日時を(?:教えて|書いて))/u;
 const NAME_REDACTED = /\[お名前\]/u;
 const PHONE_REDACTED = /\[電話番号\]/u;
@@ -312,14 +326,115 @@ function flowMessages(history: ConversationContextMessage[], currentMessage: str
   return messages.slice(start);
 }
 
+export function latestListedInquiryProperties(history: ConversationContextMessage[]): InquiryPropertyOption[] {
+  const listingLine = /^[-・]\s*(.+?)：/u;
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const message = history[index];
+    if (!message || message.role !== 'assistant') continue;
+    const titles: InquiryPropertyOption[] = [];
+    const seen = new Set<string>();
+    for (const line of message.content.split('\n')) {
+      const match = listingLine.exec(line.trim());
+      const title = match?.[1]?.trim();
+      if (!title || seen.has(title)) continue;
+      seen.add(title);
+      titles.push({ title });
+    }
+    if (titles.length > 0) return titles.slice(0, 6);
+  }
+  return [];
+}
+
+export function mergeInquiryProperties(
+  listed: InquiryPropertyOption[],
+  cited: Array<{ title: string; url: string }>,
+): InquiryPropertyOption[] {
+  if (listed.length === 0) {
+    return cited.slice(0, 6).map((item) => ({ title: item.title, url: item.url }));
+  }
+  return listed.map((item) => {
+    const citedMatch = cited.find((candidate) => candidate.title === item.title)
+      || cited.find((candidate) => candidate.title.includes(item.title) || item.title.includes(candidate.title));
+    return citedMatch ? { title: item.title, url: citedMatch.url } : item;
+  });
+}
+
+export function inquiryPropertiesForLead(
+  selected: InquiryPropertyOption | undefined,
+  citations: Array<{ title: string; url: string }>,
+): Array<{ title: string; url: string }> {
+  if (!selected) return citations;
+  const matched = citations.find((item) => (
+    item.title === selected.title
+    || item.url === selected.url
+    || item.title.includes(selected.title)
+    || selected.title.includes(item.title)
+  ));
+  if (matched) return [matched];
+  if (selected.url?.startsWith('https://')) return [{ title: selected.title, url: selected.url }];
+  return citations;
+}
+
+function matchListedProperty(content: string, listed: InquiryPropertyOption[]): InquiryPropertyOption | undefined {
+  const normalized = normalize(content).replace(new RegExp(`^${PROPERTY_SELECT_PREFIX}`, 'u'), '').trim();
+  if (!normalized || normalized === '未定') return undefined;
+  const exact = listed.find((item) => normalize(item.title) === normalized);
+  if (exact) return exact;
+  const withoutType = (normalized.split(/[：:]/u)[0] || normalized).trim();
+  const byTitle = listed.filter((item) => {
+    const title = normalize(item.title);
+    return title === withoutType || title.startsWith(withoutType) || withoutType.startsWith(title);
+  });
+  if (byTitle.length === 1) return byTitle[0];
+  const includes = listed.filter((item) => {
+    const title = normalize(item.title);
+    return title.includes(withoutType) || withoutType.includes(title);
+  });
+  return includes.length === 1 ? includes[0] : undefined;
+}
+
+function propertySelectionFromMessage(
+  content: string,
+  listed: InquiryPropertyOption[],
+): 'undecided' | InquiryPropertyOption | undefined {
+  const normalized = normalize(content);
+  if (
+    normalized === PROPERTY_INQUIRY_VALUES.propertyUndecided
+    || normalized === `${PROPERTY_SELECT_PREFIX}未定`
+  ) {
+    return 'undecided';
+  }
+  if (
+    KIND_BY_VALUE[normalized]
+    || kindFromInquiryMessage(normalized)
+    || normalized === PROPERTY_INQUIRY_VALUES.viewingFreeText
+    || normalized.startsWith(VIEWING_DATETIME_PREFIX)
+    || normalized.startsWith(VIEWING_DAY_PREFIX)
+    || normalized.startsWith(VIEWING_TIME_PREFIX)
+  ) {
+    return undefined;
+  }
+  if (listed.length === 0) return undefined;
+  const title = normalized.startsWith(PROPERTY_SELECT_PREFIX)
+    ? normalized.slice(PROPERTY_SELECT_PREFIX.length).trim()
+    : normalized;
+  return title ? matchListedProperty(title, listed) : undefined;
+}
+
 export function extractPropertyInquiryState(
   history: ConversationContextMessage[],
   currentMessage: string,
   now = new Date(),
+  listedProperties?: InquiryPropertyOption[],
 ): PropertyInquiryState {
+  const listed = listedProperties && listedProperties.length > 0
+    ? listedProperties
+    : latestListedInquiryProperties(history);
   const messages = flowMessages(history, currentMessage);
   const state: PropertyInquiryState = {
     wantsFreeDatetime: false,
+    propertySet: false,
+    needsPropertyChoice: listed.length > 0,
     nameSet: false,
     addressSet: false,
     phoneSet: false,
@@ -329,14 +444,17 @@ export function extractPropertyInquiryState(
   let expectingAddress = false;
   let expectingPhone = false;
   let expectingDatetimeText = false;
+  let expectingProperty = false;
 
   for (const message of messages) {
     const content = message.content;
     if (message.role === 'assistant') {
       expectingName = NAME_PROMPT.test(content);
       expectingAddress = ADDRESS_PROMPT.test(content);
-      expectingPhone = PHONE_PROMPT.test(content);
+      expectingPhone = PHONE_PROMPT.test(content) || PHONE_RETRY_PROMPT.test(content);
       expectingDatetimeText = DATETIME_TEXT_PROMPT.test(content);
+      expectingProperty = PROPERTY_PROMPT.test(content);
+      if (PHONE_RETRY_PROMPT.test(content)) state.phoneSet = false;
       continue;
     }
 
@@ -384,6 +502,27 @@ export function extractPropertyInquiryState(
     }
     if (!state.kind) continue;
 
+    const selection = propertySelectionFromMessage(content, listed);
+    if (selection === 'undecided') {
+      state.propertySet = true;
+      state.selectedProperty = undefined;
+      expectingProperty = false;
+      continue;
+    }
+    if (selection) {
+      state.propertySet = true;
+      state.selectedProperty = selection;
+      expectingProperty = false;
+      continue;
+    }
+    if (expectingProperty) {
+      expectingName = false;
+      expectingAddress = false;
+      expectingPhone = false;
+      expectingDatetimeText = false;
+      continue;
+    }
+
     if (normalize(content) === PROPERTY_INQUIRY_VALUES.viewingFreeText) {
       state.wantsFreeDatetime = true;
       expectingDatetimeText = true;
@@ -410,18 +549,30 @@ export function extractPropertyInquiryState(
     expectingDatetimeText = false;
   }
 
+  const propertyReady = !state.needsPropertyChoice || state.propertySet;
   if (state.kind === 'phone') {
-    state.leadReady = state.nameSet && state.phoneSet;
+    state.leadReady = propertyReady && state.nameSet && state.phoneSet;
   } else if (state.kind === 'document_request') {
-    state.leadReady = state.nameSet && state.phoneSet && state.addressSet;
+    state.leadReady = propertyReady && state.nameSet && state.phoneSet && state.addressSet;
   } else if (state.kind === 'viewing') {
-    state.leadReady = Boolean(state.preferredDatetime) && state.nameSet && state.phoneSet && state.addressSet;
+    state.leadReady = propertyReady
+      && Boolean(state.preferredDatetime)
+      && state.nameSet
+      && state.phoneSet
+      && state.addressSet;
   }
   return state;
 }
 
 function nextStep(state: PropertyInquiryState): PropertyInquiryStep | undefined {
   if (!state.kind) return undefined;
+  const startedLaterSteps = Boolean(state.preferredDatetime)
+    || state.wantsFreeDatetime
+    || Boolean(state.preferredDate)
+    || state.nameSet
+    || state.addressSet
+    || state.phoneSet;
+  if (!state.propertySet && state.needsPropertyChoice && !startedLaterSteps) return 'select_property';
   if (state.kind === 'viewing' && !state.preferredDatetime) {
     if (state.wantsFreeDatetime) return 'viewing_datetime_text';
     if (state.preferredDate && !state.preferredTime) return 'viewing_time';
@@ -431,10 +582,16 @@ function nextStep(state: PropertyInquiryState): PropertyInquiryStep | undefined 
   if (!state.nameSet) return 'contact_name';
   if (state.kind !== 'phone' && !state.addressSet) return 'contact_address';
   if (!state.phoneSet) return 'contact_phone';
+  if (!state.propertySet && state.needsPropertyChoice) return 'select_property';
   return 'complete';
 }
 
 function promptForStep(kind: PropertyInquiryKind, step: PropertyInquiryStep) {
+  if (step === 'select_property') {
+    if (kind === 'document_request') return 'どの物件の資料が必要かにゃ？候補から選んでにゃん。';
+    if (kind === 'phone') return 'どの物件について相談したいかにゃ？候補から選んでにゃん。';
+    return 'どの物件を見学したいにゃ？候補から選んでにゃん。';
+  }
   if (step === 'viewing_datetime') return '見学の希望日時を、カレンダーから選んでにゃん。';
   if (step === 'viewing_day') return '見学の希望日を選んでにゃん。ボタンから選べるにゃん。';
   if (step === 'viewing_time') return 'その日の希望時間を選んでにゃん。';
@@ -456,25 +613,29 @@ export function evaluatePropertyInquiry(
   history: ConversationContextMessage[],
   currentMessage: string,
   now = new Date(),
+  listedProperties?: InquiryPropertyOption[],
 ): PropertyInquiryDecision {
+  const listed = listedProperties && listedProperties.length > 0
+    ? listedProperties
+    : latestListedInquiryProperties(history);
   const normalized = normalize(currentMessage);
   if (isModeSwitch(normalized)) return { active: false };
   // Once a lead has been accepted, later chat must not re-enter this flow.
   // Otherwise follow-up questions create a second lead and hide property answers.
-  if (!kindFromInquiryMessage(normalized) && extractPropertyInquiryState(history, '', now).leadReady) {
+  if (!kindFromInquiryMessage(normalized) && extractPropertyInquiryState(history, '', now, listed).leadReady) {
     return { active: false };
   }
 
-  const state = extractPropertyInquiryState(history, currentMessage, now);
+  const state = extractPropertyInquiryState(history, currentMessage, now, listed);
   if (!state.kind) return { active: false };
 
   if (state.leadReady) {
-    return { active: true, leadReady: true, kind: state.kind, step: 'complete' };
+    return { active: true, leadReady: true, kind: state.kind, step: 'complete', properties: listed };
   }
 
   const step = nextStep(state);
   if (!step || step === 'complete') {
-    return { active: true, leadReady: true, kind: state.kind, step: 'complete' };
+    return { active: true, leadReady: true, kind: state.kind, step: 'complete', properties: listed };
   }
 
   if (CONTACT_DECLINE.test(normalized) && /contact_/u.test(step)) {
@@ -482,6 +643,7 @@ export function evaluatePropertyInquiry(
       active: true,
       kind: state.kind,
       step,
+      properties: listed,
       response: 'お名前と電話番号がないと、担当者からご連絡できないにゃん。入力できる範囲で教えてにゃん。チャットで入力しない場合は、公式LINEから担当者へ相談してにゃん。',
     };
   }
@@ -499,6 +661,7 @@ export function evaluatePropertyInquiry(
       active: true,
       kind: state.kind,
       step,
+      properties: listed,
       response: normalized.startsWith(VIEWING_DATETIME_PREFIX)
         ? 'その日時は見学の予約では選べないにゃん。カレンダーから選んでにゃん。'
         : '見学の日付と時間の両方を、カレンダーから選んでにゃん。',
@@ -509,6 +672,7 @@ export function evaluatePropertyInquiry(
     active: true,
     kind: state.kind,
     step,
+    properties: listed,
     response: promptForStep(state.kind, step) || '見学の希望日時を、カレンダーから選んでにゃん。',
   };
 }
@@ -517,6 +681,15 @@ export function propertyInquiryChoicesForResponse(
   decision: PropertyInquiryDecision,
   now = new Date(),
 ): ChatChoice[] {
+  if (decision.step === 'select_property') {
+    return [
+      ...(decision.properties || []).map((item) => ({
+        label: item.title,
+        value: `${PROPERTY_SELECT_PREFIX}${item.title}`,
+      })),
+      { label: 'まだ決めてない', value: PROPERTY_INQUIRY_VALUES.propertyUndecided, size: 'compact' },
+    ];
+  }
   if (decision.step === 'viewing_day') return viewingDayChoices(now);
   if (decision.step === 'viewing_time') return VIEWING_TIME_CHOICES;
   return [];
