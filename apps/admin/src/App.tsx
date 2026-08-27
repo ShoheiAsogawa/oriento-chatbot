@@ -19,6 +19,7 @@ import {
 } from './api';
 import { OverviewPage } from './OverviewPage';
 import { ReportsPage } from './ReportsPage';
+import { formatJapanDateTime } from '../../worker/src/japan-time';
 
 type PageKey = 'overview' | 'reports' | 'knowledge' | 'conversations' | 'inquiries';
 
@@ -33,9 +34,7 @@ const navItems: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
 const orinyanSpriteStyle = { backgroundImage: "url('/assets/orinyan-states.png')" };
 
 function formatDate(value: string) {
-  const date = new Date(value);
-  if (!value || !Number.isFinite(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
+  return formatJapanDateTime(value);
 }
 
 function formatBytes(value: number) {

@@ -7,6 +7,7 @@ import {
   type MonthlyPropertyInterest,
   type MonthlyReport,
 } from './api';
+import { formatJapanDateTime } from '../../worker/src/japan-time';
 
 const orinyanSpriteStyle = { backgroundImage: "url('/assets/orinyan-states.png')" };
 
@@ -38,9 +39,7 @@ const categoryLabels = {
 } as const;
 
 function formatDate(value: string) {
-  const date = new Date(value);
-  if (!value || !Number.isFinite(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
+  return formatJapanDateTime(value);
 }
 
 function formatMonthLabel(month: string) {

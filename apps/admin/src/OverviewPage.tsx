@@ -16,6 +16,7 @@ import {
   type OverviewPrefectureCount,
   type OverviewPropertyView,
 } from './api';
+import { formatJapanDateTime } from '../../worker/src/japan-time';
 
 const emptyOverview: OverviewData = {
   conversations30d: 0,
@@ -79,7 +80,7 @@ const intentLabels: Record<OverviewIntentCount['intent'], string> = {
 };
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+  return formatJapanDateTime(value);
 }
 
 function formatDay(value: string) {
