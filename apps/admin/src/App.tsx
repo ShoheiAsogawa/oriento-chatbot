@@ -219,6 +219,7 @@ function KnowledgePage() {
   const editCloseButtonRef = useRef<HTMLButtonElement>(null);
   const processingStartedAt = useRef<number | null>(null);
   const seedRetryCount = useRef(0);
+  const seedRemainingRef = useRef(0);
   const [seedCleanupPending, setSeedCleanupPending] = useState(false);
   const loadRequestSequence = useRef(0);
   const documentContentRequestSequence = useRef(0);
@@ -618,26 +619,42 @@ function KnowledgePage() {
 
   const seed = async () => {
     if (!beginOperation()) return;
+    if (!seedCleanupPending) seedRetryCount.current = 0;
     setSeeding(true);
     setNotice(null);
     try {
       const result = await api.seedKnowledge(true);
+      const remaining = result.remaining ?? 0;
+      const failedCount = result.failed?.length ?? 0;
+      const stillUploading = remaining > 0;
       const stillIndexing = result.incomplete.length > 0;
       const retryAfterVisibility = result.pruneBlockedReason === 'completed_items_not_visible'
         && seedRetryCount.current < 3;
-      setSeedCleanupPending(stillIndexing || retryAfterVisibility);
-      if (stillIndexing || retryAfterVisibility) seedRetryCount.current += 1;
-      else seedRetryCount.current = 0;
-      if (stillIndexing) {
-        setNotice(`初期ナレッジを同期中です。${result.incomplete.length}件の反映完了後、旧版の整理まで自動で続けます。`);
-      } else if (retryAfterVisibility) {
-        setNotice('新しいナレッジの反映を確認中です。旧版の整理まで自動で続けます。');
-      } else if (result.pruneBlockedReason === 'property_count_dropped_unexpectedly') {
-        setNotice('物件件数の急減を検知したため、旧版の自動削除を停止しました。取得結果を確認してください。');
-      } else if (result.pruneBlockedReason === 'manifest_empty') {
-        setNotice('初期ナレッジが空のため、安全のため同期を停止しました。');
+      seedRemainingRef.current = remaining;
+      const shouldContinue = stillUploading || stillIndexing || retryAfterVisibility;
+      if (seedRetryCount.current >= 150) {
+        setSeedCleanupPending(false);
+        setNotice('同期が長引いています。もう一度「再同期」を押すと続きから再開します。');
       } else {
-        setNotice(`初期ナレッジの同期が完了しました。旧版${result.deleted.length}件を整理しました。`);
+        setSeedCleanupPending(shouldContinue);
+        if (shouldContinue) seedRetryCount.current += 1;
+        else seedRetryCount.current = 0;
+        if (stillUploading) {
+          setNotice(`初期ナレッジを同期中です。残り${remaining.toLocaleString()}件を登録しています。`);
+        } else if (failedCount > 0) {
+          setSeedCleanupPending(false);
+          setNotice(`同期中に${failedCount.toLocaleString()}件を登録できませんでした。もう一度「再同期」を押してください。`);
+        } else if (stillIndexing) {
+          setNotice(`初期ナレッジを同期中です。${result.incomplete.length}件の反映完了後、旧版の整理まで自動で続けます。`);
+        } else if (retryAfterVisibility) {
+          setNotice('新しいナレッジの反映を確認中です。旧版の整理まで自動で続けます。');
+        } else if (result.pruneBlockedReason === 'property_count_dropped_unexpectedly') {
+          setNotice('物件件数の急減を検知したため、旧版の自動削除を停止しました。取得結果を確認してください。');
+        } else if (result.pruneBlockedReason === 'manifest_empty') {
+          setNotice('初期ナレッジが空のため、安全のため同期を停止しました。');
+        } else {
+          setNotice(`初期ナレッジの同期が完了しました。旧版${result.deleted.length}件を整理しました。`);
+        }
       }
       await load();
     } catch (error) {
@@ -650,8 +667,9 @@ function KnowledgePage() {
   };
 
   useEffect(() => {
-    if (!seedCleanupPending || pendingKnowledgeIds.length > 0 || busy || loading) return;
-    const timer = window.setTimeout(() => { void seed(); }, 1500);
+    if (!seedCleanupPending || busy || loading) return;
+    if (seedRemainingRef.current === 0 && pendingKnowledgeIds.length > 0) return;
+    const timer = window.setTimeout(() => { void seed(); }, seedRemainingRef.current > 0 ? 400 : 1500);
     return () => window.clearTimeout(timer);
   }, [busy, loading, pendingKnowledgeIds.length, seedCleanupPending]);
 

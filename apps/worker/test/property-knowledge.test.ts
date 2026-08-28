@@ -294,6 +294,8 @@ JR大阪環状線「弁天町」徒歩6分
     expect(sync).toHaveBeenCalledOnce();
     expect(upload).not.toHaveBeenCalled();
     expect(result.accepted).toEqual([{ file: entry.file, key: stale.key, id: stale.id, status: 'queued' }]);
+    expect(result.remaining).toBe(0);
+    expect(result.failed).toEqual([]);
   });
 
   it('uploads changed content under a new version key and keeps the completed old item', async () => {
@@ -333,6 +335,73 @@ JR大阪環状線「弁天町」徒歩6分
     expect(upload.mock.calls[0]?.[0]).toBe(initialKnowledgeItemKey(entry));
     expect(upload.mock.calls[0]?.[0]).not.toBe(oldItem.key);
     expect(result.accepted[0]).toMatchObject({ id: 'new', status: 'queued' });
+    expect(result.remaining).toBe(0);
+    expect(result.failed).toEqual([]);
+  });
+
+  it('uploads only a mutation batch and reports how many files remain', async () => {
+    const entries = [1, 2, 3].map((index) => ({
+      file: `properties_for_rent/post-${index}.md`,
+      category: 'properties_for_rent',
+      source_url: `https://orijyu.com/rent/post-${index}.html`,
+      sha256: 'b'.repeat(64),
+    }));
+    const upload = vi.fn().mockImplementation(async (key: string) => ({
+      id: key,
+      key,
+      status: 'queued',
+    }));
+    const items = { upload, get: vi.fn() } as unknown as AiSearchItems;
+    const env = {
+      STATIC_ASSETS: {
+        fetch: vi.fn().mockImplementation(async () => new Response('# 物件', { status: 200 })),
+      },
+    } as unknown as Env;
+
+    const result = await syncInitialKnowledgeFiles(
+      env,
+      new URL('https://example.test'),
+      items,
+      entries,
+      [],
+      { maxMutations: 2 },
+    );
+
+    expect(upload).toHaveBeenCalledTimes(2);
+    expect(result.accepted).toHaveLength(2);
+    expect(result.remaining).toBe(1);
+    expect(result.failed).toEqual([]);
+  });
+
+  it('keeps uploading other files when one asset cannot be read', async () => {
+    const entries = [1, 2].map((index) => ({
+      file: `properties_for_rent/post-${index}.md`,
+      category: 'properties_for_rent',
+      source_url: `https://orijyu.com/rent/post-${index}.html`,
+      sha256: 'b'.repeat(64),
+    }));
+    const upload = vi.fn().mockResolvedValue({ id: 'ok', key: 'ok.md', status: 'queued' });
+    const items = { upload, get: vi.fn() } as unknown as AiSearchItems;
+    const env = {
+      STATIC_ASSETS: {
+        fetch: vi.fn().mockImplementation(async (request: Request) => {
+          if (String(request.url).includes('post-1.md')) return new Response('missing', { status: 404 });
+          return new Response('# 物件', { status: 200 });
+        }),
+      },
+    } as unknown as Env;
+
+    const result = await syncInitialKnowledgeFiles(
+      env,
+      new URL('https://example.test'),
+      items,
+      entries,
+      [],
+    );
+
+    expect(result.failed).toEqual([{ file: 'properties_for_rent/post-1.md', error: '初期ナレッジを読み込めません: properties_for_rent/post-1.md' }]);
+    expect(result.accepted).toHaveLength(1);
+    expect(result.remaining).toBe(0);
   });
 
   it('updates a seeded general document without a replacement, preserving its stored content and excluding its manual override from later reseeds', async () => {
@@ -393,7 +462,7 @@ JR大阪環状線「弁天町」徒歩6分
       items,
       remainingInitialEntries,
       [manualOverride],
-    )).resolves.toEqual({ accepted: [], skipped: [] });
+    )).resolves.toEqual({ accepted: [], skipped: [], remaining: 0, failed: [] });
     expect(upload).not.toHaveBeenCalled();
   });
 

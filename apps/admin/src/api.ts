@@ -542,6 +542,8 @@ export const api = {
     accepted: Array<{ file: string; id: string; status: string }>;
     skipped: string[];
     incomplete: Array<{ file: string; id: string; status: string }>;
+    remaining: number;
+    failed: Array<{ file: string; error: string }>;
     deleted: string[];
     pruneRequested: boolean;
     pruneApplied: boolean;
@@ -557,6 +559,8 @@ export const api = {
     accepted: [],
     skipped: [],
     incomplete: [],
+    remaining: 0,
+    failed: [],
     deleted: [],
     pruneRequested: prune,
     pruneApplied: prune,

@@ -265,6 +265,17 @@ app.use('/api/chat/message', async (context, next) => {
   return context.res;
 });
 
+function publicWorkerError(error: Error, status: number, path: string) {
+  if (status !== 500) return error.message;
+  if (path.startsWith('/api/admin/') || path === '/api/internal/knowledge/reseed') {
+    if (/subrequest/iu.test(error.message) || /CPU time/iu.test(error.message) || /Memory limit/iu.test(error.message)) {
+      return '登録処理が上限に達したため中断しました。再同期をもう一度押すと続きから再開します。';
+    }
+    return `処理中にエラーが発生しました（${error.name}）`;
+  }
+  return '処理中にエラーが発生しました';
+}
+
 app.onError(async (error, context) => {
   const status = error instanceof ChatHttpError
     ? error.status
@@ -294,9 +305,9 @@ app.onError(async (error, context) => {
     try { await releaseChatTurn(context.env.DB, claim); } catch { /* best effort */ }
   }
   return context.json({
-    error: status === 500 ? '処理中にエラーが発生しました' : error.message,
+    error: publicWorkerError(error, status, context.req.path),
     requestId,
-    ...(canSeeInternalDetails ? { details: error.message } : {}),
+    ...(canSeeInternalDetails || context.req.path.startsWith('/api/admin/') ? { details: error.message } : {}),
   }, status);
 });
 
@@ -429,6 +440,10 @@ function knowledgeCategoryFromFilename(filename: string) {
 }
 
 const MAX_KNOWLEDGE_ITEM_SIZE = 4 * 1024 * 1024;
+const INITIAL_KNOWLEDGE_SYNC_BATCH_SIZE = 20;
+const INITIAL_KNOWLEDGE_SYNC_CONCURRENCY = 3;
+const KNOWLEDGE_LIST_PAGE_SIZE = 50;
+const KNOWLEDGE_LIST_MAX_PAGES = 200;
 const SUPPORTED_KNOWLEDGE_ITEM = /\.(?:pdf|docx?|xlsx?|csv|txt|md|png|jpe?g|webp)$/iu;
 const INITIAL_KNOWLEDGE_PATH = /^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.md$/iu;
 const PROPERTY_KNOWLEDGE_CATEGORY = /^properties_for_(?:sale|rent)$/u;
@@ -880,16 +895,15 @@ function initialKnowledgeMetadata(entry: InitialKnowledgeEntry) {
 }
 
 async function listAllKnowledgeItems(items: AiSearchItems, status?: KnowledgeListStatus) {
-  const perPage = 50;
   const all: AiSearchItemInfo[] = [];
   let page = 1;
   let totalCount = Number.POSITIVE_INFINITY;
-  while (all.length < totalCount) {
-    const response = await items.list({ page, per_page: perPage, status });
+  while (all.length < totalCount && page <= KNOWLEDGE_LIST_MAX_PAGES) {
+    const response = await items.list({ page, per_page: KNOWLEDGE_LIST_PAGE_SIZE, status });
     all.push(...response.result);
     const reportedTotal = response.result_info?.total_count;
-    totalCount = typeof reportedTotal === 'number' ? reportedTotal : all.length + (response.result.length === perPage ? 1 : 0);
-    if (response.result.length < perPage) break;
+    totalCount = typeof reportedTotal === 'number' ? reportedTotal : all.length + (response.result.length === KNOWLEDGE_LIST_PAGE_SIZE ? 1 : 0);
+    if (response.result.length < KNOWLEDGE_LIST_PAGE_SIZE) break;
     page += 1;
   }
   return all;
@@ -900,6 +914,11 @@ type InitialKnowledgeSyncItem = {
   key: string;
   id: string;
   status: string;
+};
+
+type InitialKnowledgeSyncFailure = {
+  file: string;
+  error: string;
 };
 
 function matchingInitialKnowledgeItems(entry: InitialKnowledgeEntry, existingItems: AiSearchItemInfo[]) {
@@ -962,59 +981,99 @@ async function uploadInitialKnowledgeItem(
   return { file: entry.file, key: result.key || key, id: result.id, status: result.status };
 }
 
+async function mutateInitialKnowledgeItem(
+  env: Env,
+  baseUrl: URL,
+  items: AiSearchItems,
+  entry: InitialKnowledgeEntry,
+  existing: AiSearchItemInfo | undefined,
+): Promise<{ ok: true; item: InitialKnowledgeSyncItem } | { ok: false; failure: InitialKnowledgeSyncFailure }> {
+  try {
+    if (existing) {
+      try {
+        const result = await items.get(existing.id).sync();
+        return {
+          ok: true,
+          item: {
+            file: entry.file,
+            key: result.key || existing.key,
+            id: result.id || existing.id,
+            status: result.status,
+          },
+        };
+      } catch {
+        const recovered = await uploadInitialKnowledgeItem(
+          env,
+          baseUrl,
+          items,
+          entry,
+          recoveryInitialKnowledgeItemKey(entry),
+        );
+        return { ok: true, item: recovered };
+      }
+    }
+    const uploaded = await uploadInitialKnowledgeItem(
+      env,
+      baseUrl,
+      items,
+      entry,
+      initialKnowledgeItemKey(entry),
+    );
+    return { ok: true, item: uploaded };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        file: entry.file,
+        error: error instanceof Error ? error.message : 'upload_failed',
+      },
+    };
+  }
+}
+
 async function syncInitialKnowledgeFiles(
   env: Env,
   baseUrl: URL,
   items: AiSearchItems,
   files: InitialKnowledgeEntry[],
   existingItems: AiSearchItemInfo[],
+  options: { maxMutations?: number } = {},
 ) {
-  const accepted: InitialKnowledgeSyncItem[] = [];
+  const maxMutations = options.maxMutations ?? Number.POSITIVE_INFINITY;
   const skipped: InitialKnowledgeSyncItem[] = [];
+  const pending: Array<{ entry: InitialKnowledgeEntry; existing?: AiSearchItemInfo }> = [];
 
-  for (let offset = 0; offset < files.length; offset += 3) {
-    const batch = files.slice(offset, offset + 3);
-    const results = await Promise.all(batch.flatMap((entry) => {
-      const matching = matchingInitialKnowledgeItems(entry, existingItems);
-      const sameVersion = entry.sha256
-        ? matching.filter((item) => metadataString(item.metadata, 'manifest_sha256') === entry.sha256)
-        : matching.filter((item) => item.key === initialKnowledgeItemKey(entry));
-      const existing = canonicalInitialKnowledgeItem(entry, sameVersion);
-      if (existing && (isCurrentInitialKnowledgeItem(entry, existing)
-        || isFreshPendingInitialItem(existing, entry.sha256))) {
-        skipped.push({ file: entry.file, key: existing.key, id: existing.id, status: existing.status });
-        return [];
-      }
-
-      if (existing) {
-        return [items.get(existing.id).sync()
-          .then((result) => ({
-            file: entry.file,
-            key: result.key || existing.key,
-            id: result.id || existing.id,
-            status: result.status,
-          }))
-          .catch(() => uploadInitialKnowledgeItem(
-            env,
-            baseUrl,
-            items,
-            entry,
-            recoveryInitialKnowledgeItemKey(entry),
-          ))];
-      }
-
-      return [uploadInitialKnowledgeItem(
-        env,
-        baseUrl,
-        items,
-        entry,
-        initialKnowledgeItemKey(entry),
-      )];
-    }));
-    accepted.push(...results);
+  for (const entry of files) {
+    const matching = matchingInitialKnowledgeItems(entry, existingItems);
+    const sameVersion = entry.sha256
+      ? matching.filter((item) => metadataString(item.metadata, 'manifest_sha256') === entry.sha256)
+      : matching.filter((item) => item.key === initialKnowledgeItemKey(entry));
+    const existing = canonicalInitialKnowledgeItem(entry, sameVersion);
+    if (existing && (isCurrentInitialKnowledgeItem(entry, existing)
+      || isFreshPendingInitialItem(existing, entry.sha256))) {
+      skipped.push({ file: entry.file, key: existing.key, id: existing.id, status: existing.status });
+      continue;
+    }
+    pending.push({ entry, existing });
   }
 
-  return { accepted, skipped };
+  const batch = pending.slice(0, Number.isFinite(maxMutations) ? maxMutations : pending.length);
+  const remaining = Math.max(0, pending.length - batch.length);
+  const accepted: InitialKnowledgeSyncItem[] = [];
+  const failed: InitialKnowledgeSyncFailure[] = [];
+
+  for (let offset = 0; offset < batch.length; offset += INITIAL_KNOWLEDGE_SYNC_CONCURRENCY) {
+    const chunk = batch.slice(offset, offset + INITIAL_KNOWLEDGE_SYNC_CONCURRENCY);
+    const results = await Promise.all(chunk.map(({ entry, existing }) => (
+      mutateInitialKnowledgeItem(env, baseUrl, items, entry, existing)
+    )));
+    for (const result of results) {
+      if (result.ok) accepted.push(result.item);
+      else failed.push(result.failure);
+    }
+  }
+
+  return { accepted, skipped, remaining, failed };
 }
 
 function initialKnowledgePruneSafety(files: InitialKnowledgeEntry[], existingItems: AiSearchItemInfo[]) {
@@ -1954,17 +2013,19 @@ app.post('/api/admin/knowledge/seed', async (context) => {
   const propertyFiltered = excludeInitialPropertiesCoveredByManualItems(exclusionFiltered, existingItems);
   const files = excludeInitialGeneralKnowledgeOverriddenByManualItems(propertyFiltered, existingItems);
   const generalOverrides = propertyFiltered.length - files.length;
-  const { accepted, skipped: skippedItems } = await syncInitialKnowledgeFiles(
+  const { accepted, skipped: skippedItems, remaining, failed } = await syncInitialKnowledgeFiles(
     context.env,
     baseUrl,
     items,
     files,
     existingItems,
+    { maxMutations: INITIAL_KNOWLEDGE_SYNC_BATCH_SIZE },
   );
   const syncedItems = [...accepted, ...skippedItems];
   const incomplete = syncedItems.filter((item) => item.status !== 'completed');
   const pruneSafety = initialKnowledgePruneSafety(files, existingItems);
-  const refreshedItems = input.prune && incomplete.length === 0 && pruneSafety.safe
+  const stillSyncing = remaining > 0 || failed.length > 0;
+  const refreshedItems = input.prune && !stillSyncing && incomplete.length === 0 && pruneSafety.safe
     ? await listAllKnowledgeItems(items)
     : null;
   const desiredItemIds = refreshedItems
@@ -1972,17 +2033,31 @@ app.post('/api/admin/knowledge/seed', async (context) => {
     : null;
   const pruneBlockedReason = !input.prune
     ? null
-    : incomplete.length > 0
-      ? 'indexing_incomplete'
-      : !pruneSafety.safe
-        ? pruneSafety.reason
-        : !desiredItemIds
-          ? 'completed_items_not_visible'
-          : null;
+    : remaining > 0
+      ? 'sync_in_progress'
+      : failed.length > 0
+        ? 'sync_failed'
+        : incomplete.length > 0
+          ? 'indexing_incomplete'
+          : !pruneSafety.safe
+            ? pruneSafety.reason
+            : !desiredItemIds
+              ? 'completed_items_not_visible'
+              : null;
   const deleted = input.prune && !pruneBlockedReason && refreshedItems && desiredItemIds
     ? await pruneManagedInitialKnowledgeItems(items, refreshedItems, desiredItemIds)
     : [];
   const skipped = skippedItems.map((item) => item.file);
+
+  console.info(JSON.stringify({
+    level: 'info',
+    event: 'knowledge.initial_seed.batch',
+    accepted: accepted.length,
+    skipped: skipped.length,
+    remaining,
+    failed: failed.length,
+    incomplete: incomplete.length,
+  }));
 
   await appendAudit(context.env, {
     eventType: 'knowledge.initial_seeded',
@@ -1994,6 +2069,8 @@ app.post('/api/admin/knowledge/seed', async (context) => {
       accepted: accepted.length,
       skipped: skipped.length,
       incomplete: incomplete.length,
+      remaining,
+      failed: failed.length,
       deleted: deleted.length,
       pruneRequested: input.prune,
       pruneBlockedReason,
@@ -2002,11 +2079,14 @@ app.post('/api/admin/knowledge/seed', async (context) => {
       generalOverrides,
     },
   });
+  const inProgress = remaining > 0 || incomplete.length > 0 || failed.length > 0;
   return context.json({
-    ok: incomplete.length === 0 && (!input.prune || !pruneBlockedReason),
+    ok: !inProgress && (!input.prune || !pruneBlockedReason),
     accepted,
     skipped,
     incomplete,
+    remaining,
+    failed,
     deleted,
     pruneRequested: input.prune,
     pruneApplied: input.prune && !pruneBlockedReason,
@@ -2014,7 +2094,7 @@ app.post('/api/admin/knowledge/seed', async (context) => {
     excluded: manifestEntries.length - exclusionFiltered.length,
     coveredByManualItem: exclusionFiltered.length - files.length,
     generalOverrides,
-  }, incomplete.length ? 202 : 200);
+  }, inProgress ? 202 : 200);
 });
 
 app.post('/api/internal/knowledge/reseed', async (context) => {
@@ -2037,16 +2117,18 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
   const generalOverrides = propertyFiltered.length - generalOverrideFiltered.length;
   const files = generalOverrideFiltered
     .filter((entry): entry is InitialKnowledgeEntry & { sha256: string } => Boolean(entry.sha256));
-  const { accepted, skipped } = await syncInitialKnowledgeFiles(
+  const { accepted, skipped: skippedItems, remaining, failed } = await syncInitialKnowledgeFiles(
     context.env,
     baseUrl,
     items,
     files,
     existingItems,
+    { maxMutations: INITIAL_KNOWLEDGE_SYNC_BATCH_SIZE },
   );
-  const incomplete = [...accepted, ...skipped].filter((item) => item.status !== 'completed');
+  const incomplete = [...accepted, ...skippedItems].filter((item) => item.status !== 'completed');
   const pruneSafety = initialKnowledgePruneSafety(files, existingItems);
-  const refreshedItems = input.prune && incomplete.length === 0 && pruneSafety.safe
+  const stillSyncing = remaining > 0 || failed.length > 0;
+  const refreshedItems = input.prune && !stillSyncing && incomplete.length === 0 && pruneSafety.safe
     ? await listAllKnowledgeItems(items)
     : null;
   const desiredItemIds = refreshedItems
@@ -2054,16 +2136,21 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
     : null;
   const pruneBlockedReason = !input.prune
     ? null
-    : incomplete.length > 0
-      ? 'indexing_incomplete'
-      : !pruneSafety.safe
-        ? pruneSafety.reason
-        : !desiredItemIds
-          ? 'completed_items_not_visible'
-          : null;
+    : remaining > 0
+      ? 'sync_in_progress'
+      : failed.length > 0
+        ? 'sync_failed'
+        : incomplete.length > 0
+          ? 'indexing_incomplete'
+          : !pruneSafety.safe
+            ? pruneSafety.reason
+            : !desiredItemIds
+              ? 'completed_items_not_visible'
+              : null;
   const deleted = input.prune && !pruneBlockedReason && refreshedItems && desiredItemIds
     ? await pruneManagedInitialKnowledgeItems(items, refreshedItems, desiredItemIds)
     : [];
+  const skipped = skippedItems.map((item) => item.file);
 
   await appendAudit(context.env, {
     eventType: 'knowledge.initial_reseeded',
@@ -2074,6 +2161,8 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
       accepted: accepted.length,
       skipped: skipped.length,
       incomplete: incomplete.length,
+      remaining,
+      failed: failed.length,
       deleted: deleted.length,
       pruneRequested: input.prune,
       pruneBlockedReason,
@@ -2082,11 +2171,14 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
       generalOverrides,
     },
   });
+  const inProgress = remaining > 0 || incomplete.length > 0 || failed.length > 0;
   return context.json({
-    ok: incomplete.length === 0 && (!input.prune || !pruneBlockedReason),
+    ok: !inProgress && (!input.prune || !pruneBlockedReason),
     accepted,
     skipped,
     incomplete,
+    remaining,
+    failed,
     deleted,
     pruneRequested: input.prune,
     pruneApplied: input.prune && !pruneBlockedReason,
@@ -2094,7 +2186,7 @@ app.post('/api/internal/knowledge/reseed', async (context) => {
     excluded: manifestEntries.length - exclusionFiltered.length,
     coveredByManualItem: exclusionFiltered.length - files.length,
     generalOverrides,
-  }, incomplete.length ? 202 : 200);
+  }, inProgress ? 202 : 200);
 });
 
 app.get('/api/admin/overview', async (context) => {
