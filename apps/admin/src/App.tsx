@@ -1,7 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity, Archive, BookOpen, ChevronLeft, ChevronRight,
-  EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
+  Database, EllipsisVertical, Eye, File, FileCheck2, FileSpreadsheet,
   FileText, Gauge, History, Home, Link2, Menu, MessageSquareText, Plus, ClipboardList,
   RefreshCw, Search, ShieldCheck, Trash2, UploadCloud, UsersRound,
   Pencil, X,
@@ -197,6 +197,7 @@ function KnowledgePage() {
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [seeded, setSeeded] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<KnowledgeAddMode>('property');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -217,6 +218,8 @@ function KnowledgePage() {
   const editModalRef = useRef<HTMLElement>(null);
   const editCloseButtonRef = useRef<HTMLButtonElement>(null);
   const processingStartedAt = useRef<number | null>(null);
+  const seedRetryCount = useRef(0);
+  const [seedCleanupPending, setSeedCleanupPending] = useState(false);
   const loadRequestSequence = useRef(0);
   const documentContentRequestSequence = useRef(0);
   const generatedPropertyKnowledge = useMemo(() => propertyKnowledgePreview(propertyForm), [propertyForm]);
@@ -613,6 +616,44 @@ function KnowledgePage() {
     }
   };
 
+  const seed = async () => {
+    if (!beginOperation()) return;
+    setNotice(null);
+    try {
+      const result = await api.seedKnowledge(true);
+      const stillIndexing = result.incomplete.length > 0;
+      const retryAfterVisibility = result.pruneBlockedReason === 'completed_items_not_visible'
+        && seedRetryCount.current < 3;
+      setSeedCleanupPending(stillIndexing || retryAfterVisibility);
+      if (stillIndexing || retryAfterVisibility) seedRetryCount.current += 1;
+      else seedRetryCount.current = 0;
+      setSeeded(result.ok && result.pruneApplied);
+      if (stillIndexing) {
+        setNotice(`初期ナレッジを同期中です。${result.incomplete.length}件の反映完了後、旧版の整理まで自動で続けます。`);
+      } else if (retryAfterVisibility) {
+        setNotice('新しいナレッジの反映を確認中です。旧版の整理まで自動で続けます。');
+      } else if (result.pruneBlockedReason === 'property_count_dropped_unexpectedly') {
+        setNotice('物件件数の急減を検知したため、旧版の自動削除を停止しました。取得結果を確認してください。');
+      } else if (result.pruneBlockedReason === 'manifest_empty') {
+        setNotice('初期ナレッジが空のため、安全のため同期を停止しました。');
+      } else {
+        setNotice(`初期ナレッジの同期が完了しました。旧版${result.deleted.length}件を整理しました。`);
+      }
+      await load();
+    } catch (error) {
+      setSeedCleanupPending(false);
+      setNotice(error instanceof Error ? `同期を開始できませんでした: ${error.message}` : '同期を開始できませんでした。');
+    } finally {
+      finishOperation();
+    }
+  };
+
+  useEffect(() => {
+    if (!seedCleanupPending || pendingKnowledgeIds.length > 0 || busy || loading) return;
+    const timer = window.setTimeout(() => { void seed(); }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [busy, loading, pendingKnowledgeIds.length, seedCleanupPending]);
+
   const isEditingDocument = Boolean(editingId && addMode === 'document');
   const isEditingDirectDocument = Boolean(selected && supportsDirectDocumentEditing(selected));
   const documentContentSaveUnavailable = documentEditMode === 'content'
@@ -623,8 +664,9 @@ function KnowledgePage() {
     <main className="split-main">
       <PageHeader
         title="物件ナレッジ"
-        description="物件は1件ごとに管理します。成約済みになった物件だけを削除し、必要な物件だけを追加できます。"
+        description="物件は1件ごとに管理します。成約済みになった物件だけを削除し、必要な物件だけを追加できます。公式サイトから取り込んだ初期ナレッジは、再同期でチャット検索へ反映します。"
         action={<div className="page-actions">
+          <button className="secondary-button" onClick={() => void seed()} disabled={busy}><Database />{seeded ? '初期ナレッジ同期済み' : '初期ナレッジを再同期'}</button>
           <button className="primary-button" onClick={openAddForm} disabled={busy}><Plus />物件・資料を追加</button>
         </div>}
       />
