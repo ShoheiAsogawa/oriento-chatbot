@@ -227,6 +227,7 @@ function KnowledgePage() {
   const generatedPropertyKnowledge = useMemo(() => propertyKnowledgePreview(propertyForm), [propertyForm]);
   const documentContentBytes = useMemo(() => new TextEncoder().encode(documentContent).byteLength, [documentContent]);
 
+  const loadRetryCount = useRef(0);
   const load = useCallback(async (preferredId?: string, options: { silent?: boolean } = {}) => {
     const sequence = loadRequestSequence.current + 1;
     loadRequestSequence.current = sequence;
@@ -237,6 +238,7 @@ function KnowledgePage() {
     try {
       const data = await api.knowledge({ perPage: 1000 });
       if (loadRequestSequence.current !== sequence) return;
+      loadRetryCount.current = 0;
       setItems(data.result);
       setTotal(Number(data.result_info.total_count || data.result.length));
       setSelected((current) => {
@@ -246,6 +248,14 @@ function KnowledgePage() {
       });
     } catch (error) {
       if (loadRequestSequence.current !== sequence) return;
+      const message = error instanceof Error ? error.message : '';
+      const retryable = /503|混み合|取得できませんでした/u.test(message);
+      if (retryable && loadRetryCount.current < 3) {
+        loadRetryCount.current += 1;
+        setNotice('ナレッジ一覧が混み合っています。少し待って再読み込みします。');
+        window.setTimeout(() => { void load(preferredId, options); }, 2500);
+        return;
+      }
       setNotice(error instanceof Error ? `ナレッジを読み込めませんでした: ${error.message}` : 'ナレッジを読み込めませんでした。');
     } finally {
       if (!options.silent && loadRequestSequence.current === sequence) setLoading(false);

@@ -271,7 +271,10 @@ function publicWorkerError(error: Error, status: number, path: string) {
     if (/subrequest/iu.test(error.message) || /CPU time/iu.test(error.message) || /Memory limit/iu.test(error.message) || /503/u.test(error.message)) {
       return '登録処理が混み合っているため中断しました。再同期をもう一度押すと続きから再開します。';
     }
-    return `処理中にエラーが発生しました（${error.name}）`;
+    const detail = error.message.replace(/\s+/gu, ' ').trim().slice(0, 180);
+    return detail
+      ? `処理中にエラーが発生しました（${detail}）`
+      : `処理中にエラーが発生しました（${error.name}）`;
   }
   return '処理中にエラーが発生しました';
 }
@@ -442,8 +445,8 @@ function knowledgeCategoryFromFilename(filename: string) {
 const MAX_KNOWLEDGE_ITEM_SIZE = 4 * 1024 * 1024;
 const INITIAL_KNOWLEDGE_SYNC_BATCH_SIZE = 8;
 const INITIAL_KNOWLEDGE_SYNC_CONCURRENCY = 1;
-const KNOWLEDGE_LIST_PAGE_SIZE = 100;
-const KNOWLEDGE_LIST_MAX_PAGES = 100;
+const KNOWLEDGE_LIST_PAGE_SIZE = 50;
+const KNOWLEDGE_LIST_MAX_PAGES = 200;
 const SUPPORTED_KNOWLEDGE_ITEM = /\.(?:pdf|docx?|xlsx?|csv|txt|md|png|jpe?g|webp)$/iu;
 const INITIAL_KNOWLEDGE_PATH = /^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.md$/iu;
 const PROPERTY_KNOWLEDGE_CATEGORY = /^properties_for_(?:sale|rent)$/u;
@@ -900,7 +903,9 @@ function delay(ms: number) {
 
 function isRetryableAiSearchError(error: unknown) {
   const message = error instanceof Error ? `${error.name} ${error.message}` : String(error);
-  return /503|429|502|504|1102|overload|temporar|unavailab/iu.test(message);
+  if (/401|403|404|413/u.test(message) && !/503|429|502|504/u.test(message)) return false;
+  return /503|429|502|504|1102|overload|temporar|unavailab|^Error\s*$/iu.test(message)
+    || (error instanceof Error && !error.message.trim());
 }
 
 async function withAiSearchRetry<T>(operation: () => Promise<T>, attempts = 4): Promise<T> {
@@ -922,12 +927,29 @@ async function listAllKnowledgeItems(items: AiSearchItems, status?: KnowledgeLis
   let page = 1;
   let totalCount = Number.POSITIVE_INFINITY;
   while (all.length < totalCount && page <= KNOWLEDGE_LIST_MAX_PAGES) {
-    const response = await withAiSearchRetry(() => items.list({ page, per_page: KNOWLEDGE_LIST_PAGE_SIZE, status }));
-    all.push(...response.result);
-    const reportedTotal = response.result_info?.total_count;
-    totalCount = typeof reportedTotal === 'number' ? reportedTotal : all.length + (response.result.length === KNOWLEDGE_LIST_PAGE_SIZE ? 1 : 0);
-    if (response.result.length < KNOWLEDGE_LIST_PAGE_SIZE) break;
-    page += 1;
+    try {
+      const params: { page: number; per_page: number; status?: KnowledgeListStatus } = {
+        page,
+        per_page: KNOWLEDGE_LIST_PAGE_SIZE,
+      };
+      if (status) params.status = status;
+      const response = await withAiSearchRetry(() => items.list(params));
+      all.push(...response.result);
+      const reportedTotal = response.result_info?.total_count;
+      totalCount = typeof reportedTotal === 'number' ? reportedTotal : all.length + (response.result.length === KNOWLEDGE_LIST_PAGE_SIZE ? 1 : 0);
+      if (response.result.length < KNOWLEDGE_LIST_PAGE_SIZE) break;
+      page += 1;
+    } catch (error) {
+      console.warn(JSON.stringify({
+        level: 'warn',
+        event: 'knowledge.list_page_failed',
+        page,
+        collected: all.length,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      if (all.length === 0) throw error;
+      break;
+    }
   }
   return all;
 }
@@ -1214,11 +1236,15 @@ function projectKnowledgeItem(item: AiSearchItemInfo) {
   const category = normalizeKnowledgeCategory(metadataString(item.metadata, 'category'));
   const sourceUrl = safeSourceUrl(metadataString(item.metadata, 'source_url')) || '';
   return {
-    ...item,
+    id: item.id,
+    key: item.key,
+    status: item.status,
     chunks_count: item.chunks_count || 0,
     file_size: item.file_size || 0,
     created_at: item.created_at || '',
     last_seen_at: item.last_seen_at || item.created_at || '',
+    error: item.error,
+    metadata: item.metadata,
     title,
     category,
     source_url: sourceUrl,
@@ -2298,10 +2324,23 @@ app.get('/api/admin/knowledge', async (context) => {
     : 'updated_desc';
   const page = boundedPositiveInteger(query.page, 1, 1000);
   const perPage = boundedPositiveInteger(query.perPage, 20, 1000);
-  const allItems = await listAllKnowledgeItems(
-    context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items,
-    status,
-  );
+  let allItems: AiSearchItemInfo[];
+  try {
+    allItems = await listAllKnowledgeItems(
+      context.env.AI_SEARCH.get(context.env.AI_SEARCH_INSTANCE).items,
+      status,
+    );
+  } catch (error) {
+    console.error(JSON.stringify({
+      level: 'error',
+      event: 'knowledge.list_failed',
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return context.json({
+      error: 'ナレッジ一覧を取得できませんでした。少し待って再読み込みしてください。',
+      details: error instanceof Error ? error.message : String(error),
+    }, 503);
+  }
   const projected = allItems.map(projectKnowledgeItem);
   const categories = Object.entries(projected.reduce<Record<string, number>>((counts, item) => {
     counts[item.category] = (counts[item.category] || 0) + 1;
