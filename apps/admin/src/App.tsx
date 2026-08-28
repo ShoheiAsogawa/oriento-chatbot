@@ -197,7 +197,7 @@ function KnowledgePage() {
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [seeded, setSeeded] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<KnowledgeAddMode>('property');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -618,6 +618,7 @@ function KnowledgePage() {
 
   const seed = async () => {
     if (!beginOperation()) return;
+    setSeeding(true);
     setNotice(null);
     try {
       const result = await api.seedKnowledge(true);
@@ -627,7 +628,6 @@ function KnowledgePage() {
       setSeedCleanupPending(stillIndexing || retryAfterVisibility);
       if (stillIndexing || retryAfterVisibility) seedRetryCount.current += 1;
       else seedRetryCount.current = 0;
-      setSeeded(result.ok && result.pruneApplied);
       if (stillIndexing) {
         setNotice(`初期ナレッジを同期中です。${result.incomplete.length}件の反映完了後、旧版の整理まで自動で続けます。`);
       } else if (retryAfterVisibility) {
@@ -644,6 +644,7 @@ function KnowledgePage() {
       setSeedCleanupPending(false);
       setNotice(error instanceof Error ? `同期を開始できませんでした: ${error.message}` : '同期を開始できませんでした。');
     } finally {
+      setSeeding(false);
       finishOperation();
     }
   };
@@ -666,7 +667,7 @@ function KnowledgePage() {
         title="物件ナレッジ"
         description="物件は1件ごとに管理します。成約済みになった物件だけを削除し、必要な物件だけを追加できます。公式サイトから取り込んだ初期ナレッジは、再同期でチャット検索へ反映します。"
         action={<div className="page-actions">
-          <button className="secondary-button" onClick={() => void seed()} disabled={busy}><Database />{seeded ? '初期ナレッジ同期済み' : '初期ナレッジを再同期'}</button>
+          <button className="secondary-button" type="button" onClick={() => void seed()} disabled={busy}><Database />{seeding || seedCleanupPending ? '初期ナレッジを同期中…' : '初期ナレッジを再同期'}</button>
           <button className="primary-button" onClick={openAddForm} disabled={busy}><Plus />物件・資料を追加</button>
         </div>}
       />
