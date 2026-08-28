@@ -2,14 +2,14 @@
   "version": 2,
   "started_at": "2026-08-09T19:59:07.473156+00:00",
   "finished_at": "2026-08-09T20:03:32.392547+00:00",
-  "property_refreshed_at": "2026-08-14T07:38:09.676137+00:00",
+  "property_refreshed_at": "2026-08-28T02:50:43.958777+00:00",
   "source_roots": [
     "https://orijyu.com/",
     "https://orichin.com/",
     "https://origumi.jp/",
     "https://oriho.com/"
   ],
-  "page_count": 2291,
+  "page_count": 2288,
   "category_counts": {
     "corporate_and_policies": 2,
     "homebuilding_and_renovation": 9,
@@ -17,8 +17,8 @@
     "orichin_real_estate": 38,
     "origumi_construction": 24,
     "oriho_homebuilding": 1527,
-    "properties_for_rent": 25,
-    "properties_for_sale": 537,
+    "properties_for_rent": 21,
+    "properties_for_sale": 538,
     "property_search_guides": 100,
     "recruitment": 12,
     "services_and_guides": 6,
@@ -172,14 +172,6 @@
       "source_url": "https://orijyu.com/buy/post-122856.html",
       "bytes": 7400,
       "sha256": "6c2ba6734013b49577f7a72bcaf07f4d6a8497b7cc9929f51eff37ae0ed83a5a"
-    },
-    {
-      "file": "properties/sale/sale-122504.md",
-      "category": "properties_for_sale",
-      "title": "OrientCity 住之江",
-      "source_url": "https://orijyu.com/buy/post-122504.html",
-      "bytes": 5704,
-      "sha256": "144d874b4b41e3ef01247257aad21c3a869d3fe08b96cc509e96d4e8df2b437e"
     },
     {
       "file": "properties/sale/sale-122959.md",
@@ -350,14 +342,6 @@
       "sha256": "bfac8fc0bb0737d5b6fac10409ddf86b89fae96a8f8b504f618a4f00f383a11a"
     },
     {
-      "file": "properties/sale/sale-122309.md",
-      "category": "properties_for_sale",
-      "title": "OrientCity 恩智北町",
-      "source_url": "https://orijyu.com/buy/post-122309.html",
-      "bytes": 6362,
-      "sha256": "af3b27e6605e753b70cc1e880f0d174745e03d9579b2072e97d20f070c43ce1e"
-    },
-    {
       "file": "properties/sale/sale-53235.md",
       "category": "properties_for_sale",
       "title": "OrientCity 桜ガ丘",
@@ -395,7 +379,7 @@
       "title": "OrientCity 泉ケ丘",
       "source_url": "https://orijyu.com/buy/post-121778.html",
       "bytes": 7610,
-      "sha256": "f81a02dd7ddcf85e5d43066654c1ad966c9433d2a0183785556190b86ca9950e"
+      "sha256": "c8ecedc1aed3ef64ae75bb4c88c5807235c249712e6e200605824373a9b0fb39"
     },
     {
       "file": "properties/sale/sale-108679.md",
@@ -410,8 +394,8 @@
       "category": "properties_for_sale",
       "title": "OrientCity 深井",
       "source_url": "https://orijyu.com/buy/post-121865.html",
-      "bytes": 5341,
-      "sha256": "df1c4d1cf622c087372e942ddabbe93266b5ff12a26a3520b06906b06dd8ac88"
+      "bytes": 5141,
+      "sha256": "50585fa3e192c104a35c93c6fbf7b3a05f296b3493c84e1a4e32f87690c0ecbc"
     },
     {
       "file": "properties/sale/sale-115902.md",
@@ -492,14 +476,6 @@
       "source_url": "https://orijyu.com/buy/post-121428-2.html",
       "bytes": 7055,
       "sha256": "6c4d9f0558bf11446af44926d42490881d65ff5918545234e325c751b32f840e"
-    },
-    {
-      "file": "properties/sale/sale-110489.md",
-      "category": "properties_for_sale",
-      "title": "OrientCity 神戸南 Part5",
-      "source_url": "https://orijyu.com/buy/post-110489.html",
-      "bytes": 8165,
-      "sha256": "1d24362975b284a719f05d16347ebd5eb32145d28cc9e9dd41219c210a51f9f3"
     },
     {
       "file": "properties/sale/sale-117841.md",
@@ -694,6 +670,14 @@
       "sha256": "5499da5693b3f4cdecbb8c448e2bdbefb72d84219d782ffe40db0e5014c49520"
     },
     {
+      "file": "properties/sale/sale-135312.md",
+      "category": "properties_for_sale",
+      "title": "クレール諏訪ノ森マリーニア",
+      "source_url": "https://orijyu.com/buy/post-135312.html",
+      "bytes": 2197,
+      "sha256": "8dc3d742e1bd38284609618943873f8e88756f85a09e5a860a2ef459564fa046"
+    },
+    {
       "file": "properties/sale/sale-132886.md",
       "category": "properties_for_sale",
       "title": "グランイースト",
@@ -722,8 +706,8 @@
       "category": "properties_for_sale",
       "title": "グラン・ビルド宿院Rino Room",
       "source_url": "https://orijyu.com/buy/post-134437.html",
-      "bytes": 2187,
-      "sha256": "9d3aaabdfee07d48f523b9ca8d2747b0c6bb7652bf249d3dfabf46acf1a89254"
+      "bytes": 2152,
+      "sha256": "76af46f747180671de03bba6d9002448c1feb810b9b89b5784e668fe9a3f1366"
     },
     {
       "file": "properties/sale/sale-134418.md",
@@ -754,8 +738,8 @@
       "category": "properties_for_sale",
       "title": "サンライズマンション・ドムス諏訪森",
       "source_url": "https://orijyu.com/buy/post-131039.html",
-      "bytes": 3723,
-      "sha256": "7b72655fc9f3b8b1de13d29cb027c61770f1ec142ffa3eead83ca09a6fd981ba"
+      "bytes": 8449,
+      "sha256": "c934e8dc15188aaf92b54338d163db07762a0fd1a1642db08f2acc3a159e81f2"
     },
     {
       "file": "properties/sale/sale-133678.md",
@@ -770,8 +754,8 @@
       "category": "properties_for_sale",
       "title": "シャンボール第3新大阪Rino Room",
       "source_url": "https://orijyu.com/buy/post-134424.html",
-      "bytes": 2036,
-      "sha256": "40493b20bdbff0cea65d25c3494a5402d1b43a4e11362f3635200bb8ceda1637"
+      "bytes": 2051,
+      "sha256": "def04616eab13a18866dd6f1bfc1ecfa589c126ef9a2420c1c9d0399893bbfb4"
     },
     {
       "file": "properties/sale/sale-123402.md",
@@ -794,8 +778,8 @@
       "category": "properties_for_sale",
       "title": "チサンマンション第7新大阪Rino Room",
       "source_url": "https://orijyu.com/buy/post-134405.html",
-      "bytes": 2280,
-      "sha256": "f2bcf463085b73c65b6996bff579763971e3ca0954beb8c85c1a7b25c43eff16"
+      "bytes": 2277,
+      "sha256": "8dd439907a03d6d42e5bc14e808e43c17b8552df03ce8959621f85f5b1405278"
     },
     {
       "file": "properties/sale/sale-134453.md",
@@ -810,8 +794,8 @@
       "category": "properties_for_sale",
       "title": "フルーレ第2新大阪Rino Room",
       "source_url": "https://orijyu.com/buy/post-134430.html",
-      "bytes": 2115,
-      "sha256": "ee14937c6a650fe0daad26ecd10b60e2987392329448fd9dd351229b12041a30"
+      "bytes": 2130,
+      "sha256": "d8cc8e09d77ebee066b789f264cd5a4ba579924e2e433029e6b7fbcdefe1a333"
     },
     {
       "file": "properties/sale/sale-65215.md",
@@ -1070,14 +1054,6 @@
       "sha256": "f1d2cdc7efe551242a0cdcff7fec683a1013deb5f2d2093205b38373edef0f5f"
     },
     {
-      "file": "properties/sale/sale-131893.md",
-      "category": "properties_for_sale",
-      "title": "京都市北区紫野東泉堂町",
-      "source_url": "https://orijyu.com/buy/post-131893.html",
-      "bytes": 1974,
-      "sha256": "9a2a574d0f388b45c3d060bb23947672bfbf8720bbcc18b16c57c15a21bfa973"
-    },
-    {
       "file": "properties/sale/sale-131718.md",
       "category": "properties_for_sale",
       "title": "京都市右京区山ノ内苗町",
@@ -1118,22 +1094,6 @@
       "sha256": "32ce8e042a189749adf87cb8b3b4511bc32c4b90c9b916b286b3aa2f6fb38753"
     },
     {
-      "file": "properties/sale/sale-132111.md",
-      "category": "properties_for_sale",
-      "title": "八尾市上尾町1丁目",
-      "source_url": "https://orijyu.com/buy/post-132111.html",
-      "bytes": 1958,
-      "sha256": "e4fa565795cbb28f9ad4a55a1bd9fc3f7ae246c9e6d945c687592a1683a00308"
-    },
-    {
-      "file": "properties/sale/sale-127321.md",
-      "category": "properties_for_sale",
-      "title": "八尾市久宝園2丁目",
-      "source_url": "https://orijyu.com/buy/post-127321.html",
-      "bytes": 2425,
-      "sha256": "25c12c3ce579bffde1940cf6826412cacf644c636c8ad23494910c05149ba95e"
-    },
-    {
       "file": "properties/sale/sale-132095.md",
       "category": "properties_for_sale",
       "title": "八尾市南植松町2丁目",
@@ -1158,14 +1118,6 @@
       "sha256": "2442e46901a083bcbaf2d59fd03908679a39073abe08e914a750766a302a29a8"
     },
     {
-      "file": "properties/sale/sale-132101.md",
-      "category": "properties_for_sale",
-      "title": "八尾市美園町4丁目",
-      "source_url": "https://orijyu.com/buy/post-132101.html",
-      "bytes": 2034,
-      "sha256": "20825b440b6f678e6e436b1294d997ea54a119cf6320bd6b5efcdfb2b5a73c78"
-    },
-    {
       "file": "properties/sale/sale-131962.md",
       "category": "properties_for_sale",
       "title": "八尾市老原1丁目",
@@ -1180,6 +1132,14 @@
       "source_url": "https://orijyu.com/buy/post-119631.html",
       "bytes": 2072,
       "sha256": "6b7d3b018c3cd24513f6563575ad19a396d959c084c9b25854caba686c1748cf"
+    },
+    {
+      "file": "properties/sale/sale-135389.md",
+      "category": "properties_for_sale",
+      "title": "吹田市内本町3丁目",
+      "source_url": "https://orijyu.com/buy/post-135389.html",
+      "bytes": 2374,
+      "sha256": "60d7527f176cda5fd5d1c3c1544c8a5f1227efa977ab8832544644b7cf188127"
     },
     {
       "file": "properties/sale/sale-118716.md",
@@ -1246,20 +1206,28 @@
       "sha256": "c74d19a39a1db56eab4094102919ace16a49f787f3271dae0da3d21eaaf586d4"
     },
     {
-      "file": "properties/sale/sale-135069.md",
-      "category": "properties_for_sale",
-      "title": "四条畷市二丁通町 1期1号棟",
-      "source_url": "https://orijyu.com/buy/post-135069.html",
-      "bytes": 2090,
-      "sha256": "44fe033c815dad1339acb519d6df676a5cb60026bff701f02208cba2374db0fe"
-    },
-    {
       "file": "properties/sale/sale-135085.md",
       "category": "properties_for_sale",
       "title": "四条畷市二丁通町 1期2号棟",
       "source_url": "https://orijyu.com/buy/post-135085.html",
       "bytes": 2052,
       "sha256": "085ecbe98da1c31723d8abcf2f682cea3a9732fd8d14a1f877d0af6771b6d44c"
+    },
+    {
+      "file": "properties/sale/sale-135117.md",
+      "category": "properties_for_sale",
+      "title": "四條畷市中野本町 1期2号棟",
+      "source_url": "https://orijyu.com/buy/post-135117.html",
+      "bytes": 2058,
+      "sha256": "bd84ba2b8e8612bc6d3d7d78f4c6a480f6b9d20863a739c2123420ce23ee5e88"
+    },
+    {
+      "file": "properties/sale/sale-135069.md",
+      "category": "properties_for_sale",
+      "title": "四條畷市二丁通町 1期1号棟",
+      "source_url": "https://orijyu.com/buy/post-135069.html",
+      "bytes": 2071,
+      "sha256": "8b105ec91eff7565c1a410aa5e9126787c6d093e6bb8a4c02acdbd7ad04b4d3e"
     },
     {
       "file": "properties/sale/sale-132939.md",
@@ -1483,7 +1451,7 @@
       "title": "堺市北区北花田町2丁",
       "source_url": "https://orijyu.com/buy/post-132821.html",
       "bytes": 6121,
-      "sha256": "fbe1416a6c83e58907f2d66461da8df2d4d50d3bab57628fe4da6f99593a9b25"
+      "sha256": "4e152636bb9d675ba16d844d408a4c96d88ad343380c90f9b3e1f118849c5acf"
     },
     {
       "file": "properties/sale/sale-130764.md",
@@ -1686,6 +1654,14 @@
       "sha256": "35d68aa1ac1ee988e427e44e51186c1b984e6ed200939438bb79a75514dfa356"
     },
     {
+      "file": "properties/sale/sale-135377.md",
+      "category": "properties_for_sale",
+      "title": "堺市南区逆瀬川",
+      "source_url": "https://orijyu.com/buy/post-135377.html",
+      "bytes": 1959,
+      "sha256": "b0084286617e98e537fcb68227f9f3c070c6d0919504cc376ce1e63a7553eac9"
+    },
+    {
       "file": "properties/sale/sale-131923.md",
       "category": "properties_for_sale",
       "title": "堺市南区鴨谷台1丁",
@@ -1718,14 +1694,6 @@
       "sha256": "5f3efe937ee172a2a4623f3bd8cbd186c3df4ada634219b04c3cfea684887e8d"
     },
     {
-      "file": "properties/sale/sale-134459.md",
-      "category": "properties_for_sale",
-      "title": "堺市堺区南庄町1丁 1期1号棟",
-      "source_url": "https://orijyu.com/buy/post-134459.html",
-      "bytes": 2207,
-      "sha256": "575a5bfe48ab55da37118fa8665a33c57bcb7b2e75a320a424550ae3e5c90c63"
-    },
-    {
       "file": "properties/sale/sale-133322.md",
       "category": "properties_for_sale",
       "title": "堺市堺区新在家町西3丁",
@@ -1747,7 +1715,7 @@
       "title": "堺市堺区旭ヶ丘北町2丁",
       "source_url": "https://orijyu.com/buy/post-130940.html",
       "bytes": 2498,
-      "sha256": "4adb512274e77f1af6c389007b19aa9ddff2a0c601735f73e0ca0bec52cf758f"
+      "sha256": "e645a15a56db089de2cb3ccc2d307789852d7d34158693c68f4a105da4cac5df"
     },
     {
       "file": "properties/sale/sale-133448.md",
@@ -1890,8 +1858,8 @@
       "category": "properties_for_sale",
       "title": "堺市東区南野田",
       "source_url": "https://orijyu.com/buy/post-134741.html",
-      "bytes": 2224,
-      "sha256": "71a742bac927ec44200b604c21d708cecc13b72da60b15c666a8dfad9f8e4029"
+      "bytes": 5189,
+      "sha256": "6761416179fb1473b8be9214acb5a080e21584fb297e8a4c51384d621f61c749"
     },
     {
       "file": "properties/sale/sale-131855.md",
@@ -1918,6 +1886,14 @@
       "sha256": "1dd8d0bcd979c2f3d39cd27950d7ad1dd1243ff85cfe8760963ebc539532fb70"
     },
     {
+      "file": "properties/sale/sale-135383.md",
+      "category": "properties_for_sale",
+      "title": "堺市東区日置荘北町2丁",
+      "source_url": "https://orijyu.com/buy/post-135383.html",
+      "bytes": 1997,
+      "sha256": "f14b4a4ae43fc9891fd68c250373ff29e7fa48adee8867eefd06196721bbfe22"
+    },
+    {
       "file": "properties/sale/sale-131467.md",
       "category": "properties_for_sale",
       "title": "堺市東区菩提町5丁",
@@ -1938,16 +1914,16 @@
       "category": "properties_for_sale",
       "title": "堺市美原区南余部",
       "source_url": "https://orijyu.com/buy/post-134826.html",
-      "bytes": 2104,
-      "sha256": "2612ac8fa19796cc9c13a2272cd79c16ea8694b00b049133f177138b607f6335"
+      "bytes": 3388,
+      "sha256": "c59038922c4fc2347c96f1de1b47c570f1ab1a71ad8e62698fffacafff10a98f"
     },
     {
       "file": "properties/sale/sale-134839.md",
       "category": "properties_for_sale",
       "title": "堺市美原区南余部",
       "source_url": "https://orijyu.com/buy/post-134839.html",
-      "bytes": 2016,
-      "sha256": "a03bb42cb68d48ad32f8f0107971d8042e8ca458ec5a67d99c17d3784ea43dd5"
+      "bytes": 3002,
+      "sha256": "54689c83047df12263e6335b9eebece2b6c602a02fe80ce3adb6e20db02f89be"
     },
     {
       "file": "properties/sale/sale-131476.md",
@@ -1956,14 +1932,6 @@
       "source_url": "https://orijyu.com/buy/post-131476.html",
       "bytes": 2272,
       "sha256": "d5c190730e44bdb53b989a96f02ed3add0034171bd5dc5f75f795e5c7649188e"
-    },
-    {
-      "file": "properties/sale/sale-131987.md",
-      "category": "properties_for_sale",
-      "title": "堺市美原区平尾",
-      "source_url": "https://orijyu.com/buy/post-131987.html",
-      "bytes": 2170,
-      "sha256": "b56cefb0734fe00b27e1f328d48abc6149cde916c6c7e0a0aaf8d94d86caa7bf"
     },
     {
       "file": "properties/sale/sale-123995.md",
@@ -2106,8 +2074,8 @@
       "category": "properties_for_sale",
       "title": "大阪市住之江区北島3丁目",
       "source_url": "https://orijyu.com/buy/post-134902.html",
-      "bytes": 2054,
-      "sha256": "b9939f0a74d37da2d6acbe4799fd64ed9dc544a955329e98597e452fd5ba37d2"
+      "bytes": 3111,
+      "sha256": "b75f22666c1b4d76d63b6ee4827688d850f539fca4b55cccfb9c162d9772c39a"
     },
     {
       "file": "properties/sale/sale-130479.md",
@@ -2150,14 +2118,6 @@
       "sha256": "c010a8bb239d375036f00988d41835cff37da727c901bd2eda2c95c9b377b12b"
     },
     {
-      "file": "properties/sale/sale-133275.md",
-      "category": "properties_for_sale",
-      "title": "大阪市住吉区南住吉1丁目",
-      "source_url": "https://orijyu.com/buy/post-133275.html",
-      "bytes": 2088,
-      "sha256": "13994e9760195eadc253ba8069cedf6ac78e7804ab2bd8bf2c65843cdf49ffc4"
-    },
-    {
       "file": "properties/sale/sale-122104.md",
       "category": "properties_for_sale",
       "title": "大阪市住吉区東粉浜2丁目",
@@ -2180,14 +2140,6 @@
       "source_url": "https://orijyu.com/buy/post-120395.html",
       "bytes": 1722,
       "sha256": "86f38fe2fbda29411fb2bffb1d25781029d966d55195d4432121daf2aba1daa5"
-    },
-    {
-      "file": "properties/sale/sale-134545.md",
-      "category": "properties_for_sale",
-      "title": "大阪市城東区東中浜2丁目",
-      "source_url": "https://orijyu.com/buy/post-134545.html",
-      "bytes": 2579,
-      "sha256": "c1c16aba92319fd6586ba95d05bcc34ab8f57460c6c2bca939746e99e35a5daa"
     },
     {
       "file": "properties/sale/sale-125682.md",
@@ -2278,12 +2230,12 @@
       "sha256": "cfc87996297a06b63e89a2357b62d7f023852fbc9a0450f72e48ef93ba028d58"
     },
     {
-      "file": "properties/sale/sale-128216.md",
+      "file": "properties/sale/sale-135334.md",
       "category": "properties_for_sale",
-      "title": "大阪市平野区瓜破2丁目",
-      "source_url": "https://orijyu.com/buy/post-128216.html",
-      "bytes": 2067,
-      "sha256": "3f2e5c9fd753ac51ea57d3b007083cddb32a1d1f8f35c1e4e4cc89c265af6f18"
+      "title": "大阪市平野区平野本町3丁目",
+      "source_url": "https://orijyu.com/buy/post-135334.html",
+      "bytes": 2701,
+      "sha256": "0620a5e9229d2a0c6bb5a035a454938c0a454a89321bbd847b0d235428a3eb5b"
     },
     {
       "file": "properties/sale/sale-126439.md",
@@ -2340,6 +2292,22 @@
       "source_url": "https://orijyu.com/buy/post-132961.html",
       "bytes": 2256,
       "sha256": "45adb924f2580d739c071177eb0b18f127369a1aa7217280969fab88a1fbf6da"
+    },
+    {
+      "file": "properties/sale/sale-135321.md",
+      "category": "properties_for_sale",
+      "title": "大阪市旭区大宮2丁目",
+      "source_url": "https://orijyu.com/buy/post-135321.html",
+      "bytes": 2339,
+      "sha256": "792ffd8eb94ea4a9e02fcf308c78bf45be5d87f42b3e03cfed6eca485ba6bc36"
+    },
+    {
+      "file": "properties/sale/sale-135515.md",
+      "category": "properties_for_sale",
+      "title": "大阪市旭区森小路1丁目",
+      "source_url": "https://orijyu.com/buy/post-135515.html",
+      "bytes": 2125,
+      "sha256": "7a20c8fbeb1a09f6403f9ea92255c4a8fe0134a6e10a69e381f44edf1b62238e"
     },
     {
       "file": "properties/sale/sale-132116.md",
@@ -2442,8 +2410,8 @@
       "category": "properties_for_sale",
       "title": "大阪市東成区東今里1丁目",
       "source_url": "https://orijyu.com/buy/post-134495.html",
-      "bytes": 2359,
-      "sha256": "94dcd43e098dafa84cde62072aa0b2c66de36aaa2fda4fa2d7a77a34b72eb954"
+      "bytes": 2378,
+      "sha256": "f0e03c072963f8576a26a817b874058c80cbd8ef5007d9366ebed98df087a902"
     },
     {
       "file": "properties/sale/sale-133069.md",
@@ -2462,6 +2430,14 @@
       "sha256": "6f1dcfaf6d23f386860e05e629f455466d63a094764d69c3ebbbcf26f04865d4"
     },
     {
+      "file": "properties/sale/sale-135356.md",
+      "category": "properties_for_sale",
+      "title": "大阪市東淀川区上新庄2丁目",
+      "source_url": "https://orijyu.com/buy/post-135356.html",
+      "bytes": 2414,
+      "sha256": "538b6c447feb31a2afbb666a594beaed007b1d2aa8b2c7159901418b6817c979"
+    },
+    {
       "file": "properties/sale/sale-133606.md",
       "category": "properties_for_sale",
       "title": "大阪市東淀川区下新庄4丁目",
@@ -2476,6 +2452,14 @@
       "source_url": "https://orijyu.com/buy/post-132672.html",
       "bytes": 2607,
       "sha256": "fed972e6f13329692ca930ef0a6eff284ee405c7ca426967d7fb6b1ec7c89645"
+    },
+    {
+      "file": "properties/sale/sale-135255.md",
+      "category": "properties_for_sale",
+      "title": "大阪市東淀川区瑞光2丁目",
+      "source_url": "https://orijyu.com/buy/post-135255.html",
+      "bytes": 2560,
+      "sha256": "34140781f8a5601380986b9eefaaed75388d9b40331ca8db26715642b19b9f48"
     },
     {
       "file": "properties/sale/sale-130463.md",
@@ -2558,6 +2542,14 @@
       "sha256": "5160fcbfd6f11d1c404d9379a16a05ac7d81c2717fa72058da150d941fa2d1ac"
     },
     {
+      "file": "properties/sale/sale-135157.md",
+      "category": "properties_for_sale",
+      "title": "大阪市此花区高見3丁目",
+      "source_url": "https://orijyu.com/buy/post-135157.html",
+      "bytes": 1941,
+      "sha256": "b47b16bba264930ac283caac251d1f78c1f612926b5d25f596f3b644501ed35c"
+    },
+    {
       "file": "properties/sale/sale-133700.md",
       "category": "properties_for_sale",
       "title": "大阪市浪速区大国2丁目",
@@ -2580,6 +2572,14 @@
       "source_url": "https://orijyu.com/buy/post-134225.html",
       "bytes": 2001,
       "sha256": "ffc6801439d49c8f9157f6cd33c26477e8f0deb0e1c72401d8de9ae40bb91792"
+    },
+    {
+      "file": "properties/sale/sale-135304.md",
+      "category": "properties_for_sale",
+      "title": "大阪市淀川区田川3丁目",
+      "source_url": "https://orijyu.com/buy/post-135304.html",
+      "bytes": 1921,
+      "sha256": "1f0d4b80557758b61108af76ba4c2caf497411dd08216d41725fc0598c92d451"
     },
     {
       "file": "properties/sale/sale-131751.md",
@@ -2620,6 +2620,14 @@
       "source_url": "https://orijyu.com/buy/post-125779.html",
       "bytes": 1597,
       "sha256": "7e9c001650778d0457f2d1af5154a936ea989c6c0fd1b976e9652209a96d544a"
+    },
+    {
+      "file": "properties/sale/sale-135488.md",
+      "category": "properties_for_sale",
+      "title": "大阪市生野区林寺4丁目",
+      "source_url": "https://orijyu.com/buy/post-135488.html",
+      "bytes": 2290,
+      "sha256": "53f8904aecf6a105f64f9bde9bf92e5e383a8c9dc63214384e9b9e317f1a6a56"
     },
     {
       "file": "properties/sale/sale-130485.md",
@@ -2670,6 +2678,22 @@
       "sha256": "e069145ad98b0bccdb1bc5f92466012cc2f79a31630937c768ef532a6566a987"
     },
     {
+      "file": "properties/sale/sale-135472.md",
+      "category": "properties_for_sale",
+      "title": "大阪市西成区千本北2丁目",
+      "source_url": "https://orijyu.com/buy/post-135472.html",
+      "bytes": 2618,
+      "sha256": "77b7039c661c9ce6aec23011d767bedf6ecc0d089976f363774b1e437bb1e091"
+    },
+    {
+      "file": "properties/sale/sale-135288.md",
+      "category": "properties_for_sale",
+      "title": "大阪市西成区南津守4丁目",
+      "source_url": "https://orijyu.com/buy/post-135288.html",
+      "bytes": 2586,
+      "sha256": "3488339a010cae3c895f729bc7df2a7edcfc51293256ff196c7c623421de3075"
+    },
+    {
       "file": "properties/sale/sale-126697.md",
       "category": "properties_for_sale",
       "title": "大阪市西成区天下茶屋2丁目",
@@ -2716,6 +2740,14 @@
       "source_url": "https://orijyu.com/buy/post-129455.html",
       "bytes": 1811,
       "sha256": "67223b655d41e5e4774e7c7c12b4dc1d907b8b324334d5784a7393906422f613"
+    },
+    {
+      "file": "properties/sale/sale-135230.md",
+      "category": "properties_for_sale",
+      "title": "大阪市西成区鶴見橋2丁目",
+      "source_url": "https://orijyu.com/buy/post-135230.html",
+      "bytes": 2033,
+      "sha256": "762c4008d2612294f21c4880c4ac2c827d8a3ce573da1b532b786883b401f9ff"
     },
     {
       "file": "properties/sale/sale-128908.md",
@@ -2798,6 +2830,14 @@
       "sha256": "b5648006b37c8c8e7aef1f15ef521e841b7118fdb6492ada99241aba71e86b1f"
     },
     {
+      "file": "properties/sale/sale-135344.md",
+      "category": "properties_for_sale",
+      "title": "大阪市都島区高倉町2丁目",
+      "source_url": "https://orijyu.com/buy/post-135344.html",
+      "bytes": 2312,
+      "sha256": "707c28a12f65312f0c352331cdb2bdd30d8aecf6d6342a93df3e4e0963af585b"
+    },
+    {
       "file": "properties/sale/sale-126460.md",
       "category": "properties_for_sale",
       "title": "大阪市阿倍野区丸山通2丁目",
@@ -2862,14 +2902,6 @@
       "sha256": "6a3c07ef5546f73755d4d48e33ca61be8e0f6aec4e1889b0813baa4a7bd79811"
     },
     {
-      "file": "properties/sale/sale-124350.md",
-      "category": "properties_for_sale",
-      "title": "奈良県北葛城郡広陵町馬見北3丁目",
-      "source_url": "https://orijyu.com/buy/post-124350.html",
-      "bytes": 1737,
-      "sha256": "3e59cd84f896c37f398c3ac274f40055b912bb4ce55e1cef0cd42cd5b4ec994c"
-    },
-    {
       "file": "properties/sale/sale-131447.md",
       "category": "properties_for_sale",
       "title": "奈良県香芝市西真美2丁目",
@@ -2918,12 +2950,12 @@
       "sha256": "cc5e7dfd4787d4e803dd02269a77c85cfdb314e6b9cb3839a622c83e4a20f628"
     },
     {
-      "file": "properties/sale/sale-129380.md",
+      "file": "properties/sale/sale-135408.md",
       "category": "properties_for_sale",
-      "title": "宝塚市仁川高丸2丁目",
-      "source_url": "https://orijyu.com/buy/post-129380.html",
-      "bytes": 1987,
-      "sha256": "b71fea1e2cb80af21761baee31a81a910c39c168be6c24a2e147b81fa2c9ae30"
+      "title": "宝塚市安倉南4丁目",
+      "source_url": "https://orijyu.com/buy/post-135408.html",
+      "bytes": 1961,
+      "sha256": "6445af2af883973b8310de3b3f5b7b252afca2f3328f1da15b80eb8d9c1d59f7"
     },
     {
       "file": "properties/sale/sale-131954.md",
@@ -2934,12 +2966,12 @@
       "sha256": "54e3cadd9def2e53cf848b567e01fed6fa10b3f6bd9a999d40e9223c1d1d1c8a"
     },
     {
-      "file": "properties/sale/sale-131885.md",
+      "file": "properties/sale/sale-135415.md",
       "category": "properties_for_sale",
-      "title": "宝塚市桜ガ丘",
-      "source_url": "https://orijyu.com/buy/post-131885.html",
-      "bytes": 1921,
-      "sha256": "da352ce92b86063780cea305cefa64d7e5d92b761d42b781f842221e215e7960"
+      "title": "宝塚市野上5丁目",
+      "source_url": "https://orijyu.com/buy/post-135415.html",
+      "bytes": 1979,
+      "sha256": "0dfd20e90f8bf547141668cead758a3ff96c63d8b5bb9de7086d3604dc7011bc"
     },
     {
       "file": "properties/sale/sale-124785.md",
@@ -3019,7 +3051,7 @@
       "title": "尼崎市大庄北3丁目",
       "source_url": "https://orijyu.com/buy/post-134163.html",
       "bytes": 2123,
-      "sha256": "e9caa22264e42aaca83f18d5762321c2d3c9c0dbddf31ae9981ad8a98a5223af"
+      "sha256": "35d1c0a30dd69a188e9e7db381efc0a76515daa47189cecbfddead4b1a77e6fb"
     },
     {
       "file": "properties/sale/sale-123545.md",
@@ -3075,7 +3107,7 @@
       "title": "山本マンション",
       "source_url": "https://orijyu.com/buy/post-133459.html",
       "bytes": 3559,
-      "sha256": "04d2031f9223f274c1a7bab38c0cb8e551492a499501e64e3c43bbe36347fc1c"
+      "sha256": "2738b336250c3ca40d2b8175839d13c83aa7fcdd5692c003a7f2d85edbee87cd"
     },
     {
       "file": "properties/sale/sale-116706.md",
@@ -3150,6 +3182,14 @@
       "sha256": "773492325bf3581d8ef4e93088b23ee27046a2462958db755c945764e3fd5ae5"
     },
     {
+      "file": "properties/sale/sale-135248.md",
+      "category": "properties_for_sale",
+      "title": "東大阪市南上小阪",
+      "source_url": "https://orijyu.com/buy/post-135248.html",
+      "bytes": 2037,
+      "sha256": "c76defdf61e72cbe25d985c0c2b014ca3a4043eac1d00a8e81309c7e2f3759f4"
+    },
+    {
       "file": "properties/sale/sale-135025.md",
       "category": "properties_for_sale",
       "title": "東大阪市南上小阪 1期1号地",
@@ -3206,6 +3246,22 @@
       "sha256": "0ad23520aa183dfa3569b86055ba7cb2138cc1f5d85295d176c4c73e6b40ccbb"
     },
     {
+      "file": "properties/sale/sale-135127.md",
+      "category": "properties_for_sale",
+      "title": "東大阪市末広町",
+      "source_url": "https://orijyu.com/buy/post-135127.html",
+      "bytes": 2267,
+      "sha256": "601fdbcd8ba7c2283fa982262f4c82f087a8ed2bd96bd9dce4e4fdc8f8d37e8b"
+    },
+    {
+      "file": "properties/sale/sale-135139.md",
+      "category": "properties_for_sale",
+      "title": "東大阪市末広町",
+      "source_url": "https://orijyu.com/buy/post-135139.html",
+      "bytes": 2355,
+      "sha256": "15837d0ca86a5e17130ff8ef8a15adaf86445edd5e042f6520cffbc1092b0dd4"
+    },
+    {
       "file": "properties/sale/sale-134757.md",
       "category": "properties_for_sale",
       "title": "東大阪市東山町",
@@ -3219,7 +3275,15 @@
       "title": "東大阪市森河内西2丁目",
       "source_url": "https://orijyu.com/buy/post-134671.html",
       "bytes": 2462,
-      "sha256": "735b835f3441d3ae7d4726e6998689b9d77ee209d44396a993b695827ccbb7b8"
+      "sha256": "e342620ce542a9947c4e4c96f9361e8a172d5a308f2b401fd28f19567481f18c"
+    },
+    {
+      "file": "properties/sale/sale-135145.md",
+      "category": "properties_for_sale",
+      "title": "東大阪市横小路町5丁目",
+      "source_url": "https://orijyu.com/buy/post-135145.html",
+      "bytes": 2442,
+      "sha256": "843667aa258fb0980f2debccd9817c8bc04f945ad07eafb84c9e2f607f9c0951"
     },
     {
       "file": "properties/sale/sale-134538.md",
@@ -3228,6 +3292,14 @@
       "source_url": "https://orijyu.com/buy/post-134538.html",
       "bytes": 2333,
       "sha256": "86398e1dd99980cd90c4b58e49b150a50899b0672cd7ccd54837f53ada680325"
+    },
+    {
+      "file": "properties/sale/sale-135371.md",
+      "category": "properties_for_sale",
+      "title": "東大阪市玉串元町2丁目",
+      "source_url": "https://orijyu.com/buy/post-135371.html",
+      "bytes": 2048,
+      "sha256": "e89b646f6a428fc49f60539869c332f5b37213d63f73b8cbe6c185bbd8db8f48"
     },
     {
       "file": "properties/sale/sale-131976.md",
@@ -3254,6 +3326,14 @@
       "sha256": "8b09b626532c67ec4bc74bd6c2314331be9716fbc5d51f76469ac8f015e963cb"
     },
     {
+      "file": "properties/sale/sale-135096.md",
+      "category": "properties_for_sale",
+      "title": "東大阪市若江本町 1期1号棟",
+      "source_url": "https://orijyu.com/buy/post-135096.html",
+      "bytes": 2086,
+      "sha256": "8cc8f1e6c045fd6ea5e3cd346cb899ea8652c58bba8364e654601a01388f59d3"
+    },
+    {
       "file": "properties/sale/sale-135059.md",
       "category": "properties_for_sale",
       "title": "東大阪市若江東町1丁目 1期1号地",
@@ -3268,6 +3348,14 @@
       "source_url": "https://orijyu.com/buy/post-135067.html",
       "bytes": 2142,
       "sha256": "66bb26b4f18955c7db666856b739ec64507a7a34c912345c1e424f8ceb7fe288"
+    },
+    {
+      "file": "properties/sale/sale-135165.md",
+      "category": "properties_for_sale",
+      "title": "東大阪市衣摺4丁目",
+      "source_url": "https://orijyu.com/buy/post-135165.html",
+      "bytes": 2463,
+      "sha256": "476177d2a1d597844bd74bf059355617261e4cf133ab0281aee719bf8acb793b"
     },
     {
       "file": "properties/sale/sale-123532.md",
@@ -3443,15 +3531,7 @@
       "title": "泉佐野市泉ケ丘3丁目",
       "source_url": "https://orijyu.com/buy/post-123490.html",
       "bytes": 2335,
-      "sha256": "baa9fa77e18c48cfe72f4bccd58a5ee8f526a849d73c173c2963764508578ec4"
-    },
-    {
-      "file": "properties/sale/sale-127499.md",
-      "category": "properties_for_sale",
-      "title": "泉北郡忠岡町忠岡中1丁目 1号棟",
-      "source_url": "https://orijyu.com/buy/post-127499.html",
-      "bytes": 2635,
-      "sha256": "250d10fbc0698a7f1045c05c52454f7013139f0deaab89aa5e0258b6893b09d1"
+      "sha256": "0c5e0f3d72ebd2204e9ff8894a129349e731f3b301274bf8427b823c44877950"
     },
     {
       "file": "properties/sale/sale-122892.md",
@@ -3558,28 +3638,12 @@
       "sha256": "96b5fca72516c58813de3b76dc522bc8a8b6b8771212d56f092a40ac99a78b28"
     },
     {
-      "file": "properties/sale/sale-130689.md",
-      "category": "properties_for_sale",
-      "title": "神戸市兵庫区大同町1丁目",
-      "source_url": "https://orijyu.com/buy/post-130689.html",
-      "bytes": 1808,
-      "sha256": "0b174155431e0905c19852eb80418a8f290dc56ed5f9b8ad6990a7e21e2ffd59"
-    },
-    {
       "file": "properties/sale/sale-132563.md",
       "category": "properties_for_sale",
       "title": "神戸市兵庫区浜中町2丁目",
       "source_url": "https://orijyu.com/buy/post-132563.html",
       "bytes": 3342,
-      "sha256": "5901f4d08d19366f5d6e468aa2d1157f901a5bb874553c42f0e5ad7fc71108c7"
-    },
-    {
-      "file": "properties/sale/sale-129784.md",
-      "category": "properties_for_sale",
-      "title": "神戸市兵庫区金平町1丁目",
-      "source_url": "https://orijyu.com/buy/post-129784.html",
-      "bytes": 1848,
-      "sha256": "a435024c53eb7f8c42a3521169747be963b0c249509948351c0aa0a845856b32"
+      "sha256": "1785b801204b7139c3548ca52de2aae54adba646e27b998f7c03562d247cce14"
     },
     {
       "file": "properties/sale/sale-129932.md",
@@ -3654,14 +3718,6 @@
       "sha256": "15beb984073a536ed44385dcbda4b0fad289f94ec02ec8f6df1103d5bf2fa569"
     },
     {
-      "file": "properties/sale/sale-129507.md",
-      "category": "properties_for_sale",
-      "title": "神戸市東灘区御影山手3丁目",
-      "source_url": "https://orijyu.com/buy/post-129507.html",
-      "bytes": 2321,
-      "sha256": "0f4c93f8eb7c768f97547d9facea4e0033e6faffdd0ba41fcabf4c0eeedbc554"
-    },
-    {
       "file": "properties/sale/sale-134276.md",
       "category": "properties_for_sale",
       "title": "神戸市東灘区森北町7丁目",
@@ -3678,20 +3734,28 @@
       "sha256": "df240957b910fff7c3094e1d56ea6943a7cfcedb5a6b77e78904c055a4622765"
     },
     {
+      "file": "properties/sale/sale-135166.md",
+      "category": "properties_for_sale",
+      "title": "神戸市東灘区魚崎南町6丁目 A号棟",
+      "source_url": "https://orijyu.com/buy/post-135166.html",
+      "bytes": 2512,
+      "sha256": "351eab50d4e07899bdc890a093cb172fc1ccc6eb7d3d2724bb57d0da0c4fb31b"
+    },
+    {
+      "file": "properties/sale/sale-135194.md",
+      "category": "properties_for_sale",
+      "title": "神戸市東灘区魚崎南町6丁目 B号棟",
+      "source_url": "https://orijyu.com/buy/post-135194.html",
+      "bytes": 2453,
+      "sha256": "5cf6bbacc07ce378a0bb84e88ef93aa369d081e73297ab536b97887b5753531e"
+    },
+    {
       "file": "properties/sale/sale-129405.md",
       "category": "properties_for_sale",
       "title": "神戸市東灘区鴨子ヶ原3丁目",
       "source_url": "https://orijyu.com/buy/post-129405.html",
       "bytes": 2463,
       "sha256": "501b03a2d0f1cf82bad903fdda6fb6d1fdeefd9c4214095256a7491d8d814c91"
-    },
-    {
-      "file": "properties/sale/sale-131128.md",
-      "category": "properties_for_sale",
-      "title": "神戸市灘区上野通3丁目 B号地",
-      "source_url": "https://orijyu.com/buy/post-131128.html",
-      "bytes": 2937,
-      "sha256": "84068b32c2ff1f673c11b2178f1a8047bcb0df9cbd721fb75e3cb62d1e2e6914"
     },
     {
       "file": "properties/sale/sale-121512.md",
@@ -3710,36 +3774,12 @@
       "sha256": "4bff697d14cbb6d285c1003fb20b229795ac37ec48d733fb6103d57b4553a6cf"
     },
     {
-      "file": "properties/sale/sale-129797.md",
-      "category": "properties_for_sale",
-      "title": "神戸市長田区三番町3丁目",
-      "source_url": "https://orijyu.com/buy/post-129797.html",
-      "bytes": 5540,
-      "sha256": "5b97af1afba5e186fdef405bf7ca86f9eb789638df3e5d75e3d582a9bbfafc8b"
-    },
-    {
       "file": "properties/sale/sale-130709.md",
       "category": "properties_for_sale",
       "title": "神戸市長田区上池田1丁目",
       "source_url": "https://orijyu.com/buy/post-130709.html",
       "bytes": 2091,
       "sha256": "3c4a968d639a8b59915addb1836376327f6c4dcba54791d8291765997be91fb9"
-    },
-    {
-      "file": "properties/sale/sale-129576.md",
-      "category": "properties_for_sale",
-      "title": "神戸市長田区二葉町2丁目",
-      "source_url": "https://orijyu.com/buy/post-129576.html",
-      "bytes": 2067,
-      "sha256": "c2b9570533885aa2c7592ff3caede80c8ff019547d042dce846eccd7a28ebf2a"
-    },
-    {
-      "file": "properties/sale/sale-129303.md",
-      "category": "properties_for_sale",
-      "title": "神戸市長田区六番町8丁目",
-      "source_url": "https://orijyu.com/buy/post-129303.html",
-      "bytes": 2134,
-      "sha256": "f5afbc00929a19890da154c848452a5def1c295569a58e4148f7521747e296d6"
     },
     {
       "file": "properties/sale/sale-133249.md",
@@ -3750,20 +3790,12 @@
       "sha256": "ed8661809557f2005f1c00958cbe8d23e2b2c4e518cde44fec1fc1b707eaa897"
     },
     {
-      "file": "properties/sale/sale-130558.md",
-      "category": "properties_for_sale",
-      "title": "神戸市長田区東尻池町7丁目",
-      "source_url": "https://orijyu.com/buy/post-130558.html",
-      "bytes": 2498,
-      "sha256": "8345aa387b5de49675ee14c755facd0a1225cc4663f9ca0521890ae324a12b56"
-    },
-    {
       "file": "properties/sale/sale-127441.md",
       "category": "properties_for_sale",
       "title": "神戸市長田区片山町1丁目",
       "source_url": "https://orijyu.com/buy/post-127441.html",
       "bytes": 2792,
-      "sha256": "8b092b692c669c71058260bf93ccbde747f95fbf718c26e87b258063927f0f37"
+      "sha256": "2a550a53cdbc13c9496d35586cb05a20f8089cef1092013ec10119137c5b2fa4"
     },
     {
       "file": "properties/sale/sale-127557.md",
@@ -3774,22 +3806,6 @@
       "sha256": "bf05627bc5ff8dd1319540cb00043bc7e6213abc4aa4ca2c9eb4bb167ef4de43"
     },
     {
-      "file": "properties/sale/sale-129703.md",
-      "category": "properties_for_sale",
-      "title": "神戸市長田区苅藻通4丁目",
-      "source_url": "https://orijyu.com/buy/post-129703.html",
-      "bytes": 2053,
-      "sha256": "2a9a783e56e4b0a798484cb8648d776d5d6dc45ab9b14f1431d90808ed2a8360"
-    },
-    {
-      "file": "properties/sale/sale-129654.md",
-      "category": "properties_for_sale",
-      "title": "神戸市長田区西代通3丁目",
-      "source_url": "https://orijyu.com/buy/post-129654.html",
-      "bytes": 2427,
-      "sha256": "dbe8946c46e045adc896787e5b473abe97841d4cb37ad0c9d229016beb6f4063"
-    },
-    {
       "file": "properties/sale/sale-126264.md",
       "category": "properties_for_sale",
       "title": "神戸市長田区長楽町2丁目",
@@ -3798,28 +3814,20 @@
       "sha256": "9091d5ea23bb494319fcfbd687d1c06a6ea1c4cb8c978dcd66854d7e4f5186d6"
     },
     {
-      "file": "properties/sale/sale-129882.md",
-      "category": "properties_for_sale",
-      "title": "神戸市須磨区北落合5丁目",
-      "source_url": "https://orijyu.com/buy/post-129882.html",
-      "bytes": 2164,
-      "sha256": "f8d520980837b749af09ba70994b2da0c25ba5092c021d6cb217cf405842f225"
-    },
-    {
       "file": "properties/sale/sale-129888.md",
       "category": "properties_for_sale",
       "title": "神戸市須磨区妙法寺白坂",
       "source_url": "https://orijyu.com/buy/post-129888.html",
-      "bytes": 2099,
-      "sha256": "22c0616fcce50fe978394ad132f27248286ef20c37f6b5b8be74c0845a25b309"
+      "bytes": 2080,
+      "sha256": "368bf987f1b19cdedda27be7f83db8b7a77aee01df773741d0a99614e62310be"
     },
     {
       "file": "properties/sale/sale-132758.md",
       "category": "properties_for_sale",
       "title": "神戸市須磨区東白川台2丁目",
       "source_url": "https://orijyu.com/buy/post-132758.html",
-      "bytes": 2448,
-      "sha256": "33dc1419bf7f28720517088c3f27922b0af2148297da588a6bed8197d09686dc"
+      "bytes": 2429,
+      "sha256": "a315768b14e0a088cf2ef5d76b80ffcac88d125a6e1b116a7ca6e4a9d818e16f"
     },
     {
       "file": "properties/sale/sale-130695.md",
@@ -3834,8 +3842,8 @@
       "category": "properties_for_sale",
       "title": "神戸市須磨区若草町3丁目",
       "source_url": "https://orijyu.com/buy/post-128405.html",
-      "bytes": 1978,
-      "sha256": "a082dd004f803cb092fc7c77360ba1a7bc8c9e317dd00d95ace2995280ffddd7"
+      "bytes": 1959,
+      "sha256": "5779c91be963b133840bad9da90c507a504f1613feff35ac85d7d7e787d3aafd"
     },
     {
       "file": "properties/sale/sale-132752.md",
@@ -3843,7 +3851,7 @@
       "title": "神戸市須磨区須磨浦通6丁目",
       "source_url": "https://orijyu.com/buy/post-132752.html",
       "bytes": 2596,
-      "sha256": "cb656d18400458674a9f68fb5688a277159a77be2f1374fd0abc5daa86e29f2f"
+      "sha256": "b8d63230d9e1cd7b3412a9e3f4441639825be3495a8f1ba76ff8beb22e1ffb75"
     },
     {
       "file": "properties/sale/sale-86208.md",
@@ -3886,14 +3894,6 @@
       "sha256": "d1e924fedccc86a3c63f29886392bbd8f7c9d3ec0456e8ba8c1522e0689cd29d"
     },
     {
-      "file": "properties/sale/sale-128063.md",
-      "category": "properties_for_sale",
-      "title": "芦屋市大原町",
-      "source_url": "https://orijyu.com/buy/post-128063.html",
-      "bytes": 2131,
-      "sha256": "4abd5f4bccf23df3136d80d001a3cbfa88770a2d54d267cb6057fd1d3b21fe58"
-    },
-    {
       "file": "properties/sale/sale-128524.md",
       "category": "properties_for_sale",
       "title": "芦屋市朝日ケ丘町1期 2号棟",
@@ -3932,6 +3932,14 @@
       "source_url": "https://orijyu.com/buy/post-132778.html",
       "bytes": 1806,
       "sha256": "3774db97a60e6f5600643f9b45c82cd083e9139d2aff13389c171e734e5499a8"
+    },
+    {
+      "file": "properties/sale/sale-135422.md",
+      "category": "properties_for_sale",
+      "title": "茨木市太田3丁目",
+      "source_url": "https://orijyu.com/buy/post-135422.html",
+      "bytes": 2284,
+      "sha256": "26f05aa90e36245f28d5c1f6b7fb1a1a0c3f5d3499683cf6e04d81e7f927d3bd"
     },
     {
       "file": "properties/sale/sale-127805.md",
@@ -4051,7 +4059,7 @@
       "title": "西宮市五月ケ丘",
       "source_url": "https://orijyu.com/buy/post-131650.html",
       "bytes": 2254,
-      "sha256": "1f00187514e591a27d2e10f090abe44a0de1a662f621ad9232641a48477fb0e6"
+      "sha256": "8d8bc1153e7c73eed3ba2b1fb3600184e83de4506fd321783df4ec65f3821587"
     },
     {
       "file": "properties/sale/sale-129148.md",
@@ -4083,15 +4091,7 @@
       "title": "西宮市名塩さくら台4丁目",
       "source_url": "https://orijyu.com/buy/post-129629.html",
       "bytes": 2609,
-      "sha256": "9b3738e9868a3a21b6b55a5763e9e13d59cd64af7558c97477da245edca4a536"
-    },
-    {
-      "file": "properties/sale/sale-133514.md",
-      "category": "properties_for_sale",
-      "title": "西宮市段上町6丁目",
-      "source_url": "https://orijyu.com/buy/post-133514.html",
-      "bytes": 2684,
-      "sha256": "2436ace43fe766f3124e2d978621654bf4b5560bcc4bba189de1e847e69f665c"
+      "sha256": "3c6f571d4f4573344d52f140282a0ea7825912792de6205bcc648ba9e7517b9c"
     },
     {
       "file": "properties/sale/sale-129156.md",
@@ -4099,7 +4099,7 @@
       "title": "西宮市段上町7丁目",
       "source_url": "https://orijyu.com/buy/post-129156.html",
       "bytes": 2272,
-      "sha256": "d683b39d88d14823550dc20ee6e96f95315598e44c7f0abc88e00a654002ceb7"
+      "sha256": "40f94b2ded621671627ded4764ea214e477a6531877daa95fa6ea93c52bc90b2"
     },
     {
       "file": "properties/sale/sale-130038.md",
@@ -4116,6 +4116,14 @@
       "source_url": "https://orijyu.com/buy/post-130045.html",
       "bytes": 2145,
       "sha256": "ba0a7247add0db66d6ff16e288c86866ca658396f7fa8bbe54a1635d68e0c6e7"
+    },
+    {
+      "file": "properties/sale/sale-135465.md",
+      "category": "properties_for_sale",
+      "title": "西宮市甲風園3丁目",
+      "source_url": "https://orijyu.com/buy/post-135465.html",
+      "bytes": 1910,
+      "sha256": "a1f990cd2e5626470ca20824d11ca98a21cd5c53904c527f7b00180ce58283d9"
     },
     {
       "file": "properties/sale/sale-126528.md",
@@ -4158,12 +4166,20 @@
       "sha256": "4d417777d0c141d37028cf3a04f76f47eac8323b426b977b670f61c935626b91"
     },
     {
+      "file": "properties/sale/sale-135503.md",
+      "category": "properties_for_sale",
+      "title": "豊中市穂積1丁目",
+      "source_url": "https://orijyu.com/buy/post-135503.html",
+      "bytes": 1964,
+      "sha256": "a8db0f81a8ec45b691c34e4a6453e518a7b2169626d234e45c03b071d76f5f22"
+    },
+    {
       "file": "properties/sale/sale-133042.md",
       "category": "properties_for_sale",
       "title": "豊岡市中郷",
       "source_url": "https://orijyu.com/buy/post-133042.html",
       "bytes": 2690,
-      "sha256": "8e41bdc0cffb8e1c4ec247c70181ad04ab807063d9e4561ec4971bb33f35602a"
+      "sha256": "1fc26a97fd8bc748170669a1285c0bf2e862bb8710758f0e08366d609d344cbb"
     },
     {
       "file": "properties/sale/sale-111903.md",
@@ -4214,14 +4230,6 @@
       "sha256": "3932dfa9531ffb764151688381ac889001e1ead73514d580cd6925967b69e2e2"
     },
     {
-      "file": "properties/sale/sale-130645.md",
-      "category": "properties_for_sale",
-      "title": "貝塚市東山6丁目",
-      "source_url": "https://orijyu.com/buy/post-130645.html",
-      "bytes": 1862,
-      "sha256": "5337d5bffb95c770393fb026124de03a5a6a51d08ffb06af0f042c8200f97647"
-    },
-    {
       "file": "properties/sale/sale-123201.md",
       "category": "properties_for_sale",
       "title": "貝塚市澤",
@@ -4270,28 +4278,12 @@
       "sha256": "e11ec34c16884f1378146a47033ba71b1cee4d4fe62229cd1b008f19c2e80793"
     },
     {
-      "file": "properties/sale/sale-134843.md",
-      "category": "properties_for_sale",
-      "title": "門真市江端町",
-      "source_url": "https://orijyu.com/buy/post-134843.html",
-      "bytes": 2144,
-      "sha256": "9332a13e2d4e11ac97d697f6df81a7590cbf43123cad05c8826d2999aa280972"
-    },
-    {
       "file": "properties/sale/sale-131196.md",
       "category": "properties_for_sale",
       "title": "阪南市桑畑",
       "source_url": "https://orijyu.com/buy/post-131196.html",
       "bytes": 6140,
       "sha256": "4522a9b5e1024dee81cc4313297870b67c526c996d7d3ed3722f1cb68a61b115"
-    },
-    {
-      "file": "properties/sale/sale-124857.md",
-      "category": "properties_for_sale",
-      "title": "阪南市石田",
-      "source_url": "https://orijyu.com/buy/post-124857.html",
-      "bytes": 1695,
-      "sha256": "2e83042bb1dbf77718df76bb56334fd22995f6475c0985aa4e44e9c780776eb5"
     },
     {
       "file": "properties/sale/sale-131640.md",
@@ -4342,6 +4334,22 @@
       "sha256": "3a2163cb9a65cd573c4626bb938144a0106efbff5585c72527ab6eecabab578e"
     },
     {
+      "file": "properties/sale/sale-135508.md",
+      "category": "properties_for_sale",
+      "title": "高槻市大冠町3丁目",
+      "source_url": "https://orijyu.com/buy/post-135508.html",
+      "bytes": 2025,
+      "sha256": "f9dab8f7c823c2279f196da1c9820fadf68654f0e0cb96d14c70ab2e7214bd4f"
+    },
+    {
+      "file": "properties/sale/sale-135450.md",
+      "category": "properties_for_sale",
+      "title": "高槻市寿町3丁目",
+      "source_url": "https://orijyu.com/buy/post-135450.html",
+      "bytes": 2329,
+      "sha256": "5ff9d05772dfd67f9fbc09b90a7fd2e8f3d4d6b20d3b643efeeeb79b76487387"
+    },
+    {
       "file": "properties/sale/sale-134267.md",
       "category": "properties_for_sale",
       "title": "高槻市津之江町3丁目",
@@ -4382,20 +4390,20 @@
       "sha256": "61644e24989c32a93c67049a66f87212f8fcf2ca257c0f57794b313320e8ad3d"
     },
     {
-      "file": "properties/rent/rent-132634.md",
-      "category": "properties_for_rent",
-      "title": "【賃貸】HOUSE EGRET 405号室",
-      "source_url": "https://orijyu.com/rent/post-132634.html",
-      "bytes": 1848,
-      "sha256": "e28cd8cf4e5ff37584984d419ad4418e13db74bc85cb52e40f8c6d1457d46e2f"
-    },
-    {
       "file": "properties/rent/rent-377.md",
       "category": "properties_for_rent",
       "title": "【賃貸】KEEP 新今里 702号室",
       "source_url": "https://orijyu.com/rent/post-377.html",
       "bytes": 1459,
       "sha256": "5db916d3f3c59fba6879bbf3d2a49b5693e79bc5c3bdc2a0af40cf4234f5087b"
+    },
+    {
+      "file": "properties/rent/rent-133426.md",
+      "category": "properties_for_rent",
+      "title": "【賃貸】エニート天下茶屋東 201号室",
+      "source_url": "https://orijyu.com/rent/post-133426.html",
+      "bytes": 2781,
+      "sha256": "7c48d3608d1038d8688e94a19773ec39a2f2f068cefa8800f603d147c3b27912"
     },
     {
       "file": "properties/rent/rent-49933.md",
@@ -4420,14 +4428,6 @@
       "source_url": "https://orijyu.com/rent/post-132332.html",
       "bytes": 3181,
       "sha256": "8d9f94ae76a512c4d348d50d77061e99dfb3fcd248a2ec9fa84448853edf8bc1"
-    },
-    {
-      "file": "properties/rent/rent-132348.md",
-      "category": "properties_for_rent",
-      "title": "【賃貸】オリエントシティ勝山 102号室",
-      "source_url": "https://orijyu.com/rent/post-132348.html",
-      "bytes": 3271,
-      "sha256": "11fbc3db17a50c003adb85f5ead0297117ae8d844fee41e018d2359f7726bd96"
     },
     {
       "file": "properties/rent/rent-132354.md",
@@ -4482,8 +4482,8 @@
       "category": "properties_for_rent",
       "title": "【賃貸】三軒家東貸戸建",
       "source_url": "https://orijyu.com/rent/post-133536.html",
-      "bytes": 3833,
-      "sha256": "7d204c2923989080be08bb818bd60b8594d3fe4ce829c030cd7ae8828f8ae334"
+      "bytes": 3840,
+      "sha256": "f8ee3360c967f1581882f70508345daf6f3477612bdd8442501972973bb23d71"
     },
     {
       "file": "properties/rent/rent-133982.md",
@@ -4499,7 +4499,7 @@
       "title": "【賃貸】中川2丁目 店舗・事務所 1F",
       "source_url": "https://orijyu.com/rent/post-130174.html",
       "bytes": 1818,
-      "sha256": "a5d0e5de7c3cc9d116de3a876677c955dcce0a7b5122c152459b35ea465b0ba6"
+      "sha256": "3ae0211de64109ff2e43da991c1221baab58b926b32484a72a86811c7a24dc22"
     },
     {
       "file": "properties/rent/rent-125914.md",
@@ -4516,30 +4516,6 @@
       "source_url": "https://orijyu.com/rent/post-133945.html",
       "bytes": 1977,
       "sha256": "6ac338733aba25e2c9d38fea4e5f690b4a2ac685da61908bb6d0461c1d7ce7fe"
-    },
-    {
-      "file": "properties/rent/rent-133939.md",
-      "category": "properties_for_rent",
-      "title": "【賃貸】天下茶屋北 事務所・倉庫",
-      "source_url": "https://orijyu.com/rent/post-133939.html",
-      "bytes": 2016,
-      "sha256": "86a0ac05e610e5721631be5868aff269f730601ef1d1f348db75942d7f555daa"
-    },
-    {
-      "file": "properties/rent/rent-133416.md",
-      "category": "properties_for_rent",
-      "title": "【賃貸】天下茶屋東アパート 101号室",
-      "source_url": "https://orijyu.com/rent/post-133416.html",
-      "bytes": 2841,
-      "sha256": "50061e9cdef158618f543d30562f3569099ceedd58a9f46d4c6fe57171956ca4"
-    },
-    {
-      "file": "properties/rent/rent-133426.md",
-      "category": "properties_for_rent",
-      "title": "【賃貸】天下茶屋東アパート 201号室",
-      "source_url": "https://orijyu.com/rent/post-133426.html",
-      "bytes": 2781,
-      "sha256": "056d0ca3d96d5f0e2766a70233e59475b93ff7eda3c1b26a3cf78481135f784e"
     },
     {
       "file": "properties/rent/rent-131006.md",
@@ -4563,7 +4539,7 @@
       "title": "【賃貸】蔦屋",
       "source_url": "https://orijyu.com/rent/post-131017.html",
       "bytes": 2065,
-      "sha256": "4599117638fe603e90b6e29580c57295c9c095008cf590bfca03e280dbd86654"
+      "sha256": "fdb3e0eff18cb9a5447cb7f299e1f5fdc89441a531123b67d0bc6b8caef84806"
     },
     {
       "file": "properties/rent/rent-126080.md",
@@ -4583,7 +4559,7 @@
     }
   ],
   "failures": [],
-  "property_refresh_started_at": "2026-08-14T07:37:32.325759+00:00",
-  "property_itemized_at": "2026-08-14T07:38:09.676137+00:00",
-  "property_item_count": 562
+  "property_refresh_started_at": "2026-08-28T02:48:30.196256+00:00",
+  "property_itemized_at": "2026-08-28T02:50:43.958777+00:00",
+  "property_item_count": 559
 }

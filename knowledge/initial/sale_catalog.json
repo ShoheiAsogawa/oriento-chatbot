@@ -107,23 +107,6 @@
       "status": ""
     },
     {
-      "id": "110489",
-      "title": "OrientCity 神戸南 Part5",
-      "url": "https://orijyu.com/buy/post-110489.html",
-      "property_type": "新築一戸建て",
-      "price_yen": 37800000,
-      "address": "神戸市兵庫区金平町1丁目",
-      "transport": [
-        "地下鉄海岸線「御崎公園」徒歩4分",
-        "地下鉄海岸線「苅藻」徒歩11分",
-        "地下鉄海岸線「和田岬」徒歩14分",
-        "JR和田岬線「和田岬」徒歩14分"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 4,
-      "status": ""
-    },
-    {
       "id": "110533",
       "title": "OrientCity 箱作",
       "url": "https://orijyu.com/buy/post-110533.html",
@@ -1104,7 +1087,7 @@
       "id": "121865",
       "title": "OrientCity 深井",
       "url": "https://orijyu.com/buy/post-121865.html",
-      "property_type": "新築一戸建て",
+      "property_type": "新築一戸建て,新築一戸建て",
       "price_yen": 14800000,
       "address": "堺市中区辻之",
       "transport": [
@@ -1208,21 +1191,6 @@
       "status": ""
     },
     {
-      "id": "122309",
-      "title": "OrientCity 恩智北町",
-      "url": "https://orijyu.com/buy/post-122309.html",
-      "property_type": "新築一戸建て",
-      "price_yen": 34800000,
-      "address": "八尾市恩智北町3丁目",
-      "transport": [
-        "近鉄大阪線「恩智」徒歩8分",
-        "近鉄大阪線「高安」徒歩18分"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 8,
-      "status": ""
-    },
-    {
       "id": "122330",
       "title": "大阪市阿倍野区北畠2丁目",
       "url": "https://orijyu.com/buy/post-122330.html",
@@ -1249,22 +1217,6 @@
         "南海本線「忠岡」徒歩12分"
       ],
       "layout": "4LDK",
-      "walk_minutes": 12,
-      "status": ""
-    },
-    {
-      "id": "122504",
-      "title": "OrientCity 住之江",
-      "url": "https://orijyu.com/buy/post-122504.html",
-      "property_type": "新築一戸建て",
-      "price_yen": 29800000,
-      "address": "大阪市住之江区御崎2丁目",
-      "transport": [
-        "地下鉄四つ橋線「住之江公園」徒歩12分",
-        "南港ポートタウン線「住之江公園」徒歩12分",
-        "地下鉄四つ橋線「北加賀屋」徒歩15分"
-      ],
-      "layout": "3LDK",
       "walk_minutes": 12,
       "status": ""
     },
@@ -1546,7 +1498,7 @@
       "title": "泉佐野市泉ケ丘3丁目",
       "url": "https://orijyu.com/buy/post-123490.html",
       "property_type": "土地",
-      "price_yen": 24800000,
+      "price_yen": 22800000,
       "address": "泉佐野市泉ケ丘3丁目",
       "transport": [
         "JR阪和線「東佐野」徒歩5分",
@@ -1740,21 +1692,6 @@
       "status": ""
     },
     {
-      "id": "124350",
-      "title": "奈良県北葛城郡広陵町馬見北3丁目",
-      "url": "https://orijyu.com/buy/post-124350.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 26800000,
-      "address": "奈良県北葛城郡広陵町馬見北3丁目",
-      "transport": [
-        "近鉄大阪線「五位堂」徒歩9分",
-        "バス停「馬見北3丁目」徒歩2分"
-      ],
-      "layout": "4SLDK",
-      "walk_minutes": 2,
-      "status": ""
-    },
-    {
       "id": "124361",
       "title": "奈良県北葛城郡上牧町米山台2丁目",
       "url": "https://orijyu.com/buy/post-124361.html",
@@ -1917,23 +1854,6 @@
       "layout": "4DK",
       "walk_minutes": 15,
       "status": ""
-    },
-    {
-      "id": "124857",
-      "title": "阪南市石田",
-      "url": "https://orijyu.com/buy/post-124857.html",
-      "property_type": "土地",
-      "price_yen": 4500000,
-      "address": "阪南市石田",
-      "transport": [
-        "JR阪和線「和泉鳥取」徒歩27分",
-        "南海本線「鳥取ノ荘」駅徒歩25分",
-        "現況",
-        "更地"
-      ],
-      "layout": "",
-      "walk_minutes": 25,
-      "status": "更地"
     },
     {
       "id": "125080",
@@ -2295,21 +2215,6 @@
       "status": ""
     },
     {
-      "id": "127321",
-      "title": "八尾市久宝園2丁目",
-      "url": "https://orijyu.com/buy/post-127321.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 43990000,
-      "address": "八尾市久宝園2丁目",
-      "transport": [
-        "近鉄大阪線「弥刀」徒歩8分",
-        "近鉄大阪線「久宝寺口」徒歩12分"
-      ],
-      "layout": "5SLDK",
-      "walk_minutes": 8,
-      "status": ""
-    },
-    {
       "id": "127402",
       "title": "神戸市兵庫区上祇園",
       "url": "https://orijyu.com/buy/post-127402.html",
@@ -2328,7 +2233,7 @@
       "title": "神戸市長田区片山町1丁目",
       "url": "https://orijyu.com/buy/post-127441.html",
       "property_type": "中古一戸建て",
-      "price_yen": 30000000,
+      "price_yen": 29990000,
       "address": "神戸市長田区片山町1丁目",
       "transport": [
         "地下鉄西神・山手線「長田」徒歩7分",
@@ -2337,22 +2242,6 @@
       ],
       "layout": "3LDK",
       "walk_minutes": 7,
-      "status": ""
-    },
-    {
-      "id": "127499",
-      "title": "泉北郡忠岡町忠岡中1丁目 1号棟",
-      "url": "https://orijyu.com/buy/post-127499.html",
-      "property_type": "新築一戸建て",
-      "price_yen": 25990000,
-      "address": "泉北郡忠岡町忠岡中1丁目",
-      "transport": [
-        "南海本線「忠岡」駅徒歩5分",
-        "築年月",
-        "2026年1月"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 5,
       "status": ""
     },
     {
@@ -2450,22 +2339,6 @@
       "status": ""
     },
     {
-      "id": "128063",
-      "title": "芦屋市大原町",
-      "url": "https://orijyu.com/buy/post-128063.html",
-      "property_type": "土地",
-      "price_yen": 47800000,
-      "address": "芦屋市大原町",
-      "transport": [
-        "JR東海道本線「芦屋」徒歩10分",
-        "阪急神戸線「芦屋川」徒歩14分",
-        "阪神本線「打出」徒歩19分"
-      ],
-      "layout": "",
-      "walk_minutes": 10,
-      "status": ""
-    },
-    {
       "id": "128072",
       "title": "松原市東新町1丁目",
       "url": "https://orijyu.com/buy/post-128072.html",
@@ -2492,21 +2365,6 @@
       ],
       "layout": "16室",
       "walk_minutes": 5,
-      "status": ""
-    },
-    {
-      "id": "128216",
-      "title": "大阪市平野区瓜破2丁目",
-      "url": "https://orijyu.com/buy/post-128216.html",
-      "property_type": "収益物件",
-      "price_yen": 168800000,
-      "address": "大阪市平野区瓜破2丁目",
-      "transport": [
-        "地下鉄谷町線「喜連瓜破」徒歩3分",
-        "地下鉄谷町線「出戸」徒歩18分"
-      ],
-      "layout": "1K×23室",
-      "walk_minutes": 3,
       "status": ""
     },
     {
@@ -2558,8 +2416,8 @@
       "id": "128405",
       "title": "神戸市須磨区若草町3丁目",
       "url": "https://orijyu.com/buy/post-128405.html",
-      "property_type": "中古一戸建て,中古一戸建て",
-      "price_yen": 30490000,
+      "property_type": "中古一戸建て",
+      "price_yen": 29990000,
       "address": "神戸市須磨区若草町3丁目",
       "transport": [
         "地下鉄西神・山手線「妙法寺」",
@@ -3020,7 +2878,7 @@
       "title": "西宮市段上町7丁目",
       "url": "https://orijyu.com/buy/post-129156.html",
       "property_type": "中古一戸建て",
-      "price_yen": 17990000,
+      "price_yen": 14990000,
       "address": "西宮市段上町7丁目",
       "transport": [
         "阪急今津線「甲東園」徒歩15分",
@@ -3110,21 +2968,6 @@
       "status": "空家"
     },
     {
-      "id": "129303",
-      "title": "神戸市長田区六番町8丁目",
-      "url": "https://orijyu.com/buy/post-129303.html",
-      "property_type": "土地",
-      "price_yen": 11400000,
-      "address": "神戸市長田区六番町8丁目",
-      "transport": [
-        "地下鉄西神・山手線「長田」徒歩3分",
-        "神戸高速線「高速長田」徒歩5分"
-      ],
-      "layout": "",
-      "walk_minutes": 3,
-      "status": ""
-    },
-    {
       "id": "129337",
       "title": "OrientCity 和泉橋本 Part2",
       "url": "https://orijyu.com/buy/post-129337.html",
@@ -3138,20 +2981,6 @@
       "layout": "3LDK",
       "walk_minutes": 12,
       "status": ""
-    },
-    {
-      "id": "129380",
-      "title": "宝塚市仁川高丸2丁目",
-      "url": "https://orijyu.com/buy/post-129380.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 39800000,
-      "address": "宝塚市仁川高丸2丁目",
-      "transport": [
-        "阪急今津線「仁川」徒歩16分"
-      ],
-      "layout": "5LDK",
-      "walk_minutes": 16,
-      "status": "居住中"
     },
     {
       "id": "129405",
@@ -3212,20 +3041,6 @@
       "status": "空家"
     },
     {
-      "id": "129507",
-      "title": "神戸市東灘区御影山手3丁目",
-      "url": "https://orijyu.com/buy/post-129507.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 32800000,
-      "address": "神戸市東灘区御影山手3丁目",
-      "transport": [
-        "阪急神戸線「御影」駅徒歩10分"
-      ],
-      "layout": "3LDK",
-      "walk_minutes": 10,
-      "status": "空家"
-    },
-    {
       "id": "129516",
       "title": "貝塚市東山2丁目",
       "url": "https://orijyu.com/buy/post-129516.html",
@@ -3238,22 +3053,6 @@
       ],
       "layout": "3LDK",
       "walk_minutes": 17,
-      "status": ""
-    },
-    {
-      "id": "129576",
-      "title": "神戸市長田区二葉町2丁目",
-      "url": "https://orijyu.com/buy/post-129576.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 660000,
-      "address": "神戸市長田区二葉町2丁目",
-      "transport": [
-        "地下鉄海岸線「駒ヶ林」徒歩5分",
-        "地下鉄西神・山手線・海岸線「新長田」徒歩10分",
-        "JR山陽本線「新長田」徒歩10分"
-      ],
-      "layout": "",
-      "walk_minutes": 5,
       "status": ""
     },
     {
@@ -3276,7 +3075,7 @@
       "title": "西宮市名塩さくら台4丁目",
       "url": "https://orijyu.com/buy/post-129629.html",
       "property_type": "中古一戸建て",
-      "price_yen": 25000000,
+      "price_yen": 23990000,
       "address": "西宮市名塩さくら台4丁目",
       "transport": [
         "JR福知山線「西宮名塩」バス15分",
@@ -3284,35 +3083,6 @@
       ],
       "layout": "4LDK",
       "walk_minutes": 2,
-      "status": ""
-    },
-    {
-      "id": "129654",
-      "title": "神戸市長田区西代通3丁目",
-      "url": "https://orijyu.com/buy/post-129654.html",
-      "property_type": "新築一戸建て",
-      "price_yen": 32800000,
-      "address": "神戸市長田区西代通3丁目",
-      "transport": [
-        "神戸市西神・山手線「板宿」駅徒歩6分",
-        "JR山陽本線「新長田」駅徒歩9分"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 6,
-      "status": ""
-    },
-    {
-      "id": "129703",
-      "title": "神戸市長田区苅藻通4丁目",
-      "url": "https://orijyu.com/buy/post-129703.html",
-      "property_type": "土地",
-      "price_yen": 21000000,
-      "address": "神戸市長田区苅藻通4丁目",
-      "transport": [
-        "神戸市営地下鉄海岸線「苅藻」駅徒歩6分"
-      ],
-      "layout": "",
-      "walk_minutes": 6,
       "status": ""
     },
     {
@@ -3331,60 +3101,11 @@
       "status": ""
     },
     {
-      "id": "129784",
-      "title": "神戸市兵庫区金平町1丁目",
-      "url": "https://orijyu.com/buy/post-129784.html",
-      "property_type": "新築一戸建て",
-      "price_yen": 25800000,
-      "address": "神戸市兵庫区金平町1丁目",
-      "transport": [
-        "神戸市営地下鉄海岸線「御崎公園」駅徒歩4分"
-      ],
-      "layout": "3LDK",
-      "walk_minutes": 4,
-      "status": "空家"
-    },
-    {
-      "id": "129797",
-      "title": "神戸市長田区三番町3丁目",
-      "url": "https://orijyu.com/buy/post-129797.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 31800000,
-      "address": "神戸市長田区三番町3丁目",
-      "transport": [
-        "神戸高速線「高速長田」徒歩6分",
-        "## 神戸市長田区三番町3丁目（続き 2）",
-        "公式ページ: https://orijyu.com/buy/post-129797.html",
-        "更新日: 2026-02-26T02:22:49+09:00",
-        "地下鉄西神・山手線「長田」徒歩6分",
-        "JR東海道本線「兵庫」徒歩11分"
-      ],
-      "layout": "2SLDK",
-      "walk_minutes": 6,
-      "status": ""
-    },
-    {
-      "id": "129882",
-      "title": "神戸市須磨区北落合5丁目",
-      "url": "https://orijyu.com/buy/post-129882.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 35000000,
-      "address": "神戸市須磨区北落合5丁目",
-      "transport": [
-        "地下鉄西神・山手線「名谷」徒歩25分",
-        "地下鉄西神・山手線「名谷」バス11分",
-        "バス停「白川台」徒歩8分"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 8,
-      "status": ""
-    },
-    {
       "id": "129888",
       "title": "神戸市須磨区妙法寺白坂",
       "url": "https://orijyu.com/buy/post-129888.html",
-      "property_type": "中古一戸建て,中古一戸建て",
-      "price_yen": 24490000,
+      "property_type": "中古一戸建て",
+      "price_yen": 22990000,
       "address": "神戸市須磨区妙法寺白坂",
       "transport": [
         "地下鉄西神・山手線「妙法寺」徒歩19分",
@@ -3659,21 +3380,6 @@
       "status": ""
     },
     {
-      "id": "130558",
-      "title": "神戸市長田区東尻池町7丁目",
-      "url": "https://orijyu.com/buy/post-130558.html",
-      "property_type": "テラスハウス",
-      "price_yen": 3300000,
-      "address": "神戸市長田区東尻池町7丁目",
-      "transport": [
-        "地下鉄海岸線「苅藻」徒歩4分",
-        "地下鉄海岸線「御崎公園」徒歩12分"
-      ],
-      "layout": "2LDK",
-      "walk_minutes": 4,
-      "status": ""
-    },
-    {
       "id": "130582",
       "title": "堺市東区野尻町 1期 1号地",
       "url": "https://orijyu.com/buy/post-130582.html",
@@ -3742,35 +3448,6 @@
       ],
       "layout": "3LDK",
       "walk_minutes": 18,
-      "status": ""
-    },
-    {
-      "id": "130645",
-      "title": "貝塚市東山6丁目",
-      "url": "https://orijyu.com/buy/post-130645.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 25800000,
-      "address": "貝塚市東山6丁目",
-      "transport": [
-        "水間線「三ヶ山口」徒歩10分",
-        "水間線「三ツ松」徒歩10分"
-      ],
-      "layout": "3LDK",
-      "walk_minutes": 10,
-      "status": ""
-    },
-    {
-      "id": "130689",
-      "title": "神戸市兵庫区大同町1丁目",
-      "url": "https://orijyu.com/buy/post-130689.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 29800000,
-      "address": "神戸市兵庫区大同町1丁目",
-      "transport": [
-        "神戸市営地下鉄西神山手線「湊川公園」駅徒歩15分"
-      ],
-      "layout": "4DK",
-      "walk_minutes": 15,
       "status": ""
     },
     {
@@ -3987,21 +3664,6 @@
       ],
       "layout": "4LDK",
       "walk_minutes": 11,
-      "status": ""
-    },
-    {
-      "id": "131128",
-      "title": "神戸市灘区上野通3丁目 B号地",
-      "url": "https://orijyu.com/buy/post-131128.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 53800000,
-      "address": "神戸市灘区上野通3丁目",
-      "transport": [
-        "阪急神戸線「王子公園」徒歩13分",
-        "JR東海道本線「摩耶」徒歩15分"
-      ],
-      "layout": "2SSLDK",
-      "walk_minutes": 13,
       "status": ""
     },
     {
@@ -4317,7 +3979,7 @@
       "title": "西宮市五月ケ丘",
       "url": "https://orijyu.com/buy/post-131650.html",
       "property_type": "中古一戸建て",
-      "price_yen": 28490000,
+      "price_yen": 27990000,
       "address": "西宮市五月ケ丘",
       "transport": [
         "阪急甲陽線「甲陽園」駅徒歩17分"
@@ -4566,36 +4228,6 @@
       "status": ""
     },
     {
-      "id": "131885",
-      "title": "宝塚市桜ガ丘",
-      "url": "https://orijyu.com/buy/post-131885.html",
-      "property_type": "土地",
-      "price_yen": 15000000,
-      "address": "宝塚市桜ガ丘",
-      "transport": [
-        "JR福知山線「宝塚」駅徒歩15分",
-        "阪急宝塚本線・今津線「宝塚」駅徒歩18分",
-        "JR福知山線「生瀬」駅徒歩14分"
-      ],
-      "layout": "",
-      "walk_minutes": 14,
-      "status": ""
-    },
-    {
-      "id": "131893",
-      "title": "京都市北区紫野東泉堂町",
-      "url": "https://orijyu.com/buy/post-131893.html",
-      "property_type": "土地",
-      "price_yen": 35800000,
-      "address": "京都市北区紫野東泉堂町",
-      "transport": [
-        "京都市営地下鉄烏丸線「北大路」駅徒歩22分"
-      ],
-      "layout": "",
-      "walk_minutes": 22,
-      "status": ""
-    },
-    {
       "id": "131899",
       "title": "OrientCity 姫島",
       "url": "https://orijyu.com/buy/post-131899.html",
@@ -4681,21 +4313,6 @@
       "status": "空家"
     },
     {
-      "id": "131987",
-      "title": "堺市美原区平尾",
-      "url": "https://orijyu.com/buy/post-131987.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 17800000,
-      "address": "堺市美原区平尾",
-      "transport": [
-        "南海高野線「北野田」駅徒歩59分",
-        "バス20分「平尾」停徒歩7分"
-      ],
-      "layout": "3LDK",
-      "walk_minutes": 7,
-      "status": "空家"
-    },
-    {
       "id": "132029",
       "title": "OrientCity 久宝寺口",
       "url": "https://orijyu.com/buy/post-132029.html",
@@ -4751,34 +4368,6 @@
       ],
       "layout": "2LDK",
       "walk_minutes": 15,
-      "status": "空家"
-    },
-    {
-      "id": "132101",
-      "title": "八尾市美園町4丁目",
-      "url": "https://orijyu.com/buy/post-132101.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 12800000,
-      "address": "八尾市美園町4丁目",
-      "transport": [
-        "近鉄大阪線「久宝寺口」駅徒歩11分"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 11,
-      "status": "空家"
-    },
-    {
-      "id": "132111",
-      "title": "八尾市上尾町1丁目",
-      "url": "https://orijyu.com/buy/post-132111.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 9980000,
-      "address": "八尾市上尾町1丁目",
-      "transport": [
-        "近鉄大阪線「河内山本」駅徒歩19分"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 19,
       "status": "空家"
     },
     {
@@ -5205,7 +4794,7 @@
       "title": "神戸市兵庫区浜中町2丁目",
       "url": "https://orijyu.com/buy/post-132563.html",
       "property_type": "店舗・事務所付き住宅",
-      "price_yen": 45800000,
+      "price_yen": 43800000,
       "address": "神戸市兵庫区浜中町2丁目",
       "transport": [
         "地下鉄海岸線「御崎公園」徒歩3分",
@@ -5264,7 +4853,7 @@
       "title": "神戸市須磨区須磨浦通6丁目",
       "url": "https://orijyu.com/buy/post-132752.html",
       "property_type": "中古一戸建て",
-      "price_yen": 34000000,
+      "price_yen": 32990000,
       "address": "神戸市須磨区須磨浦通6丁目",
       "transport": [
         "JR東海道・山陽本線「須磨」駅徒歩7分",
@@ -5278,8 +4867,8 @@
       "id": "132758",
       "title": "神戸市須磨区東白川台2丁目",
       "url": "https://orijyu.com/buy/post-132758.html",
-      "property_type": "中古一戸建て,中古一戸建て",
-      "price_yen": 20490000,
+      "property_type": "中古一戸建て",
+      "price_yen": 19990000,
       "address": "神戸市須磨区東白川台2丁目",
       "transport": [
         "神戸市営地下鉄「妙法寺」駅徒歩37分"
@@ -5322,7 +4911,7 @@
       "title": "堺市北区北花田町2丁",
       "url": "https://orijyu.com/buy/post-132821.html",
       "property_type": "新築一戸建て",
-      "price_yen": 38800000,
+      "price_yen": 36800000,
       "address": "堺市北区北花田町2丁",
       "transport": [
         "大阪メトロ御堂筋線「北花田」駅徒歩7分"
@@ -5556,7 +5145,7 @@
       "title": "豊岡市中郷",
       "url": "https://orijyu.com/buy/post-133042.html",
       "property_type": "中古一戸建て",
-      "price_yen": 880000,
+      "price_yen": 680000,
       "address": "豊岡市中郷",
       "transport": [
         "JR山陰本線「国府」徒歩57分",
@@ -5749,21 +5338,6 @@
       "status": "空家"
     },
     {
-      "id": "133275",
-      "title": "大阪市住吉区南住吉1丁目",
-      "url": "https://orijyu.com/buy/post-133275.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 4980000,
-      "address": "大阪市住吉区南住吉1丁目",
-      "transport": [
-        "南海高野線「住吉東」徒歩7分",
-        "JR阪和線「長居」徒歩13分"
-      ],
-      "layout": "1LDK",
-      "walk_minutes": 7,
-      "status": "賃貸中"
-    },
-    {
       "id": "133293",
       "title": "大阪市福島区大開1丁目",
       "url": "https://orijyu.com/buy/post-133293.html",
@@ -5902,7 +5476,7 @@
       "title": "山本マンション",
       "url": "https://orijyu.com/buy/post-133459.html",
       "property_type": "マンション",
-      "price_yen": 9800000,
+      "price_yen": 8800000,
       "address": "堺市堺区甲斐町西3丁",
       "transport": [
         "南海本線「堺」駅徒歩6分",
@@ -5910,21 +5484,6 @@
       ],
       "layout": "3DK",
       "walk_minutes": 6,
-      "status": ""
-    },
-    {
-      "id": "133514",
-      "title": "西宮市段上町6丁目",
-      "url": "https://orijyu.com/buy/post-133514.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 35800000,
-      "address": "西宮市段上町6丁目",
-      "transport": [
-        "阪急今津線「甲東園」徒歩17分",
-        "阪急今津線「仁川」徒歩18分"
-      ],
-      "layout": "3SLDK",
-      "walk_minutes": 17,
       "status": ""
     },
     {
@@ -6437,7 +5996,7 @@
       "title": "尼崎市大庄北3丁目",
       "url": "https://orijyu.com/buy/post-134163.html",
       "property_type": "中古一戸建て",
-      "price_yen": 32490000,
+      "price_yen": 31990000,
       "address": "尼崎市大庄北3丁目",
       "transport": [
         "東海道・山陽本線「立花」駅徒歩23分"
@@ -6833,7 +6392,7 @@
       "title": "チサンマンション第7新大阪Rino Room",
       "url": "https://orijyu.com/buy/post-134405.html",
       "property_type": "マンション,マンション",
-      "price_yen": 15900000,
+      "price_yen": 14900000,
       "address": "大阪市東淀川区西中島6丁目",
       "transport": [
         "JR東海道・山陽本線・Osaka Metro御堂筋線「新大阪」駅徒歩5分"
@@ -6874,8 +6433,8 @@
       "id": "134424",
       "title": "シャンボール第3新大阪Rino Room",
       "url": "https://orijyu.com/buy/post-134424.html",
-      "property_type": "マンション",
-      "price_yen": 11000000,
+      "property_type": "マンション,マンション",
+      "price_yen": 10500000,
       "address": "大阪市東淀川区東中島4丁目",
       "transport": [
         "JR東海道・山陽本線・Osaka Metro御堂筋線「新大阪」駅徒歩7分"
@@ -6888,8 +6447,8 @@
       "id": "134430",
       "title": "フルーレ第2新大阪Rino Room",
       "url": "https://orijyu.com/buy/post-134430.html",
-      "property_type": "マンション",
-      "price_yen": 13000000,
+      "property_type": "マンション,マンション",
+      "price_yen": 12500000,
       "address": "大阪市東淀川区西宮原2丁目",
       "transport": [
         "JR東海道・山陽本線・Osaka Metro御堂筋線「新大阪」駅徒歩12分"
@@ -6902,8 +6461,8 @@
       "id": "134437",
       "title": "グラン・ビルド宿院Rino Room",
       "url": "https://orijyu.com/buy/post-134437.html",
-      "property_type": "マンション,マンション,マンション",
-      "price_yen": 7300000,
+      "property_type": "マンション",
+      "price_yen": 6900000,
       "address": "堺市堺区宿院町西3丁",
       "transport": [
         "南海本線「堺」駅徒歩8分"
@@ -6941,24 +6500,10 @@
       "status": "賃貸中"
     },
     {
-      "id": "134459",
-      "title": "堺市堺区南庄町1丁 1期1号棟",
-      "url": "https://orijyu.com/buy/post-134459.html",
-      "property_type": "新築一戸建て,新築一戸建て,新築一戸建て",
-      "price_yen": 52980000,
-      "address": "堺市堺区南庄町1丁",
-      "transport": [
-        "南海高野線「堺東」駅徒歩10分"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 10,
-      "status": ""
-    },
-    {
       "id": "134495",
       "title": "大阪市東成区東今里1丁目",
       "url": "https://orijyu.com/buy/post-134495.html",
-      "property_type": "中古一戸建て,中古一戸建て",
+      "property_type": "中古一戸建て,中古一戸建て,中古一戸建て",
       "price_yen": 46800000,
       "address": "大阪市東成区東今里1丁目",
       "transport": [
@@ -7024,20 +6569,6 @@
       ],
       "layout": "4LDK",
       "walk_minutes": 16,
-      "status": "空家"
-    },
-    {
-      "id": "134545",
-      "title": "大阪市城東区東中浜2丁目",
-      "url": "https://orijyu.com/buy/post-134545.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 20800000,
-      "address": "大阪市城東区東中浜2丁目",
-      "transport": [
-        "大阪メトロ今里筋線「緑橋」駅徒歩6分"
-      ],
-      "layout": "4SLDK",
-      "walk_minutes": 6,
       "status": "空家"
     },
     {
@@ -7181,7 +6712,7 @@
       "title": "東大阪市森河内西2丁目",
       "url": "https://orijyu.com/buy/post-134671.html",
       "property_type": "中古一戸建て",
-      "price_yen": 29800000,
+      "price_yen": 27800000,
       "address": "東大阪市森河内西2丁目",
       "transport": [
         "JR片町線・おおさか東線「放出」徒歩10分",
@@ -7195,7 +6726,7 @@
       "id": "134741",
       "title": "堺市東区南野田",
       "url": "https://orijyu.com/buy/post-134741.html",
-      "property_type": "中古一戸建て",
+      "property_type": "中古一戸建て,中古一戸建て",
       "price_yen": 11800000,
       "address": "堺市東区南野田",
       "transport": [
@@ -7285,8 +6816,8 @@
       "id": "134826",
       "title": "堺市美原区南余部",
       "url": "https://orijyu.com/buy/post-134826.html",
-      "property_type": "中古一戸建て,中古一戸建て",
-      "price_yen": 6800000,
+      "property_type": "中古一戸建て",
+      "price_yen": 5800000,
       "address": "堺市美原区南余部",
       "transport": [
         "南海高野線「北野田」駅徒歩17分"
@@ -7299,8 +6830,8 @@
       "id": "134839",
       "title": "堺市美原区南余部",
       "url": "https://orijyu.com/buy/post-134839.html",
-      "property_type": "土地,土地",
-      "price_yen": 6800000,
+      "property_type": "土地",
+      "price_yen": 5800000,
       "address": "堺市美原区南余部",
       "transport": [
         "南海高野線「北野田」駅徒歩17分",
@@ -7310,21 +6841,6 @@
       "layout": "",
       "walk_minutes": 17,
       "status": "空家"
-    },
-    {
-      "id": "134843",
-      "title": "門真市江端町",
-      "url": "https://orijyu.com/buy/post-134843.html",
-      "property_type": "中古一戸建て",
-      "price_yen": 9800000,
-      "address": "池田市江端町",
-      "transport": [
-        "JR片町線「住道」バス13分",
-        "バス停「江端」徒歩6分"
-      ],
-      "layout": "4LDK",
-      "walk_minutes": 6,
-      "status": ""
     },
     {
       "id": "134862",
@@ -7642,9 +7158,9 @@
     },
     {
       "id": "135069",
-      "title": "四条畷市二丁通町 1期1号棟",
+      "title": "四條畷市二丁通町 1期1号棟",
       "url": "https://orijyu.com/buy/post-135069.html",
-      "property_type": "新築一戸建て,新築一戸建て,新築一戸建て",
+      "property_type": "新築一戸建て,新築一戸建て",
       "price_yen": 34990000,
       "address": "四條畷市二丁通町",
       "transport": [
@@ -7683,6 +7199,486 @@
       "layout": "4LDK",
       "walk_minutes": 24,
       "status": ""
+    },
+    {
+      "id": "135096",
+      "title": "東大阪市若江本町 1期1号棟",
+      "url": "https://orijyu.com/buy/post-135096.html",
+      "property_type": "新築一戸建て,新築一戸建て",
+      "price_yen": 43990000,
+      "address": "東大阪市若江本町2丁目",
+      "transport": [
+        "近鉄奈良線「若江岩田」駅徒歩10分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 10,
+      "status": ""
+    },
+    {
+      "id": "135117",
+      "title": "四條畷市中野本町 1期2号棟",
+      "url": "https://orijyu.com/buy/post-135117.html",
+      "property_type": "新築一戸建て",
+      "price_yen": 39980000,
+      "address": "四條畷市中野本町",
+      "transport": [
+        "JR片町線「忍ヶ丘」駅徒歩10分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 10,
+      "status": ""
+    },
+    {
+      "id": "135127",
+      "title": "東大阪市末広町",
+      "url": "https://orijyu.com/buy/post-135127.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 22800000,
+      "address": "東大阪市末広町",
+      "transport": [
+        "近鉄奈良線「瓢箪山」駅徒歩11分"
+      ],
+      "layout": "4SLDK",
+      "walk_minutes": 11,
+      "status": "空家"
+    },
+    {
+      "id": "135139",
+      "title": "東大阪市末広町",
+      "url": "https://orijyu.com/buy/post-135139.html",
+      "property_type": "中古一戸建て,中古一戸建て,中古一戸建て",
+      "price_yen": 23980000,
+      "address": "東大阪市末広町",
+      "transport": [
+        "近鉄奈良線「瓢箪山」駅徒歩10分"
+      ],
+      "layout": "3SLDK",
+      "walk_minutes": 10,
+      "status": "空家"
+    },
+    {
+      "id": "135145",
+      "title": "東大阪市横小路町5丁目",
+      "url": "https://orijyu.com/buy/post-135145.html",
+      "property_type": "中古一戸建て,中古一戸建て",
+      "price_yen": 23800000,
+      "address": "東大阪市横小路町5丁目",
+      "transport": [
+        "近鉄奈良線「瓢箪山」駅徒歩25分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 25,
+      "status": ""
+    },
+    {
+      "id": "135157",
+      "title": "大阪市此花区高見3丁目",
+      "url": "https://orijyu.com/buy/post-135157.html",
+      "property_type": "土地,土地,土地",
+      "price_yen": 46400000,
+      "address": "大阪市此花区高見3丁目",
+      "transport": [
+        "阪神なんば線「伝法」駅徒歩9分"
+      ],
+      "layout": "",
+      "walk_minutes": 9,
+      "status": ""
+    },
+    {
+      "id": "135165",
+      "title": "東大阪市衣摺4丁目",
+      "url": "https://orijyu.com/buy/post-135165.html",
+      "property_type": "中古一戸建て,中古一戸建て,中古一戸建て",
+      "price_yen": 17800000,
+      "address": "東大阪市衣摺4丁目",
+      "transport": [
+        "近鉄大阪線「弥刀」駅徒歩10分",
+        "JRおおさか東線「衣摺加美北」駅 徒歩12分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 10,
+      "status": "空家"
+    },
+    {
+      "id": "135166",
+      "title": "神戸市東灘区魚崎南町6丁目 A号棟",
+      "url": "https://orijyu.com/buy/post-135166.html",
+      "property_type": "新築一戸建て",
+      "price_yen": 52900000,
+      "address": "神戸市東灘区魚崎南町6丁目",
+      "transport": [
+        "阪神本線「青木」徒歩7分"
+      ],
+      "layout": "2SLDK",
+      "walk_minutes": 7,
+      "status": ""
+    },
+    {
+      "id": "135194",
+      "title": "神戸市東灘区魚崎南町6丁目 B号棟",
+      "url": "https://orijyu.com/buy/post-135194.html",
+      "property_type": "新築一戸建て",
+      "price_yen": 50900000,
+      "address": "神戸市東灘区魚崎南町6丁目",
+      "transport": [
+        "阪神本線「青木」徒歩7分"
+      ],
+      "layout": "2SLDK",
+      "walk_minutes": 7,
+      "status": ""
+    },
+    {
+      "id": "135230",
+      "title": "大阪市西成区鶴見橋2丁目",
+      "url": "https://orijyu.com/buy/post-135230.html",
+      "property_type": "収益物件",
+      "price_yen": 18800000,
+      "address": "大阪市西成区鶴見橋2丁目",
+      "transport": [
+        "地下鉄四つ橋線「花園町」徒歩8分",
+        "南海高野線「萩ノ茶屋」徒歩11分",
+        "南海汐見橋線「津守」徒歩12分"
+      ],
+      "layout": "3DK",
+      "walk_minutes": 8,
+      "status": ""
+    },
+    {
+      "id": "135248",
+      "title": "東大阪市南上小阪",
+      "url": "https://orijyu.com/buy/post-135248.html",
+      "property_type": "中古一戸建て,中古一戸建て,中古一戸建て",
+      "price_yen": 21800000,
+      "address": "東大阪市南上小阪",
+      "transport": [
+        "近鉄大阪線「弥刀」駅徒歩18分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 18,
+      "status": "空家"
+    },
+    {
+      "id": "135255",
+      "title": "大阪市東淀川区瑞光2丁目",
+      "url": "https://orijyu.com/buy/post-135255.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 29800000,
+      "address": "大阪市東淀川区瑞光2丁目",
+      "transport": [
+        "阪急京都線「上新庄」駅徒歩9分",
+        "大阪メトロ今里筋線「瑞光四丁目」駅 徒歩9分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 9,
+      "status": "空家"
+    },
+    {
+      "id": "135288",
+      "title": "大阪市西成区南津守4丁目",
+      "url": "https://orijyu.com/buy/post-135288.html",
+      "property_type": "中古一戸建て,中古一戸建て,中古一戸建て",
+      "price_yen": 31800000,
+      "address": "大阪市西成区南津守4丁目",
+      "transport": [
+        "大阪メトロ四つ橋線「玉出」駅徒歩12分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 12,
+      "status": "空家"
+    },
+    {
+      "id": "135304",
+      "title": "大阪市淀川区田川3丁目",
+      "url": "https://orijyu.com/buy/post-135304.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 3980000,
+      "address": "大阪市淀川区田川3丁目",
+      "transport": [
+        "JR東海道本線「塚本」徒歩15分",
+        "JR東西線「加島」徒歩18分"
+      ],
+      "layout": "2LDK",
+      "walk_minutes": 15,
+      "status": ""
+    },
+    {
+      "id": "135312",
+      "title": "クレール諏訪ノ森マリーニア",
+      "url": "https://orijyu.com/buy/post-135312.html",
+      "property_type": "マンション,マンション,マンション",
+      "price_yen": 24800000,
+      "address": "堺市西区浜寺石津町西5丁",
+      "transport": [
+        "南海本線「諏訪ノ森」駅徒歩8分",
+        "阪堺電気軌道「石津」駅 徒歩8分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 8,
+      "status": "空家"
+    },
+    {
+      "id": "135321",
+      "title": "大阪市旭区大宮2丁目",
+      "url": "https://orijyu.com/buy/post-135321.html",
+      "property_type": "収益物件",
+      "price_yen": 10800000,
+      "address": "大阪市旭区大宮2丁目",
+      "transport": [
+        "地下鉄谷町線「千林大宮」徒歩4分",
+        "京阪本線「千林」徒歩10分"
+      ],
+      "layout": "2LDK+店舗",
+      "walk_minutes": 4,
+      "status": ""
+    },
+    {
+      "id": "135334",
+      "title": "大阪市平野区平野本町3丁目",
+      "url": "https://orijyu.com/buy/post-135334.html",
+      "property_type": "新築一戸建て",
+      "price_yen": 36800000,
+      "address": "大阪市平野区平野本町3丁目",
+      "transport": [
+        "大阪メトロ谷町線「平野」駅徒歩10分",
+        "JR関西本線「平野」駅 徒歩12分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 10,
+      "status": ""
+    },
+    {
+      "id": "135344",
+      "title": "大阪市都島区高倉町2丁目",
+      "url": "https://orijyu.com/buy/post-135344.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 52800000,
+      "address": "大阪市都島区高倉町2丁目",
+      "transport": [
+        "JRおおさか東線「城北公園通」徒歩13分",
+        "地下鉄谷町線「都島」徒歩14分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 13,
+      "status": ""
+    },
+    {
+      "id": "135356",
+      "title": "大阪市東淀川区上新庄2丁目",
+      "url": "https://orijyu.com/buy/post-135356.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 33800000,
+      "address": "大阪市東淀川区上新庄2丁目",
+      "transport": [
+        "阪急京都本線「上新庄」徒歩6分",
+        "阪急千里線「下新庄」徒歩13分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 6,
+      "status": ""
+    },
+    {
+      "id": "135371",
+      "title": "東大阪市玉串元町2丁目",
+      "url": "https://orijyu.com/buy/post-135371.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 12800000,
+      "address": "東大阪市玉串元町2丁目",
+      "transport": [
+        "近鉄奈良線「河内花園」徒歩19分",
+        "近鉄奈良線「東花園」徒歩25分"
+      ],
+      "layout": "4DK",
+      "walk_minutes": 19,
+      "status": ""
+    },
+    {
+      "id": "135377",
+      "title": "堺市南区逆瀬川",
+      "url": "https://orijyu.com/buy/post-135377.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 26800000,
+      "address": "堺市南区逆瀬川",
+      "transport": [
+        "南海泉北線「泉ケ丘」バス17分",
+        "バス停「畑口」徒歩1分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 1,
+      "status": ""
+    },
+    {
+      "id": "135383",
+      "title": "堺市東区日置荘北町2丁",
+      "url": "https://orijyu.com/buy/post-135383.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 14800000,
+      "address": "堺市東区日置荘北町2丁",
+      "transport": [
+        "南海高野線「萩原天神」徒歩15分",
+        "南海高野線「初芝」徒歩20分"
+      ],
+      "layout": "2SLDK",
+      "walk_minutes": 15,
+      "status": ""
+    },
+    {
+      "id": "135389",
+      "title": "吹田市内本町3丁目",
+      "url": "https://orijyu.com/buy/post-135389.html",
+      "property_type": "中古一戸建て,中古一戸建て,中古一戸建て",
+      "price_yen": 32800000,
+      "address": "吹田市内本町3丁目",
+      "transport": [
+        "阪急千里線「吹田」駅徒歩13分"
+      ],
+      "layout": "4SLDK",
+      "walk_minutes": 13,
+      "status": "空家"
+    },
+    {
+      "id": "135408",
+      "title": "宝塚市安倉南4丁目",
+      "url": "https://orijyu.com/buy/post-135408.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 24800000,
+      "address": "宝塚市安倉南4丁目",
+      "transport": [
+        "JR福知山線「中山寺」駅徒歩34分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 34,
+      "status": "空家"
+    },
+    {
+      "id": "135415",
+      "title": "宝塚市野上5丁目",
+      "url": "https://orijyu.com/buy/post-135415.html",
+      "property_type": "中古一戸建て,中古一戸建て,中古一戸建て",
+      "price_yen": 15800000,
+      "address": "宝塚市野上5丁目",
+      "transport": [
+        "阪急今津線「逆瀬川」駅徒歩20分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 20,
+      "status": "空家"
+    },
+    {
+      "id": "135422",
+      "title": "茨木市太田3丁目",
+      "url": "https://orijyu.com/buy/post-135422.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 31800000,
+      "address": "茨木市太田3丁目",
+      "transport": [
+        "JR東海道本線「JR総持寺」駅徒歩24分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 24,
+      "status": "空家"
+    },
+    {
+      "id": "135450",
+      "title": "高槻市寿町3丁目",
+      "url": "https://orijyu.com/buy/post-135450.html",
+      "property_type": "テラスハウス",
+      "price_yen": 24800000,
+      "address": "高槻市寿町3丁目",
+      "transport": [
+        "阪急京都本線「富田」徒歩20分",
+        "JR東海道本線「摂津富田」徒歩21分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 20,
+      "status": ""
+    },
+    {
+      "id": "135465",
+      "title": "西宮市甲風園3丁目",
+      "url": "https://orijyu.com/buy/post-135465.html",
+      "property_type": "土地",
+      "price_yen": 118000000,
+      "address": "西宮市甲風園3丁目",
+      "transport": [
+        "阪急今津線「門戸厄神」徒歩5分",
+        "阪急神戸本線・今津線「西宮北口」徒歩13分"
+      ],
+      "layout": "",
+      "walk_minutes": 5,
+      "status": ""
+    },
+    {
+      "id": "135472",
+      "title": "大阪市西成区千本北2丁目",
+      "url": "https://orijyu.com/buy/post-135472.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 31800000,
+      "address": "大阪市西成区千本北2丁目",
+      "transport": [
+        "地下鉄四つ橋線「岸里」徒歩9分",
+        "南海汐見橋線「西天下茶屋」徒歩10分"
+      ],
+      "layout": "4DK",
+      "walk_minutes": 9,
+      "status": ""
+    },
+    {
+      "id": "135488",
+      "title": "大阪市生野区林寺4丁目",
+      "url": "https://orijyu.com/buy/post-135488.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 34800000,
+      "address": "大阪市生野区林寺4丁目",
+      "transport": [
+        "JR関西本線「東部市場前」徒歩8分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 8,
+      "status": ""
+    },
+    {
+      "id": "135503",
+      "title": "豊中市穂積1丁目",
+      "url": "https://orijyu.com/buy/post-135503.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 29800000,
+      "address": "豊中市穂積1丁目",
+      "transport": [
+        "阪急宝塚線「庄内」徒歩13分",
+        "阪急宝塚線「服部天神」徒歩16分"
+      ],
+      "layout": "4LDK",
+      "walk_minutes": 13,
+      "status": ""
+    },
+    {
+      "id": "135508",
+      "title": "高槻市大冠町3丁目",
+      "url": "https://orijyu.com/buy/post-135508.html",
+      "property_type": "中古一戸建て",
+      "price_yen": 21800000,
+      "address": "高槻市大冠町3丁目",
+      "transport": [
+        "阪急京都線「高槻市」徒歩37分"
+      ],
+      "layout": "5SLDK",
+      "walk_minutes": 37,
+      "status": ""
+    },
+    {
+      "id": "135515",
+      "title": "大阪市旭区森小路1丁目",
+      "url": "https://orijyu.com/buy/post-135515.html",
+      "property_type": "中古一戸建て,中古一戸建て,中古一戸建て",
+      "price_yen": 26800000,
+      "address": "大阪市旭区森小路1丁目",
+      "transport": [
+        "京阪本線「森小路」駅徒歩4分",
+        "大阪メトロ谷町線「千林大宮」駅 徒歩6分"
+      ],
+      "layout": "3LDK",
+      "walk_minutes": 4,
+      "status": "空家"
     },
     {
       "id": "48860",
