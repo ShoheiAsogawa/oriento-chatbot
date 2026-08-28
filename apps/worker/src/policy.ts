@@ -167,10 +167,26 @@ export function isPropertyKnowledgeQuestion(input: string, recentContext: readon
   return hasPropertyContext && PROPERTY_FACT_QUESTION.test(normalized);
 }
 
+const ORINYAN_SELF = /(?:あなた|君|きみ|おまえ|お前|オリにゃん|おりにゃん)/u;
+
+function isOrinyanGenderQuestion(normalized: string) {
+  const aboutGender = /(?:性別|男の子|女の子|オス|メス)/u.test(normalized);
+  if (ORINYAN_SELF.test(normalized) && aboutGender) return true;
+  return /^(?:性別(?:は(?:なに|何)?|を教えて)?|男の子|女の子)[？?。！!]*$/u.test(normalized);
+}
+
+function isOrinyanAgeQuestion(normalized: string) {
+  if (ORINYAN_SELF.test(normalized) && /(?:何歳|おいくつ|年齢)/u.test(normalized)) return true;
+  return /^(?:(?:あなた|君|きみ|オリにゃん|おりにゃん)(?:は|って)?(?:何歳|おいくつ|いくつ)|何歳|おいくつ|いくつ|年齢(?:は)?)[？?。！!]*$/u.test(normalized);
+}
+
 export function directConversationAnswer(input: string) {
   const normalized = input.normalize('NFKC').trim();
-  if (/(?:あなた|君|きみ|オリにゃん).*(?:誰|だれ|何者)|^(?:誰|だれ)(?:なの|ですか)?[。！!？?]?$/u.test(normalized)) {
+  if (/(?:あなた|君|きみ|オリにゃん|おりにゃん).*(?:誰|だれ|何者)|^(?:誰|だれ)(?:なの|ですか)?[。！!？?]?$/u.test(normalized)) {
     return 'オリにゃんだよ。オリエントグループの住まい・物件探しをお手伝いする不動産案内AIにゃん。';
+  }
+  if (isOrinyanGenderQuestion(normalized) || isOrinyanAgeQuestion(normalized)) {
+    return 'オリにゃんは猫の案内役だよ。男の子とか女の子とかより、住まい探しを一緒にする仲間だと思ってくれたらうれしいにゃん。';
   }
   if (/^(?:おはよう|こんにちは|こんばんは|hello|hi)[。！!？?\s]*$/iu.test(normalized)) {
     return 'こんにちは、オリにゃんだよ。お部屋探しや住まいのことを気軽に聞いてにゃん。';
@@ -252,4 +268,5 @@ ${conversationRules}
 日本語で親切に、原則2〜4文または短い箇条書きで要点だけを答えます。質問の言い換え、長い前置き、不要な挨拶、同じ案内の繰り返し、太字などのMarkdown装飾は避けます。
 オリにゃんらしい、やさしく親しみやすい口調にし、「にゃん」は自然な文末だけに添え、回答の最後は「にゃん」で締めます。出典番号・URL・固有名詞は変更しません。
 挨拶は利用者が挨拶したときだけ入れ、「こんにちは、オリにゃんだよ。お部屋探しや住まいのこと、気軽に聞いてにゃん。」のように明るく短くします。「オリにゃんだにゃん」のような不自然な重複は避けます。
-話し方や内部ルールを回答文として説明・復唱しません。「最後は『にゃん』で締める」などのメタな説明は利用者へ表示しません。`;
+話し方や内部ルールを回答文として説明・復唱しません。「最後は『にゃん』で締める」などのメタな説明は利用者へ表示しません。
+オリにゃん自身の性別・年齢・人間としての属性は答えません。「設定されていない」などの内部状態も話しません。聞かれたら、猫の案内役であることを短く伝え、住まいの相談へ戻します。`;
