@@ -220,6 +220,7 @@ function KnowledgePage() {
   const processingStartedAt = useRef<number | null>(null);
   const seedRetryCount = useRef(0);
   const seedRemainingRef = useRef(0);
+  const seedBusyRetryRef = useRef(false);
   const [seedCleanupPending, setSeedCleanupPending] = useState(false);
   const loadRequestSequence = useRef(0);
   const documentContentRequestSequence = useRef(0);
@@ -658,8 +659,17 @@ function KnowledgePage() {
       }
       await load();
     } catch (error) {
-      setSeedCleanupPending(false);
-      setNotice(error instanceof Error ? `同期を開始できませんでした: ${error.message}` : '同期を開始できませんでした。');
+      const message = error instanceof Error ? error.message : '';
+      const retryable = /API 503|API 429|API 502|API 504|混み合|上限に達した/u.test(message);
+      if (retryable && seedRetryCount.current < 20) {
+        seedRetryCount.current += 1;
+        seedBusyRetryRef.current = true;
+        setSeedCleanupPending(true);
+        setNotice('検索基盤が混み合っています。少し待って続きから再開します。');
+      } else {
+        setSeedCleanupPending(false);
+        setNotice(error instanceof Error ? `同期を開始できませんでした: ${error.message}` : '同期を開始できませんでした。');
+      }
     } finally {
       setSeeding(false);
       finishOperation();
@@ -668,8 +678,12 @@ function KnowledgePage() {
 
   useEffect(() => {
     if (!seedCleanupPending || busy || loading) return;
-    if (seedRemainingRef.current === 0 && pendingKnowledgeIds.length > 0) return;
-    const timer = window.setTimeout(() => { void seed(); }, seedRemainingRef.current > 0 ? 400 : 1500);
+    if (!seedBusyRetryRef.current && seedRemainingRef.current === 0 && pendingKnowledgeIds.length > 0) return;
+    const delayMs = seedBusyRetryRef.current ? 3000 : seedRemainingRef.current > 0 ? 2000 : 1500;
+    const timer = window.setTimeout(() => {
+      seedBusyRetryRef.current = false;
+      void seed();
+    }, delayMs);
     return () => window.clearTimeout(timer);
   }, [busy, loading, pendingKnowledgeIds.length, seedCleanupPending]);
 

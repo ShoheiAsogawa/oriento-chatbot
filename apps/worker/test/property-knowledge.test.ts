@@ -210,6 +210,17 @@ JR大阪環状線「弁天町」徒歩6分
     expect(matchingInitialKnowledgeItems(entry, [oldItem, currentItem, sameTitleDifferentUrl, manualItem]))
       .toEqual([oldItem, currentItem]);
     expect(canonicalInitialKnowledgeItem(entry, [oldItem, currentItem])?.id).toBe('current');
+    const decoys = Array.from({ length: 400 }, (_, index) => ({
+      ...oldItem,
+      id: `decoy-${index}`,
+      metadata: {
+        ...oldItem.metadata,
+        source_url: `https://orijyu.com/rent/post-${100000 + index}.html`,
+        manifest_sha256: 'c'.repeat(64),
+      },
+    } satisfies AiSearchItemInfo));
+    expect(matchingInitialKnowledgeItems(entry, [...decoys, oldItem, currentItem]).map((item) => item.id))
+      .toEqual(['old', 'current']);
   });
 
   it('retries stale pending initial items but leaves fresh processing alone', () => {

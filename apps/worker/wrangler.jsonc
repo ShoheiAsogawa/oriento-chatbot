@@ -94,5 +94,8 @@
       "namespace_id": "1002",
       "simple": { "limit": 5, "period": 60 }
     }
-  ]
+  ],
+  "limits": {
+    "cpu_ms": 60000
+  }
 }

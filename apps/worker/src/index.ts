@@ -268,8 +268,8 @@ app.use('/api/chat/message', async (context, next) => {
 function publicWorkerError(error: Error, status: number, path: string) {
   if (status !== 500) return error.message;
   if (path.startsWith('/api/admin/') || path === '/api/internal/knowledge/reseed') {
-    if (/subrequest/iu.test(error.message) || /CPU time/iu.test(error.message) || /Memory limit/iu.test(error.message)) {
-      return '登録処理が上限に達したため中断しました。再同期をもう一度押すと続きから再開します。';
+    if (/subrequest/iu.test(error.message) || /CPU time/iu.test(error.message) || /Memory limit/iu.test(error.message) || /503/u.test(error.message)) {
+      return '登録処理が混み合っているため中断しました。再同期をもう一度押すと続きから再開します。';
     }
     return `処理中にエラーが発生しました（${error.name}）`;
   }
@@ -440,10 +440,10 @@ function knowledgeCategoryFromFilename(filename: string) {
 }
 
 const MAX_KNOWLEDGE_ITEM_SIZE = 4 * 1024 * 1024;
-const INITIAL_KNOWLEDGE_SYNC_BATCH_SIZE = 20;
-const INITIAL_KNOWLEDGE_SYNC_CONCURRENCY = 3;
-const KNOWLEDGE_LIST_PAGE_SIZE = 50;
-const KNOWLEDGE_LIST_MAX_PAGES = 200;
+const INITIAL_KNOWLEDGE_SYNC_BATCH_SIZE = 8;
+const INITIAL_KNOWLEDGE_SYNC_CONCURRENCY = 1;
+const KNOWLEDGE_LIST_PAGE_SIZE = 100;
+const KNOWLEDGE_LIST_MAX_PAGES = 100;
 const SUPPORTED_KNOWLEDGE_ITEM = /\.(?:pdf|docx?|xlsx?|csv|txt|md|png|jpe?g|webp)$/iu;
 const INITIAL_KNOWLEDGE_PATH = /^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.md$/iu;
 const PROPERTY_KNOWLEDGE_CATEGORY = /^properties_for_(?:sale|rent)$/u;
@@ -894,12 +894,35 @@ function initialKnowledgeMetadata(entry: InitialKnowledgeEntry) {
   };
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableAiSearchError(error: unknown) {
+  const message = error instanceof Error ? `${error.name} ${error.message}` : String(error);
+  return /503|429|502|504|1102|overload|temporar|unavailab/iu.test(message);
+}
+
+async function withAiSearchRetry<T>(operation: () => Promise<T>, attempts = 4): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableAiSearchError(error) || attempt === attempts) throw error;
+      await delay(400 * (2 ** (attempt - 1)));
+    }
+  }
+  throw lastError;
+}
+
 async function listAllKnowledgeItems(items: AiSearchItems, status?: KnowledgeListStatus) {
   const all: AiSearchItemInfo[] = [];
   let page = 1;
   let totalCount = Number.POSITIVE_INFINITY;
   while (all.length < totalCount && page <= KNOWLEDGE_LIST_MAX_PAGES) {
-    const response = await items.list({ page, per_page: KNOWLEDGE_LIST_PAGE_SIZE, status });
+    const response = await withAiSearchRetry(() => items.list({ page, per_page: KNOWLEDGE_LIST_PAGE_SIZE, status }));
     all.push(...response.result);
     const reportedTotal = response.result_info?.total_count;
     totalCount = typeof reportedTotal === 'number' ? reportedTotal : all.length + (response.result.length === KNOWLEDGE_LIST_PAGE_SIZE ? 1 : 0);
@@ -921,19 +944,75 @@ type InitialKnowledgeSyncFailure = {
   error: string;
 };
 
-function matchingInitialKnowledgeItems(entry: InitialKnowledgeEntry, existingItems: AiSearchItemInfo[]) {
-  const legacyFilename = entry.file.replaceAll('/', '__');
+type ManagedKnowledgeIndex = {
+  managed: AiSearchItemInfo[];
+  bySourceUrl: Map<string, AiSearchItemInfo[]>;
+  byKey: Map<string, AiSearchItemInfo[]>;
+  byLegacyName: Map<string, AiSearchItemInfo[]>;
+};
+
+function pushIndexedItem(map: Map<string, AiSearchItemInfo[]>, key: string, item: AiSearchItemInfo) {
+  const current = map.get(key);
+  if (current) current.push(item);
+  else map.set(key, [item]);
+}
+
+function itemLegacyNames(key: string) {
+  const retry = key.match(/^initial-[a-f0-9]{16}-retry-[a-f0-9]{8}-(.+)$/iu);
+  if (retry?.[1]) return [retry[1]];
+  const versioned = key.match(/^initial-[a-f0-9]{16}-(.+)$/iu);
+  if (versioned?.[1]) return [versioned[1]];
+  const plain = key.match(/^initial-(.+)$/iu);
+  if (plain?.[1]) return [plain[1]];
+  return [];
+}
+
+function indexManagedKnowledgeItems(existingItems: AiSearchItemInfo[]): ManagedKnowledgeIndex {
+  const index: ManagedKnowledgeIndex = {
+    managed: [],
+    bySourceUrl: new Map(),
+    byKey: new Map(),
+    byLegacyName: new Map(),
+  };
+  for (const item of existingItems) {
+    if (!isManagedInitialKnowledgeItem(item)) continue;
+    index.managed.push(item);
+    pushIndexedItem(index.byKey, item.key, item);
+    const sourceUrl = knowledgeItemSourceUrl(item);
+    if (sourceUrl) pushIndexedItem(index.bySourceUrl, sourceUrl, item);
+    for (const legacyName of itemLegacyNames(item.key)) {
+      pushIndexedItem(index.byLegacyName, legacyName, item);
+    }
+  }
+  return index;
+}
+
+function uniqueKnowledgeItems(items: AiSearchItemInfo[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+function matchingIndexedInitialKnowledgeItems(entry: InitialKnowledgeEntry, index: ManagedKnowledgeIndex) {
   const category = initialKnowledgeCategory(entry);
   const sourceUrl = initialKnowledgeSourceUrl(entry);
-  return existingItems.filter((item) => {
-    if (!isManagedInitialKnowledgeItem(item)) return false;
-    if (isPropertyKnowledgeCategory(category) && new URL(sourceUrl).pathname !== '/') {
-      return knowledgeItemSourceUrl(item) === sourceUrl;
-    }
-    return item.key === initialKnowledgeItemKey(entry)
-      || item.key === legacyFilename
-      || item.key.endsWith(`-${legacyFilename}`);
-  });
+  if (isPropertyKnowledgeCategory(category) && new URL(sourceUrl).pathname !== '/') {
+    return index.bySourceUrl.get(sourceUrl) || [];
+  }
+  const versionKey = initialKnowledgeItemKey(entry);
+  const legacyFilename = entry.file.replaceAll('/', '__');
+  return uniqueKnowledgeItems([
+    ...(index.byKey.get(versionKey) || []),
+    ...(index.byKey.get(legacyFilename) || []),
+    ...(index.byLegacyName.get(legacyFilename) || []),
+  ]);
+}
+
+function matchingInitialKnowledgeItems(entry: InitialKnowledgeEntry, existingItems: AiSearchItemInfo[]) {
+  return matchingIndexedInitialKnowledgeItems(entry, indexManagedKnowledgeItems(existingItems));
 }
 
 function isFreshPendingInitialItem(item: AiSearchItemInfo, expectedSha256?: string) {
@@ -977,7 +1056,7 @@ async function uploadInitialKnowledgeItem(
   key: string,
 ) {
   const file = await fetchInitialKnowledgeAsset(env, baseUrl, entry);
-  const result = await items.upload(key, file, { metadata: initialKnowledgeMetadata(entry) });
+  const result = await withAiSearchRetry(() => items.upload(key, file, { metadata: initialKnowledgeMetadata(entry) }));
   return { file: entry.file, key: result.key || key, id: result.id, status: result.status };
 }
 
@@ -991,7 +1070,7 @@ async function mutateInitialKnowledgeItem(
   try {
     if (existing) {
       try {
-        const result = await items.get(existing.id).sync();
+        const result = await withAiSearchRetry(() => items.get(existing.id).sync());
         return {
           ok: true,
           item: {
@@ -1040,11 +1119,12 @@ async function syncInitialKnowledgeFiles(
   options: { maxMutations?: number } = {},
 ) {
   const maxMutations = options.maxMutations ?? Number.POSITIVE_INFINITY;
+  const index = indexManagedKnowledgeItems(existingItems);
   const skipped: InitialKnowledgeSyncItem[] = [];
   const pending: Array<{ entry: InitialKnowledgeEntry; existing?: AiSearchItemInfo }> = [];
 
   for (const entry of files) {
-    const matching = matchingInitialKnowledgeItems(entry, existingItems);
+    const matching = matchingIndexedInitialKnowledgeItems(entry, index);
     const sameVersion = entry.sha256
       ? matching.filter((item) => metadataString(item.metadata, 'manifest_sha256') === entry.sha256)
       : matching.filter((item) => item.key === initialKnowledgeItemKey(entry));
