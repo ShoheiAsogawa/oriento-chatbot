@@ -12,7 +12,7 @@
     "knowledge:validate": "python scripts/validate-orient-knowledge.py",
     "knowledge:refresh:properties": "pnpm knowledge:properties && pnpm knowledge:catalog && pnpm knowledge:validate",
     "check": "pnpm -r check",
-    "test": "pnpm --filter @orient/worker test",
+    "test": "pnpm --filter @orient/worker --filter @orient/widget test",
     "deploy:production": "pnpm --filter @orient/worker exec wrangler deploy",
     "deploy:preview": "pnpm --filter @orient/worker exec wrangler deploy --config ../preview/wrangler.jsonc",
     "dev:worker": "pnpm --filter @orient/worker dev",
