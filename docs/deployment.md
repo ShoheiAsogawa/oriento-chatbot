@@ -114,9 +114,10 @@ Budget Alertは通知のみで利用停止しないため、D1の原子的カウ
 ## WordPress
 
 1. `pnpm build` によりwidget、管理画面、画像をWorker Static Assetsへ同梱する。
-2. `wordpress/embed-snippet.html` のWorker URL、Turnstile site key、LINE URLを実値へ置換する。
-3. WordPressのフッター用カスタムHTML欄へ貼り付ける。
-4. CSPを使用している場合はWorkerドメインへの `script-src`, `connect-src`, `img-src` を許可する。
+2. カスタムテーマ（`original2`）では `wordpress/orient-chat.php` をテーマへコピーし、`functions.php` から `require` する。貼り付け用の生HTMLは `wordpress/embed-snippet.html`。
+3. スマホ下部の「電話でお問い合わせ」バー（`#click_to_call_bar`）は、ウィジェットが自動で避けて上に出す。手動で上げたいときは `offset-bottom="56"` を付ける。
+4. 外観ウィジェットのカスタムHTMLでも同じタグは貼れるが、未知タグを消すプラグインがあるため `wp_footer` 推奨。
+5. CSPを使用している場合はWorkerドメインへの `script-src`, `connect-src`, `img-src` を許可する。
 
 ## 検収
 

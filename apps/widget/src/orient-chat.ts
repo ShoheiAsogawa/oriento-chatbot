@@ -1,3 +1,5 @@
+import { autoBottomOffset, DEFAULT_AVOID_SELECTOR, measureAvoidedBottomOffset, parseOffsetBottom } from './dock-offset';
+
 type CatState = 'idle' | 'listening' | 'speaking' | 'thinking';
 type ChatRole = 'assistant' | 'user';
 
@@ -291,8 +293,14 @@ const styles = `
     --orient-success: #20b866;
     --orient-line: #06c755;
     --orient-asset: url("${defaultAssetUrl}");
+    --orient-gutter-x: 20px;
+    --orient-gutter-y: 18px;
+    --orient-offset-bottom: 0px;
     position: fixed;
-    inset: auto 20px 18px auto;
+    top: auto;
+    right: var(--orient-gutter-x);
+    bottom: calc(var(--orient-offset-bottom) + var(--orient-gutter-y));
+    left: auto;
     z-index: 2147483000;
     overflow: visible;
     color: var(--orient-ink);
@@ -309,7 +317,7 @@ const styles = `
   .root { display: grid; justify-items: end; gap: 12px; }
   .panel {
     width: min(420px, calc(100dvw - 40px));
-    height: min(720px, calc(100vh - 118px));
+    height: min(720px, calc(100vh - 118px - var(--orient-offset-bottom)));
     min-height: 520px;
     display: grid;
     grid-template-rows: auto minmax(160px, 1fr) auto auto auto auto;
@@ -603,9 +611,15 @@ const styles = `
     .suggestions button:hover:not(:disabled) { background: #fff5ef; }
   }
   @media (max-width: 520px) {
-    :host { inset: auto 10px 10px 10px; overflow: visible; }
+    :host {
+      --orient-gutter-x: 10px;
+      --orient-gutter-y: 10px;
+      left: var(--orient-gutter-x);
+      right: var(--orient-gutter-x);
+      overflow: visible;
+    }
     .root { width: 100%; }
-    .panel { width: 100%; height: min(690px, calc(100dvh - 24px)); min-height: 480px; border-radius: 16px; }
+    .panel { width: 100%; height: min(690px, calc(100dvh - 24px - var(--orient-offset-bottom))); min-height: 480px; border-radius: 16px; }
     .launcher { width: 228px; height: 104px; }
     .launcher-ring-clip { inset: 0 -8px -4px 0; }
     .launcher-ring { width: 180px; height: 180px; right: -78px; bottom: -96px; }
@@ -637,8 +651,12 @@ class OrientChat extends HTMLElement {
   private visitorAgeDecade: VisitorAgeDecade | '' = '';
   private turnstileWidgetId = '';
   private turnstilePromise: Promise<string> | null = null;
+  private dockFrame = 0;
+  private dockResizeObserver?: ResizeObserver;
+  private dockMutationObserver?: MutationObserver;
+  private readonly onDockChange = () => this.scheduleDockOffset();
 
-  static get observedAttributes() { return ['open']; }
+  static get observedAttributes() { return ['open', 'offset-bottom', 'avoid-selector']; }
 
   constructor() {
     super();
@@ -650,6 +668,7 @@ class OrientChat extends HTMLElement {
 
   connectedCallback() {
     this.applyConfiguration();
+    this.startDockWatch();
     void this.recordPropertyPageView();
     if (!this.initialized) {
       this.initialized = true;
@@ -676,9 +695,17 @@ class OrientChat extends HTMLElement {
     if (this.hasAttribute('open')) this.open();
   }
 
+  disconnectedCallback() {
+    this.stopDockWatch();
+  }
+
   attributeChangedCallback(name: string) {
-    if (!this.isConnected || name !== 'open') return;
-    if (this.hasAttribute('open')) this.open(); else this.close();
+    if (!this.isConnected) return;
+    if (name === 'open') {
+      if (this.hasAttribute('open')) this.open(); else this.close();
+      return;
+    }
+    if (name === 'offset-bottom' || name === 'avoid-selector') this.scheduleDockOffset();
   }
 
   private get apiUrl() { return (this.getAttribute('api-url') || '').replace(/\/$/, ''); }
@@ -751,6 +778,64 @@ class OrientChat extends HTMLElement {
     if (privacy) {
       privacy.href = this.getAttribute('privacy-policy-url')
         || `${this.apiUrl}/documents/orient-ai-chat-privacy-policy.pdf`;
+    }
+    this.applyDockOffset();
+  }
+
+  private startDockWatch() {
+    this.applyDockOffset();
+    if (typeof ResizeObserver === 'function') {
+      this.dockResizeObserver = new ResizeObserver(() => this.scheduleDockOffset());
+      this.dockResizeObserver.observe(document.documentElement);
+    }
+    if (typeof MutationObserver === 'function' && document.body) {
+      this.dockMutationObserver = new MutationObserver(() => this.scheduleDockOffset());
+      this.dockMutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class', 'hidden'],
+      });
+    }
+    window.addEventListener('resize', this.onDockChange);
+    window.visualViewport?.addEventListener('resize', this.onDockChange);
+  }
+
+  private stopDockWatch() {
+    if (this.dockFrame) cancelAnimationFrame(this.dockFrame);
+    this.dockFrame = 0;
+    this.dockResizeObserver?.disconnect();
+    this.dockMutationObserver?.disconnect();
+    this.dockResizeObserver = undefined;
+    this.dockMutationObserver = undefined;
+    window.removeEventListener('resize', this.onDockChange);
+    window.visualViewport?.removeEventListener('resize', this.onDockChange);
+  }
+
+  private scheduleDockOffset() {
+    if (this.dockFrame) return;
+    this.dockFrame = requestAnimationFrame(() => {
+      this.dockFrame = 0;
+      this.applyDockOffset();
+    });
+  }
+
+  private applyDockOffset() {
+    const explicit = parseOffsetBottom(this.getAttribute('offset-bottom'));
+    const reserve = explicit ?? autoBottomOffset(this.measureAvoidedBars());
+    this.style.setProperty('--orient-offset-bottom', `${reserve}px`);
+  }
+
+  private measureAvoidedBars() {
+    const selector = this.getAttribute('avoid-selector')?.trim() || DEFAULT_AVOID_SELECTOR;
+    try {
+      return measureAvoidedBottomOffset(
+        document.querySelectorAll(selector),
+        window.innerHeight,
+        (element) => getComputedStyle(element),
+      );
+    } catch {
+      return 0;
     }
   }
 

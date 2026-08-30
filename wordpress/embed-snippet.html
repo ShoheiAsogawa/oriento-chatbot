@@ -1,4 +1,14 @@
-<!-- WordPress の「カスタムHTML」またはフッター挿入欄に貼り付けます -->
+<!--
+  既存のカスタムテーマ（original2）へオリにゃんを入れる最短手順
+
+  1. 下のブロックをテーマの functions.php 末尾に貼る
+     または wordpress/orient-chat.php をテーマへコピーして require する
+  2. 外観 > ウィジェットの「カスタムHTML」でも同じタグは貼れるが、
+     セキュリティプラグインが未知タグを消すことがあるので functions.php 推奨
+  3. スマホ下部の「電話でお問い合わせ」バー（Really Simple Click to Call /
+     #click_to_call_bar）は、ウィジェットが自動で高さを測って上にずらす
+  4. 自動検出が外れる場合だけ offset-bottom="56" を付ける
+-->
 <orient-chat
   api-url="https://orient-chat-api.uken-shohei.workers.dev"
   primary-color="#ff680b"
@@ -6,6 +16,8 @@
   character-src="https://orient-chat-api.uken-shohei.workers.dev/assets/orinyan-states.png"
   turnstile-site-key="0x4AAAAAAELFZjpF4XsO2kRC"
   line-url="https://page.line.me/089wmudt"
+  contact-url="https://orijyu.com/reception.html"
+  avoid-selector="#click_to_call_bar, .ctc_bar"
 ></orient-chat>
 <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-<script defer src="https://orient-chat-api.uken-shohei.workers.dev/widget/orient-chat.js?v=20260826-12"></script>
+<script defer src="https://orient-chat-api.uken-shohei.workers.dev/widget/orient-chat.js?v=20260830-1"></script>
