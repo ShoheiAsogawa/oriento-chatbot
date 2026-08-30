@@ -7,8 +7,9 @@ WordPress に1行のスクリプトで埋め込めるキャラクター付きチ
 - `apps/widget`: Shadow DOM を使う軽量 Web Component。WordPress のテーマと競合しません。
 - `apps/admin`: ナレッジ、会話ログ、顧客、応答方針、外観、監査を扱う React 管理画面。
 - `apps/worker`: Cloudflare Workers API と Static Assets。AI Search、D1、Durable Objects、Queues、R2、Rate Limiting、Turnstile、Access に対応。
-- `wordpress/embed-snippet.html`: 貼り付け用の埋め込みタグ。
-- `wordpress/orient-chat.php`: カスタムテーマの `functions.php` から読むフッター埋め込み。
+- `wordpress/orient-orinyan-chat/`: テーマを触らずに入れるWordPressプラグイン。
+- `wordpress/orient-orinyan-chat.zip`: 管理画面からアップロードする用。
+- `wordpress/ORIENT-CHAT-INSTALL.txt`: 入れ方・戻し方。
 - `docs/cloudflare-account-readiness.md`: 実アカウントの競合・前提条件・R2有効化状況。
 - `docs/cost-controls.md`: 予算アラート、日次ハード上限、R2保持期限。
 - `docs`: 設計、Cloudflare 機能選定、プライバシーと運用手順。

@@ -1,13 +1,7 @@
 <!--
-  既存のカスタムテーマ（original2）へオリにゃんを入れる最短手順
-
-  1. 下のブロックをテーマの functions.php 末尾に貼る
-     または wordpress/orient-chat.php をテーマへコピーして require する
-  2. 外観 > ウィジェットの「カスタムHTML」でも同じタグは貼れるが、
-     セキュリティプラグインが未知タグを消すことがあるので functions.php 推奨
-  3. スマホ下部の「電話でお問い合わせ」バー（Really Simple Click to Call /
-     #click_to_call_bar）は、ウィジェットが自動で高さを測って上にずらす
-  4. 自動検出が外れる場合だけ offset-bottom="56" を付ける
+  テーマの functions.php / footer.php は触らない。
+  公式の入れ方は wordpress/orient-orinyan-chat プラグイン（ZIPアップロード）。
+  手順は wordpress/ORIENT-CHAT-INSTALL.txt。
 -->
 <orient-chat
   api-url="https://orient-chat-api.uken-shohei.workers.dev"

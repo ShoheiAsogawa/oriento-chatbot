@@ -113,10 +113,12 @@ Budget Alertは通知のみで利用停止しないため、D1の原子的カウ
 
 ## WordPress
 
-1. `pnpm build` によりwidget、管理画面、画像をWorker Static Assetsへ同梱する。
-2. カスタムテーマ（`original2`）では `wordpress/orient-chat.php` をテーマへコピーし、`functions.php` から `require` する。貼り付け用の生HTMLは `wordpress/embed-snippet.html`。
-3. スマホ下部の「電話でお問い合わせ」バー（`#click_to_call_bar`）は、ウィジェットが自動で避けて上に出す。手動で上げたいときは `offset-bottom="56"` を付ける。
-4. 外観ウィジェットのカスタムHTMLでも同じタグは貼れるが、未知タグを消すプラグインがあるため `wp_footer` 推奨。
+テーマ `original2` は編集しない。専用プラグインを有効化する。
+
+1. `wordpress/orient-orinyan-chat.zip` を管理画面の「プラグイン → 新規追加 → プラグインのアップロード」から入れる。
+2. 「オリにゃんチャット」を有効化する。停止すれば表示だけ消える。
+3. 手順の詳細は `wordpress/ORIENT-CHAT-INSTALL.txt`。
+4. スマホ下部の「電話でお問い合わせ」バー（`#click_to_call_bar`）は、新しいウィジェットが自動で避け、本番反映前はプラグインの予備CSSで68px上げる。
 5. CSPを使用している場合はWorkerドメインへの `script-src`, `connect-src`, `img-src` を許可する。
 
 ## 検収

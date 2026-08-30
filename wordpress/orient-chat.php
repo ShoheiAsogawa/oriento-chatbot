@@ -1,11 +1,8 @@
 <?php
 /**
- * オリにゃんチャットをカスタムテーマの全ページフッターへ出す。
- *
- * 使い方（テーマ original2 の functions.php 末尾）:
- *   require get_stylesheet_directory() . '/orient-chat.php';
- *
- * このファイル自体を functions.php にコピーしても同じです。
+ * 予備ファイル。通常は使わない。
+ * テーマの functions.php は編集せず、プラグイン
+ * wordpress/orient-orinyan-chat を有効化してください。
  */
 if (!defined('ABSPATH')) {
   exit;
