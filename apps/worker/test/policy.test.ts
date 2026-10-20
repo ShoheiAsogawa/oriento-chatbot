@@ -10,10 +10,25 @@ import {
 } from '../src/policy';
 
 describe('directConversationAnswer', () => {
-  it.each(['あなたはだれ？', 'オリにゃんって何者？', '誰なの'])('answers identity questions without resuming an old search: %s', (question) => {
+  it.each(['あなたはだれ？', 'オリにゃんって何者？', '誰なの', 'おりにゃんって何者？'])('answers identity questions without resuming an old search: %s', (question) => {
     expect(directConversationAnswer(question)).toBe(
       'オリにゃんだよ。オリエントグループの住まい・物件探しをお手伝いする不動産案内AIにゃん。',
     );
+  });
+
+  it.each(['おりにゃんの性別教えて', 'オリにゃんの性別は？', 'あなたは男の子？', '性別は？'])(
+    'answers character gender questions without talking about settings: %s',
+    (question) => {
+      const answer = directConversationAnswer(question);
+      expect(answer).toContain('猫の案内役');
+      expect(answer).not.toMatch(/設定/u);
+    },
+  );
+
+  it.each(['オリにゃんは何歳？', 'あなたはいくつ？'])('answers character age questions without talking about settings: %s', (question) => {
+    const answer = directConversationAnswer(question);
+    expect(answer).toContain('猫の案内役');
+    expect(answer).not.toMatch(/設定/u);
   });
 
   it.each(['オリエントホームのこだわり', 'オリエントホームの特徴を教えて', 'オリエントホームの家づくりのこだわりは？'])('answers Orient Home\'s strengths concisely: %s', (question) => {
@@ -24,6 +39,7 @@ describe('directConversationAnswer', () => {
 
   it('leaves ordinary consultation messages to the real-estate agent', () => {
     expect(directConversationAnswer('家族4人で住む家を探したい')).toBeUndefined();
+    expect(directConversationAnswer('あなたはいくつの部屋がいい？')).toBeUndefined();
   });
 
   it.each(['こんにちは', 'こんばんは', 'ありがとう'])('handles short social turns without replaying old property results: %s', (message) => {
@@ -230,6 +246,8 @@ describe('SYSTEM_PROMPT', () => {
     expect(SYSTEM_PROMPT).toContain('公式LINEを主要な案内先');
     expect(SYSTEM_PROMPT).toContain('条件を一つ尋ねるだけの検索途中では繰り返し案内しません');
     expect(SYSTEM_PROMPT).toContain('LINEを利用できない場合の補助的な案内先');
+    expect(SYSTEM_PROMPT).toContain('オリにゃん自身の性別・年齢・人間としての属性は答えません');
+    expect(SYSTEM_PROMPT).toContain('設定されていない');
   });
 });
 
