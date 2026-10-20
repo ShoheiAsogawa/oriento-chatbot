@@ -13,6 +13,28 @@
       .hero { height: 330px; padding: 56px; display: grid; align-content: center; background: #f6f6f6; border-left: 8px solid #ff680b; }
       h1 { margin: 0 0 16px; font-size: clamp(28px, 4vw, 52px); }
       p { color: #74757f; }
+      @media (max-width: 736px) {
+        body { padding-bottom: 50px; }
+        #click_to_call_bar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 50px;
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          background: #ff6600;
+          color: #fff;
+          text-decoration: none;
+          font-weight: 800;
+        }
+      }
+      @media (min-width: 737px) {
+        #click_to_call_bar { display: none; }
+      }
     </style>
   </head>
   <body>
@@ -20,6 +42,7 @@
     <main>
       <section class="hero"><h1>理想の住まい探しを、もっと身近に。</h1><p>右下のオリにゃんをクリックしてチャットをお試しください。</p></section>
     </main>
+    <a href="tel:0120575703" class="ctc_bar" id="click_to_call_bar"><span aria-hidden="true">☎</span>電話でお問い合わせ</a>
     <orient-chat api-url="" demo-mode="true"></orient-chat>
     <script type="module" src="/src/orient-chat.ts"></script>
   </body>
