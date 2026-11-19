@@ -9,6 +9,7 @@ GitHubへpushすると、Cloudflare側で依存関係をインストールし、
 | 確認用チャット画面 | `orient-chat-preview` | `pnpm build:preview` | `pnpm deploy:preview` |
 
 両方ともRoot directoryは `/`、Production branchは `main` です。
+確認用画面は、本番の `orient-chat.js` を読み込まず、このリポジトリで調整したウィジェットを同じWorkerから配信します。
 実行時SecretはWorkerに保存済みの値を使用し、GitHubやビルド変数には保存しません。
 
 ## ローカル確認

@@ -1,3 +1,7 @@
+// 本番へ出すウィジェットは、この TypeScript ではなく
+// apps/widget/vendor/orient-chat.live.js（2026-11-14 の配信物）を
+// scripts/patch-widget-appearance.mjs で見た目だけ調整したもの。
+// ここのソースは 2026-08 時点の画面で、ビルド成果物には使わない。
 type CatState = 'idle' | 'listening' | 'speaking' | 'thinking';
 type ChatRole = 'assistant' | 'user';
 
