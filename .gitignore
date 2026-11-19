@@ -10,6 +10,8 @@ __pycache__/
 
 # Generated Cloudflare bundles and type declarations
 apps/worker/static/
+apps/preview/public/
+apps/preview/dist/
 apps/worker/src/worker-configuration.d.ts
 
 # Local Codex/build scratch data and rendered contract previews

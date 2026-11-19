@@ -10,17 +10,17 @@ const html = `<!doctype html>
   <style>
     :root { color-scheme: light; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; color: #29293a; background: #f7f4ef; }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; background: linear-gradient(145deg, #fff 0 45%, #fff4e9 100%); }
+    body { margin: 0; min-height: 100vh; background: linear-gradient(145deg, #fff 0 45%, #f8ede7 100%); }
     header { height: 74px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 72px); background: rgba(255,255,255,.92); border-bottom: 1px solid #eee8e1; }
     .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: .04em; }
-    .brand-mark { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: white; background: #ff680b; }
-    .preview-badge { padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; color: #9a3d00; background: #fff0e5; border: 1px solid #ffd2b5; }
+    .brand-mark { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: white; background: #b64d0c; }
+    .preview-badge { padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; color: #99410a; background: #faf3ee; border: 1px solid #e2b89e; }
     main { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: clamp(52px, 9vw, 112px) 0 160px; }
-    .eyebrow { margin: 0 0 14px; color: #e85400; font-size: 13px; font-weight: 900; letter-spacing: .14em; }
+    .eyebrow { margin: 0 0 14px; color: #99410a; font-size: 13px; font-weight: 900; letter-spacing: .14em; }
     h1 { max-width: 760px; margin: 0; font-size: clamp(34px, 6vw, 68px); line-height: 1.12; letter-spacing: -.04em; }
     .lead { max-width: 620px; margin: 24px 0 0; color: #666274; font-size: clamp(16px, 2vw, 19px); line-height: 1.9; }
     .hint { display: inline-flex; align-items: center; gap: 9px; margin-top: 30px; padding: 13px 18px; border-radius: 14px; background: #29293a; color: white; font-size: 14px; font-weight: 800; box-shadow: 0 12px 30px rgba(41,41,58,.16); }
-    .hint::before { content: "↘"; color: #ff9d5d; font-size: 20px; }
+    .hint::before { content: "↘"; color: #d79d79; font-size: 20px; }
     .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 72px; }
     .card { min-height: 128px; padding: 22px; border: 1px solid #eee7df; border-radius: 20px; background: rgba(255,255,255,.78); }
     .card strong { display: block; margin-bottom: 9px; }
@@ -55,22 +55,29 @@ const html = `<!doctype html>
 
   <orient-chat
     api-url="${productionAssetOrigin}"
-    primary-color="#ff680b"
-    ink-color="#29293a"
-    character-src="${productionAssetOrigin}/assets/orinyan-states.png"
+    primary-color="#b64d0c"
+    ink-color="#1f1f2c"
+    character-src="/assets/orinyan-states.png"
     turnstile-site-key="0x4AAAAAAELFZjpF4XsO2kRC"
     line-url="https://page.line.me/089wmudt"
   ></orient-chat>
   <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-  <script defer src="${productionAssetOrigin}/widget/orient-chat.js?v=20260826-12"></script>
+  <script defer src="/widget/orient-chat.js?v=20261119-launcher"></script>
 </body>
 </html>`;
 
+interface Env {
+  ASSETS: Fetcher;
+}
+
 export default {
-  fetch(request: Request) {
+  async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     if (url.pathname === '/health') {
       return Response.json({ ok: true, environment: 'preview', productionDataConnected: true });
+    }
+    if (url.pathname.startsWith('/widget/') || url.pathname.startsWith('/assets/')) {
+      return env.ASSETS.fetch(request);
     }
     if (url.pathname !== '/') return new Response('Not found', { status: 404 });
     return new Response(html, {

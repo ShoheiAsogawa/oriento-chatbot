@@ -4,8 +4,8 @@
 
 ## カラー
 
-- Brand orange: `#ff680b`
-- Brand orange strong: `#fd680a`
+- Brand orange: `#b64d0c`（白文字とのコントラスト 5.18:1。以前の `#ff680b` は 2.90:1）
+- Brand orange strong: `#99410a`（ホバー。白文字とのコントラスト 6.74:1。以前の `#fd680a`）
 - Ink: `#29293a`
 - Muted: `#74757f`
 - Border: `#e8e9ee`

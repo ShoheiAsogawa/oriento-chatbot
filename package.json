@@ -4,7 +4,7 @@
   "packageManager": "pnpm@10.4.1",
   "scripts": {
     "build": "pnpm --filter @orient/widget --filter @orient/admin build && pnpm prepare:assets && pnpm --filter @orient/worker build",
-    "build:preview": "pnpm --filter @orient/worker exec wrangler deploy --dry-run --config ../preview/wrangler.jsonc --outdir ../preview/dist",
+    "build:preview": "pnpm --filter @orient/widget build && node scripts/prepare-preview-assets.mjs && pnpm --filter @orient/worker exec wrangler deploy --dry-run --config ../preview/wrangler.jsonc --outdir ../preview/dist",
     "prepare:assets": "node scripts/prepare-assets.mjs",
     "knowledge:scrape": "python scripts/scrape-orient-knowledge.py",
     "knowledge:properties": "python scripts/scrape-orient-knowledge.py --property-only --individual-properties",
@@ -14,7 +14,7 @@
     "check": "pnpm -r check",
     "test": "pnpm --filter @orient/worker test",
     "deploy:production": "pnpm --filter @orient/worker exec wrangler deploy",
-    "deploy:preview": "pnpm --filter @orient/worker exec wrangler deploy --config ../preview/wrangler.jsonc",
+    "deploy:preview": "pnpm --filter @orient/widget build && node scripts/prepare-preview-assets.mjs && pnpm --filter @orient/worker exec wrangler deploy --config ../preview/wrangler.jsonc",
     "dev:worker": "pnpm --filter @orient/worker dev",
     "dev:admin": "pnpm --filter @orient/admin dev",
     "dev:widget": "pnpm --filter @orient/widget dev"
