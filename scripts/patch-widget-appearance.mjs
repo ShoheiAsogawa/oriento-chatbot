@@ -6,17 +6,21 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourcePath = resolve(root, 'apps/widget/vendor/orient-chat.live.js');
 const outputPath = resolve(root, 'apps/widget/dist/orient-chat.js');
 
-// 同じ色相のオレンジを、白文字が WCAG AA（通常文字 4.5:1）を満たすところまで暗くした。
-// #b64d0c は白とのコントラスト 5.18:1。ホバー用 #99410a は 6.74:1。
-const primary = '#b64d0c';
-const strong = '#99410a';
-const soft = '#faf3ee';
-const wash = '#f8ede7';
-const tint = '#f5e6dd';
-const hover = '#efd8ca';
-const line = '#e8c6b1';
-const lineStrong = '#e2b89e';
-const accentLine = '#d79d79';
+// 塗りは明るい黄色。白文字は #ffcc00 とのコントラストが 1.51:1 なので、
+// 黄色の上の文字は既存の墨色 #1f1f2c（10.76:1）にする。
+// 白や薄い地の上の文字・アイコンは #8a6200（白との 5.49:1）。
+// ホバーの塗りは #e6b000（墨色との 8.19:1）。
+const primary = '#ffcc00';
+const strong = '#e6b000';
+const textGold = '#8a6200';
+const onFill = '#1f1f2c';
+const soft = '#fffbeb';
+const wash = '#fff6d6';
+const tint = '#ffefb3';
+const hover = '#ffe58a';
+const line = '#f3dc8a';
+const lineStrong = '#e8cc66';
+const accentLine = '#e0bc45';
 
 const launcherCopy = {
   'aria-label="オリにゃんAIに聞くにゃ！"': 'aria-label="物件探しのことならオリにゃんAIに聞くにゃ！"',
@@ -123,15 +127,47 @@ let source = await readFile(sourcePath, 'utf8');
 source = replaceExact(
   source,
   'applyConfiguration(){const e={"--orient-primary":this.getAttribute("primary-color"),"--orient-ink":this.getAttribute("ink-color")',
-  'applyConfiguration(){const rawPrimary=this.getAttribute("primary-color");const primaryColor=/^#(?:ff680b|fd680a)$/i.test(rawPrimary||"")?null:rawPrimary;const e={"--orient-primary":primaryColor,"--orient-ink":this.getAttribute("ink-color")',
+  'applyConfiguration(){const rawPrimary=this.getAttribute("primary-color");const primaryColor=/^#(?:ff680b|fd680a|b64d0c|99410a)$/i.test(rawPrimary||"")?null:rawPrimary;const e={"--orient-primary":primaryColor,"--orient-ink":this.getAttribute("ink-color")',
   1,
 );
 
+const onYellow = [
+  ['padding: 13px 15px;\n    color: #fff;\n    background: var(--orient-primary);', `padding: 13px 15px;\n    color: ${onFill};\n    background: var(--orient-primary);`, 1],
+  ['border-radius: 0;\n    color: #fff;\n    background: #ff680b;', `border-radius: 0;\n    color: ${onFill};\n    background: ${primary};`, 1],
+  ['border-radius: 10px;\n    color: #fff;\n    background: #ff680b;', `border-radius: 10px;\n    color: ${onFill};\n    background: ${primary};`, 2],
+  ['.user .bubble { color: #fff; background: #ff680b;', `.user .bubble { color: ${onFill}; background: ${primary};`, 1],
+  ['border-radius: 999px; color: #fff; background: #ff680b;', `border-radius: 999px; color: ${onFill}; background: ${primary};`, 1],
+  ['color: #fff;\n    background: #f25a00;', `color: ${onFill};\n    background: ${strong};`, 3],
+  ['color: #fff; background: #f25a00;', `color: ${onFill}; background: ${strong};`, 1],
+  ['.lang-menu button[aria-selected="true"] { color: #fff; background: var(--orient-primary); }', `.lang-menu button[aria-selected="true"] { color: ${onFill}; background: var(--orient-primary); }`, 1],
+  ['.oc-cal-day[data-selected="true"] { color: #fff; background: var(--orient-primary); }', `.oc-cal-day[data-selected="true"] { color: ${onFill}; background: var(--orient-primary); }`, 1],
+  ['border-radius: 10px;\n    color: #fff;\n    background: var(--orient-primary);', `border-radius: 10px;\n    color: ${onFill};\n    background: var(--orient-primary);`, 1],
+  ['.lang-button { min-width: 36px; height: 32px; padding: 0 8px; border: 1px solid rgba(255,255,255,.5); border-radius: 999px; color: #fff; background: rgba(255,255,255,.16);', `.lang-button { min-width: 36px; height: 32px; padding: 0 8px; border: 1px solid rgba(31,31,44,.35); border-radius: 999px; color: ${onFill}; background: rgba(31,31,44,.06);`, 1],
+  ['.lang-button:hover, .lang-button:focus-visible { background: rgba(255,255,255,.28); outline: none; }', '.lang-button:hover, .lang-button:focus-visible { background: rgba(31,31,44,.12); outline: none; }', 1],
+  ['.icon-button { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 10px; color: #fff; background: transparent; cursor: pointer; }', `.icon-button { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 10px; color: ${onFill}; background: transparent; cursor: pointer; }`, 1],
+  ['.icon-button:hover, .icon-button:focus-visible { background: rgba(255,255,255,.18); outline: none; }', '.icon-button:hover, .icon-button:focus-visible { background: rgba(31,31,44,.1); outline: none; }', 1],
+  ['background: rgba(255,255,255,.22);', 'background: rgba(31,31,44,.12);', 2],
+  ['.campaign-late-kicker {\n    color: #ff680b;', `.campaign-late-kicker {\n    color: ${textGold};`, 1],
+  ['#c44a00', textGold, 2],
+  ['--orient-primary-strong: #fd680a;', `--orient-primary-strong: ${textGold};`, 1],
+  ['.send { width: 54px; min-width: 54px; max-width: 54px; height: 54px; min-height: 54px; max-height: 54px; display: grid; place-items: center; align-self: end; padding: 0; border: 0; border-radius: 12px; color: var(--orient-primary);', '.send { width: 54px; min-width: 54px; max-width: 54px; height: 54px; min-height: 54px; max-height: 54px; display: grid; place-items: center; align-self: end; padding: 0; border: 0; border-radius: 12px; color: var(--orient-primary-strong);', 1],
+  ['.oc-cal-day[data-selected="true"]:focus-visible:not(:disabled) { background: var(--orient-primary-strong); }', `.oc-cal-day[data-selected="true"]:focus-visible:not(:disabled) { background: ${strong}; }`, 1],
+  ['.oc-cal-submit:focus-visible { background: var(--orient-primary-strong);', `.oc-cal-submit:focus-visible { background: ${strong};`, 1],
+  ['.oc-cal-day[data-selected="true"]:hover:not(:disabled) { background: var(--orient-primary-strong); }', `.oc-cal-day[data-selected="true"]:hover:not(:disabled) { background: ${strong}; }`, 1],
+  ['.oc-cal-submit:hover { background: var(--orient-primary-strong); }', `.oc-cal-submit:hover { background: ${strong}; }`, 1],
+  ['#fff8f1', '#fff8dc', 1],
+  ['#ffe9d4', '#ffe9a0', 1],
+  ['#ffd2b5', '#f3dc8a', 1],
+  ['#6b2800', onFill, 2],
+  ['rgba(180, 62, 0', 'rgba(138, 98, 0', 1],
+];
+
+for (const [from, to, expected] of onYellow) {
+  source = replaceExact(source, from, to, expected);
+}
+
 const colorSwaps = [
-  ['#ff680b', primary, 7],
-  ['#fd680a', strong, 1],
-  ['#f25a00', strong, 4],
-  ['#c44a00', strong, 2],
+  ['#ff680b', primary, 1],
   ['#ff9d62', accentLine, 1],
   ['#ffd8bf', line, 1],
   ['#ffd8c2', line, 1],
@@ -144,8 +180,8 @@ const colorSwaps = [
   ['#fff7f2', wash, 3],
   ['#fff6f0', wash, 1],
   ['#fffaf7', soft, 3],
-  ['rgba(255, 104, 11', 'rgba(182, 77, 12', 4],
-  ['rgba(255,104,11', 'rgba(182,77,12', 16],
+  ['rgba(255, 104, 11', 'rgba(255, 204, 0', 4],
+  ['rgba(255,104,11', 'rgba(255,204,0', 16],
 ];
 
 for (const [from, to, expected] of colorSwaps) {
@@ -191,6 +227,7 @@ source = `${source.slice(0, mobileAt)}${mobileReplacement}${source.slice(mobileS
 const required = [
   primary,
   strong,
+  textGold,
   '物件探しのことなら\\nオリにゃんAIに聞くにゃ！',
   'Looking for a home?\\nAsk Orinyan!',
   '找房的话，\\n问问奥利喵！',

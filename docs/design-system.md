@@ -4,8 +4,9 @@
 
 ## カラー
 
-- Brand orange: `#b64d0c`（白文字とのコントラスト 5.18:1。以前の `#ff680b` は 2.90:1）
-- Brand orange strong: `#99410a`（ホバー。白文字とのコントラスト 6.74:1。以前の `#fd680a`）
+- Brand yellow: `#ffcc00`（ボタン・見出し・円の塗り。墨色 `#1f1f2c` とのコントラスト 10.76:1）
+- Brand yellow hover: `#e6b000`（墨色とのコントラスト 8.19:1）
+- Yellow text on white: `#8a6200`（白とのコントラスト 5.49:1。白文字を `#ffcc00` に乗せると 1.51:1 で読めない）
 - Ink: `#29293a`
 - Muted: `#74757f`
 - Border: `#e8e9ee`
